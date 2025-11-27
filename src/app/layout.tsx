@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Noto_Sans_JP } from 'next/font/google';
 import Sidebar from '@/components/layout/Sidebar';
 import MainLayout from '@/components/layout/MainLayout';
+import ThemeInitializer from '@/components/common/ThemeInitializer';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${inter.className} ${notoSansJP.className}`}>
+        <ThemeInitializer />
         <Sidebar />
         <MainLayout>{children}</MainLayout>
       </body>

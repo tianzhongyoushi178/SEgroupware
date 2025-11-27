@@ -120,7 +120,8 @@
 
 .themeButtonActive {
     background: white;
-    color: var(--text-main);
+    color: #1e293b;
+    /* Slate 800 - Always dark for white background */
     box-shadow: var(--shadow-sm);
 }
 

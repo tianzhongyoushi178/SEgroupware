@@ -1,10 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Bell, Moon, Sun, Shield, LogOut } from 'lucide-react';
 import styles from './page.module.css';
+import { useSettingsStore } from '@/store/settingsStore';
 
 export default function SettingsPage() {
+    const {
+        theme,
+        notifications,
+        profile,
+        setTheme,
+        toggleDesktopNotification,
+        updateProfile,
+        sendTestNotification,
+    } = useSettingsStore();
+
+    // Hydration mismatch回避のため、マウント後にレンダリングする
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
+
     return (
         <div className={styles.container}>
             <h1 className={styles.pageTitle}>設定</h1>
@@ -25,7 +47,8 @@ export default function SettingsPage() {
                                 <label className={styles.label}>ユーザー名</label>
                                 <input
                                     type="text"
-                                    defaultValue="田中 太郎"
+                                    value={profile.name}
+                                    onChange={(e) => updateProfile({ name: e.target.value })}
                                     className={styles.input}
                                 />
                             </div>
@@ -33,7 +56,8 @@ export default function SettingsPage() {
                                 <label className={styles.label}>メールアドレス</label>
                                 <input
                                     type="email"
-                                    defaultValue="tanaka.taro@example.com"
+                                    value={profile.email}
+                                    onChange={(e) => updateProfile({ email: e.target.value })}
                                     className={styles.input}
                                 />
                             </div>
@@ -57,11 +81,17 @@ export default function SettingsPage() {
                                 <p className={styles.toggleSubtext}>ライトモードとダークモードを切り替えます</p>
                             </div>
                             <div className={styles.themeToggle}>
-                                <button className={`${styles.themeButton} ${styles.themeButtonActive}`}>
+                                <button
+                                    onClick={() => setTheme('light')}
+                                    className={`${styles.themeButton} ${theme === 'light' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                >
                                     <Sun size={16} />
                                     ライト
                                 </button>
-                                <button className={`${styles.themeButton} ${styles.themeButtonInactive}`}>
+                                <button
+                                    onClick={() => setTheme('dark')}
+                                    className={`${styles.themeButton} ${theme === 'dark' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                >
                                     <Moon size={16} />
                                     ダーク
                                 </button>
@@ -86,31 +116,43 @@ export default function SettingsPage() {
                                 <p className={styles.toggleSubtext}>ブラウザでのプッシュ通知を許可します</p>
                             </div>
                             <label className={styles.switch}>
-                                <input type="checkbox" defaultChecked />
+                                <input
+                                    type="checkbox"
+                                    checked={notifications.desktop}
+                                    onChange={(e) => toggleDesktopNotification(e.target.checked)}
+                                />
                                 <span className={styles.slider}></span>
                             </label>
                         </div>
-                        <div className={styles.divider}></div>
-                        <div className={styles.toggleRow}>
-                            <div>
-                                <p className={styles.toggleText}>メール通知</p>
-                                <p className={styles.toggleSubtext}>重要なお知らせをメールで受け取ります</p>
+                        {notifications.desktop && (
+                            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={sendTestNotification}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        fontSize: '0.875rem',
+                                        color: '#2563eb',
+                                        background: '#eff6ff',
+                                        border: 'none',
+                                        borderRadius: '0.375rem',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    テスト通知を送信
+                                </button>
                             </div>
-                            <label className={styles.switch}>
-                                <input type="checkbox" defaultChecked />
-                                <span className={styles.slider}></span>
-                            </label>
-                        </div>
+                        )}
                     </div>
                 </section>
 
-                {/* その他 */}
+                {/* セキュリティ設定 */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <div className={styles.headerContent}>
                             <Shield size={20} style={{ color: '#16a34a' }} />
                             <h2 className={styles.sectionTitle}>セキュリティ</h2>
                         </div>
+                        <p className={styles.sectionDescription}>アカウントのセキュリティ設定を管理します</p>
                     </div>
                     <div className={styles.content}>
                         <button className={styles.logoutButton}>
