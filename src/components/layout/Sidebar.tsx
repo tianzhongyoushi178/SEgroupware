@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Bell, Calendar, Settings, Cloud, MessageSquare, Wrench, FileText } from 'lucide-react';
 import clsx from 'clsx';
@@ -22,8 +23,8 @@ export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <div className={styles.logoIcon} />
-        <span className={styles.logoText}>Groupware</span>
+        <Image src="/logo.png" alt="Logo" width={32} height={32} style={{ borderRadius: '6px' }} />
+        <span className={styles.logoText}>SEグループウェア</span>
       </div>
 
       <nav className={styles.nav}>
