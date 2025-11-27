@@ -44,10 +44,10 @@ export default function Sidebar() {
       </nav>
 
       <div className={styles.footer}>
-        <button className={styles.navItem}>
+        <Link href="/settings" className={styles.navItem}>
           <Settings className={styles.icon} size={20} />
           <span>設定</span>
-        </button>
+        </Link>
       </div>
     </aside>
   );
