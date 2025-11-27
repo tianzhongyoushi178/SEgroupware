@@ -17,25 +17,109 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 export default function NoticesPage() {
     const { notices, markAsRead, deleteNotice } = useNoticeStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+    const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
+    const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+
+    // フィルタリングとソートの適用
+    const filteredAndSortedNotices = notices
+        .filter((notice) => {
+            if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
+            if (showUnreadOnly && notice.isRead) return false;
+            return true;
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                        お知らせ
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>
-                        社内の最新情報やお知らせを確認できます。
-                    </p>
+            <header style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                            お知らせ
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)' }}>
+                            社内の最新情報やお知らせを確認できます。
+                        </p>
+                    </div>
+                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+                        新規作成
+                    </button>
                 </div>
-                <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
-                    新規作成
-                </button>
+
+                {/* フィルター・ソートコントロール */}
+                <div style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    padding: '1rem',
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)',
+                    flexWrap: 'wrap',
+                    alignItems: 'center'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>並び替え:</span>
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                            style={{
+                                padding: '0.5rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--border)',
+                                background: 'var(--background)',
+                                color: 'var(--text-main)',
+                                fontSize: '0.875rem'
+                            }}
+                        >
+                            <option value="newest">新しい順</option>
+                            <option value="oldest">古い順</option>
+                        </select>
+                    </div>
+
+                    <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>カテゴリ:</span>
+                        <select
+                            value={filterCategory}
+                            onChange={(e) => setFilterCategory(e.target.value as NoticeCategory | 'all')}
+                            style={{
+                                padding: '0.5rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--border)',
+                                background: 'var(--background)',
+                                color: 'var(--text-main)',
+                                fontSize: '0.875rem'
+                            }}
+                        >
+                            <option value="all">すべて</option>
+                            <option value="system">システム</option>
+                            <option value="general">一般</option>
+                            <option value="urgent">重要</option>
+                        </select>
+                    </div>
+
+                    <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={showUnreadOnly}
+                            onChange={(e) => setShowUnreadOnly(e.target.checked)}
+                            style={{ width: '16px', height: '16px' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>未読のみ表示</span>
+                    </label>
+                </div>
             </header>
 
             <div style={{ display: 'grid', gap: '1rem' }}>
-                {notices.map((notice) => {
+                {filteredAndSortedNotices.map((notice) => {
                     const config = categoryConfig[notice.category];
                     const Icon = config.icon;
 
@@ -122,9 +206,9 @@ export default function NoticesPage() {
                     );
                 })}
 
-                {notices.length === 0 && (
+                {filteredAndSortedNotices.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                        お知らせはありません。
+                        条件に一致するお知らせはありません。
                     </div>
                 )}
             </div>
