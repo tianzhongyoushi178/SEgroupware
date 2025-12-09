@@ -1,4 +1,5 @@
-import { LayoutDashboard, Bell, Calendar } from 'lucide-react';
+import { LayoutDashboard, Bell } from 'lucide-react';
+import ScheduleWidget from '@/components/dashboard/ScheduleWidget';
 
 export default function Home() {
   return (
@@ -51,24 +52,7 @@ export default function Home() {
         </section>
 
         {/* Schedule Widget */}
-        <section className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Calendar size={20} color="var(--primary)" />
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>今日の予定</h2>
-          </div>
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ minWidth: '60px', textAlign: 'center', background: 'var(--surface)', padding: '0.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>10:00</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>11:00</div>
-              </div>
-              <div>
-                <p style={{ fontWeight: '500' }}>定例ミーティング</p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>会議室A</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ScheduleWidget />
       </div>
     </div>
   );

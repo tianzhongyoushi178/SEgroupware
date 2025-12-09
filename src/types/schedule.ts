@@ -6,4 +6,5 @@ export interface ScheduleEvent {
     description?: string;
     location?: string;
     color?: string;
+    isAllDay?: boolean;
 }

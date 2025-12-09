@@ -6,6 +6,7 @@ interface ScheduleState {
     events: ScheduleEvent[];
     addEvent: (event: Omit<ScheduleEvent, 'id'>) => void;
     deleteEvent: (id: string) => void;
+    fetchEvents: () => Promise<void>;
 }
 
 const today = startOfToday();
@@ -45,4 +46,22 @@ export const useScheduleStore = create<ScheduleState>((set) => ({
         set((state) => ({
             events: state.events.filter((e) => e.id !== id),
         })),
+    fetchEvents: async () => {
+        try {
+            const response = await fetch('/api/schedule');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.events) {
+                    set((state) => {
+                        // 既存のイベントと重複しないようにマージする（簡易的にIDでチェックするか、あるいはすべて追加するか）
+                        // ここではシンプルに、既存のモックデータ + 取得データ とする
+                        // ※実際には重複排除ロジックが必要かもしれない
+                        return { events: [...state.events, ...data.events] };
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch events:', error);
+        }
+    },
 }));
