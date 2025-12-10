@@ -1,198 +1,246 @@
 .container {
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    padding: 1rem;
-    background-color: #ffffff;
+    background-color: #fff;
+    overflow: hidden;
 }
 
 .header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
-    background-color: #f0f0f0;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 2px;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+    flex-shrink: 0;
 }
 
 .headerLeft {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 16px;
 }
 
 .navButtons {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 8px;
 }
 
-.navBtn {
-    padding: 0.25rem;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    border-radius: 2px;
-    cursor: pointer;
+.navBtn,
+.todayBtn,
+.addBtn {
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid #e0e0e0;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 6px;
 }
 
-.navBtn:hover {
-    background-color: #e0e0e0;
+.navBtn {
+    width: 32px;
+    height: 32px;
+    color: #555;
 }
 
 .todayBtn {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    border-radius: 2px;
-    cursor: pointer;
+    padding: 0 12px;
+    height: 32px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
 }
 
+.addBtn {
+    padding: 0 16px;
+    height: 36px;
+    background-color: #0f9d58;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    gap: 8px;
+    border: none;
+}
+
+.addBtn:hover {
+    background-color: #0b874b;
+}
+
+.navBtn:hover,
 .todayBtn:hover {
     background-color: #f5f5f5;
 }
 
 .monthTitle {
-    font-size: 1.25rem;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 600;
     color: #333;
+    margin: 0;
 }
 
-.addBtn {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.75rem;
-    background-color: #008080;
-    color: white;
-    border: none;
-    border-radius: 2px;
-    font-size: 0.875rem;
-    cursor: pointer;
-}
-
-.addBtn:hover {
-    background-color: #006666;
-}
-
-.calendarContainer {
+/* Timeline Layout */
+.timelineContainer {
     flex: 1;
+    overflow: auto;
     display: flex;
     flex-direction: column;
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    overflow: hidden;
-}
-
-.weekdayHeader {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background-color: #f5f5f5;
-}
-
-.weekday {
-    padding: 0.25rem;
-    text-align: center;
-    font-size: 0.875rem;
-    border-right: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    color: #333;
-}
-
-.sunday {
-    color: #d32f2f;
-}
-
-.saturday {
-    color: #1976d2;
 }
 
 .grid {
-    flex: 1;
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(6, 1fr);
+    /* 1列目: ユーザー情報 (180px), 2列目以降: 7日分 (均等) */
+    grid-template-columns: 180px repeat(7, 1fr);
+    min-width: 1000px;
+    /* 横スクロール発生用 */
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.cell {
-    border-right: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    padding: 0.25rem;
-    cursor: pointer;
-    position: relative;
-    background-color: #fff;
-    transition: background-color 0.1s;
-    overflow: hidden;
+/* Headers */
+.headerRow {
+    display: contents;
 }
 
-.cell:hover {
-    background-color: #f0f8ff;
+.cornerCell {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    background-color: #f8f9fa;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px;
+    font-weight: 600;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.otherMonth {
-    background-color: #f9f9f9;
-}
-
-.today {
-    background-color: #fffde7;
-}
-
-.dateNumber {
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
+.dateHeader {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px;
+    text-align: center;
+    font-weight: 500;
     color: #333;
-}
-
-.dateNumber.sunday {
-    color: #d32f2f;
-}
-
-.dateNumber.saturday {
-    color: #1976d2;
-}
-
-.dateNumber.otherMonth {
-    opacity: 0.5;
-}
-
-.eventsList {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    overflow-y: auto;
-    max-height: calc(100% - 1.5rem);
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+}
+
+.dateHeader.sunday {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.dateHeader.saturday {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.dateHeader.today {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-bottom: 2px solid #2e7d32;
+}
+
+/* User Rows */
+.userRow {
+    display: contents;
+}
+
+.userCell {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: white;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100px;
+}
+
+.userName {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.userDept {
+    font-size: 12px;
+    color: #666;
+}
+
+.timeCell {
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 4px;
+    background-color: white;
+    min-height: 100px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.timeCell:hover {
+    background-color: #fafafa;
+}
+
+.timeCell.sunday {
+    background-color: #fff8f8;
+}
+
+.timeCell.saturday {
+    background-color: #f5faff;
+}
+
+/* Events */
+.eventList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .eventItem {
-    font-size: 10px;
-    padding: 1px 4px;
-    border-radius: 2px;
-    background-color: #e3f2fd;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #333;
+    border: 1px solid transparent;
+    transition: transform 0.1s;
+}
+
+.eventItem:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 5;
 }
 
 .eventTime {
-    font-family: monospace;
-    color: #666;
-    font-size: 9px;
+    font-weight: 700;
     flex-shrink: 0;
 }
 
 .eventTitle {
     font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

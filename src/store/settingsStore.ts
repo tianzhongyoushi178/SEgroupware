@@ -10,7 +10,9 @@ interface SettingsState {
         name: string;
         email: string;
     };
+    niCollaboCookie: string;
     setTheme: (theme: 'light' | 'dark') => void;
+    setNiCollaboCookie: (cookie: string) => void;
     toggleDesktopNotification: (enabled: boolean) => Promise<void>;
     updateProfile: (profile: Partial<SettingsState['profile']>) => void;
     requestNotificationPermission: () => Promise<boolean>;
@@ -28,8 +30,11 @@ export const useSettingsStore = create<SettingsState>()(
                 name: '田中 太郎',
                 email: 'tanaka.taro@example.com',
             },
+            niCollaboCookie: 'n7o9ahn4jhfap86g90cik8kta2',
 
             setTheme: (theme) => set({ theme }),
+
+            setNiCollaboCookie: (cookie) => set({ niCollaboCookie: cookie }),
 
             toggleDesktopNotification: async (enabled) => {
                 if (enabled) {
@@ -98,6 +103,7 @@ export const useSettingsStore = create<SettingsState>()(
                 theme: state.theme,
                 notifications: state.notifications,
                 profile: state.profile,
+                niCollaboCookie: state.niCollaboCookie, // Persist cookie
             }),
         }
     )
