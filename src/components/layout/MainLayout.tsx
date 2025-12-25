@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import IframeViewer from '@/components/common/IframeViewer';
 
 const tools = [
-    { path: '/salesforce', title: 'Salesforce', url: 'https://seibudenki.lightning.force.com/lightning/page/home' },
     { path: '/ai-chat', title: 'AI出張旅費アシスタント', url: 'https://ai-768252222357.us-west1.run.app/' },
     { path: '/se-tools', title: 'SEナレッジベース', url: 'https://se-768252222357.us-west1.run.app/' },
     { path: '/ocr-tools', title: 'OCRツール', url: 'https://ocr-768252222357.us-west1.run.app/' },
@@ -13,7 +12,7 @@ const tools = [
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isFullScreenPage = ['/schedule', ...tools.map(t => t.path)].includes(pathname);
+    const isFullScreenPage = [...tools.map(t => t.path)].includes(pathname);
     const activeTool = tools.find(t => t.path === pathname);
 
     return (
