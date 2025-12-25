@@ -1,4 +1,5 @@
-import { LayoutDashboard, Bell } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
+import NoticesWidget from '@/components/dashboard/NoticesWidget';
 
 
 export default function Home() {
@@ -34,15 +35,7 @@ export default function Home() {
         </section>
 
         {/* Notices Widget */}
-        <section className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Bell size={20} color="var(--primary)" />
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>最新のお知らせ</h2>
-          </div>
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            <p style={{ color: 'var(--text-secondary)' }}>現在、新しいお知らせはありません。</p>
-          </div>
-        </section>
+        <NoticesWidget />
       </div>
     </div>
   );
