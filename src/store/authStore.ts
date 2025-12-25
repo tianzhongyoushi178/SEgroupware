@@ -32,12 +32,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: true });
 
         // Initial session check
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // Initial session check with timeout
+        const sessionPromise = supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 fetchProfile(session.user);
             } else {
                 set({ user: null, profile: null, isAdmin: false, isLoading: false });
             }
+        });
+
+        // Timeout fallback (5 seconds)
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000));
+
+        Promise.race([sessionPromise, timeoutPromise]).catch((error) => {
+            console.error('Auth initialization error or timeout:', error);
+            set({ isLoading: false, error: '認証の初期化に失敗しました。ネットワーク接続を確認してください。' });
         });
 
         // Listen for auth changes
