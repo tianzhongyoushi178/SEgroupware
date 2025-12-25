@@ -6,17 +6,31 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './Sidebar.module.css';
-
-const navigation = [
-  { name: 'ダッシュボード', href: '/', icon: LayoutDashboard },
-  { name: 'お知らせ', href: '/notices', icon: Bell },
-  { name: 'AI出張旅費アシスタント', href: '/ai-chat', icon: MessageSquare },
-  { name: 'SEナレッジベース', href: '/se-tools', icon: Wrench },
-  { name: 'OCRツール', href: '/ocr-tools', icon: FileText },
-];
+import { useAuthStore } from '@/store/authStore';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useEffect } from 'react';
+import { navigation } from '@/constants/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { isAdmin } = useAuthStore();
+  const { tabSettings, subscribeSettings } = useAppSettingsStore();
+
+  useEffect(() => {
+    const unsubscribe = subscribeSettings();
+    return () => unsubscribe();
+  }, []);
+
+  const filteredNavigation = navigation.filter(item => {
+    // Default to visible if no setting exists
+    const setting = tabSettings[item.href];
+    if (!setting) return true;
+
+    if (!setting.visible) return false;
+    if (setting.adminOnly && !isAdmin) return false;
+
+    return true;
+  });
 
   return (
     <aside className={styles.sidebar}>
@@ -26,7 +40,7 @@ export default function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
-        {navigation.map((item) => {
+        {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

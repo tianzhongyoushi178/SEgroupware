@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface IframeViewerProps {
     url: string;
@@ -39,21 +39,6 @@ export default function IframeViewer({ url, title, height = '600px', fullScreen 
                 <h3 style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {title}
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        ログインできない場合はこちら
-                    </span>
-                    <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.875rem', padding: '0.25rem 0.5rem' }}
-                    >
-                        <ExternalLink size={16} style={{ marginRight: '0.25rem' }} />
-                        別タブで開く
-                    </a>
-                </div>
             </div>
 
             <div style={{ position: 'relative', flex: 1, width: '100%', background: 'white' }}>
@@ -106,15 +91,6 @@ export default function IframeViewer({ url, title, height = '600px', fullScreen 
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '400px' }}>
                             セキュリティ設定により、このサイトを埋め込んで表示することが許可されていない可能性があります。
                         </p>
-                        <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-primary"
-                        >
-                            <ExternalLink size={18} style={{ marginRight: '0.5rem' }} />
-                            新しいタブで開く
-                        </a>
                     </div>
                 )}
             </div>

@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { User, Bell, Moon, Sun, Shield, LogOut } from 'lucide-react';
+import { User, Bell, Moon, Sun, Shield, LogOut, Lock } from 'lucide-react';
 import styles from './page.module.css';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useAuthStore } from '@/store/authStore';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { navigation } from '@/constants/navigation';
 
 export default function SettingsPage() {
     const {
@@ -16,11 +19,16 @@ export default function SettingsPage() {
         sendTestNotification,
     } = useSettingsStore();
 
+    const { isAdmin, logout } = useAuthStore();
+    const { tabSettings, updateTabSetting, subscribeSettings } = useAppSettingsStore();
+
     // Hydration mismatch回避のため、マウント後にレンダリングする
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
+        const unsubscribe = subscribeSettings();
+        return () => unsubscribe();
     }, []);
 
     if (!mounted) {
@@ -64,6 +72,60 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </section>
+
+                {/* 管理者設定 */}
+                {isAdmin && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <div className={styles.headerContent}>
+                                <Lock size={20} style={{ color: '#dc2626' }} />
+                                <h2 className={styles.sectionTitle}>権限管理（管理者のみ）</h2>
+                            </div>
+                            <p className={styles.sectionDescription}>各機能の表示/非表示やアクセス権限を設定します</p>
+                        </div>
+                        <div className={styles.content}>
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                {navigation.map((item) => {
+                                    const setting = tabSettings[item.href] || { visible: true, adminOnly: false };
+                                    return (
+                                        <div key={item.href} style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.75rem',
+                                            background: '#f8fafc',
+                                            borderRadius: '0.375rem',
+                                            border: '1px solid var(--border)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <item.icon size={18} color="var(--text-secondary)" />
+                                                <span style={{ fontWeight: '500' }}>{item.name}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={setting.visible}
+                                                        onChange={(e) => updateTabSetting(item.href, { ...setting, visible: e.target.checked })}
+                                                    />
+                                                    <span style={{ fontSize: '0.875rem' }}>表示</span>
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={setting.adminOnly}
+                                                        onChange={(e) => updateTabSetting(item.href, { ...setting, adminOnly: e.target.checked })}
+                                                    />
+                                                    <span style={{ fontSize: '0.875rem' }}>管理者のみ</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* 表示設定 */}
                 <section className={styles.section}>
@@ -155,7 +217,11 @@ export default function SettingsPage() {
                         <p className={styles.sectionDescription}>アカウントのセキュリティ設定を管理します</p>
                     </div>
                     <div className={styles.content}>
-                        <button className={styles.logoutButton}>
+                        <button
+                            className={styles.logoutButton}
+                            onClick={logout}
+                            style={{ width: '100%', justifyContent: 'center' }}
+                        >
                             <LogOut size={20} />
                             ログアウト
                         </button>

@@ -4,6 +4,9 @@ import { usePathname } from 'next/navigation';
 
 import IframeViewer from '@/components/common/IframeViewer';
 
+import { useNoticeStore } from '@/store/noticeStore';
+import { useEffect } from 'react';
+
 const tools = [
     { path: '/ai-chat', title: 'AI出張旅費アシスタント', url: 'https://ai-768252222357.us-west1.run.app/' },
     { path: '/se-tools', title: 'SEナレッジベース', url: 'https://se-768252222357.us-west1.run.app/' },
@@ -14,6 +17,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
     const isFullScreenPage = [...tools.map(t => t.path)].includes(pathname);
     const activeTool = tools.find(t => t.path === pathname);
+
+    const { subscribeNotices } = useNoticeStore();
+
+    useEffect(() => {
+        const unsubscribe = subscribeNotices();
+        return () => unsubscribe();
+    }, []);
 
     return (
         <main
