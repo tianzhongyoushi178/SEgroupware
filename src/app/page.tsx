@@ -1,5 +1,5 @@
 import { LayoutDashboard, Bell } from 'lucide-react';
-import ScheduleWidget from '@/components/dashboard/ScheduleWidget';
+
 
 export default function Home() {
   return (
@@ -40,19 +40,9 @@ export default function Home() {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>最新のお知らせ</h2>
           </div>
           <div style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ padding: '0.5rem', borderLeft: '3px solid var(--primary)', background: 'rgba(37, 99, 235, 0.05)' }}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>2025-11-26</p>
-              <p style={{ fontWeight: '500' }}>システムメンテナンスについて</p>
-            </div>
-            <div style={{ padding: '0.5rem', borderLeft: '3px solid var(--secondary)', background: 'rgba(100, 116, 139, 0.05)' }}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>2025-11-25</p>
-              <p style={{ fontWeight: '500' }}>年末年始の営業日について</p>
-            </div>
+            <p style={{ color: 'var(--text-secondary)' }}>現在、新しいお知らせはありません。</p>
           </div>
         </section>
-
-        {/* Schedule Widget */}
-        <ScheduleWidget />
       </div>
     </div>
   );

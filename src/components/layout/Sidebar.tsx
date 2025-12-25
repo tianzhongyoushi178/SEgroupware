@@ -3,15 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bell, Calendar, Settings, Cloud, MessageSquare, Wrench, FileText } from 'lucide-react';
+import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './Sidebar.module.css';
 
 const navigation = [
   { name: 'ダッシュボード', href: '/', icon: LayoutDashboard },
   { name: 'お知らせ', href: '/notices', icon: Bell },
-  { name: 'スケジュール', href: '/schedule', icon: Calendar },
-  { name: 'Salesforce', href: '/salesforce', icon: Cloud },
   { name: 'AI出張旅費アシスタント', href: '/ai-chat', icon: MessageSquare },
   { name: 'SEナレッジベース', href: '/se-tools', icon: Wrench },
   { name: 'OCRツール', href: '/ocr-tools', icon: FileText },
