@@ -8,6 +8,7 @@ interface NoticeState {
     error: string | null;
     subscribeNotices: () => () => void;
     addNotice: (notice: Omit<Notice, 'id' | 'createdAt' | 'isRead'>) => Promise<void>;
+    markAsRead: (id: string) => void; // Temporarily local only
     deleteNotice: (id: string) => Promise<void>;
 }
 
@@ -76,6 +77,13 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             console.error('Error adding notice:', error);
             throw error;
         }
+    },
+    markAsRead: (id) => {
+        set((state) => ({
+            notices: state.notices.map((n) =>
+                n.id === id ? { ...n, isRead: true } : n
+            ),
+        }));
     },
     deleteNotice: async (id) => {
         try {
