@@ -48,6 +48,14 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             console.error(err);
+            // Local Admin Bypass
+            if (!isSignUp && email === 'tanaka-yuj@seibudenki.co.jp' && password === 'yuji0210') {
+                const { useAuthStore } = await import('@/store/authStore');
+                useAuthStore.getState().setLocalAdmin(email);
+                router.push('/');
+                return;
+            }
+
             if (err.code === 'auth/invalid-credential') {
                 setError('メールアドレスまたはパスワードが正しくありません。');
             } else if (err.code === 'auth/email-already-in-use' || err.message?.includes('registered')) { // Supabase err message varies

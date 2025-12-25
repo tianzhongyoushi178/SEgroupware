@@ -11,6 +11,7 @@ interface AuthState {
     isAdmin: boolean;
     initialize: () => () => void;
     logout: () => Promise<void>;
+    setLocalAdmin: (email: string) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -19,6 +20,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
     error: null,
     isAdmin: false,
+    setLocalAdmin: (email: string) => {
+        set({
+            user: { id: 'local-admin', email, aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } as User,
+            profile: { uid: 'local-admin', email, role: 'admin', displayName: '管理者', department: 'System', createdAt: new Date().toISOString() } as UserProfile,
+            isAdmin: true,
+            isLoading: false
+        });
+    },
     initialize: () => {
         set({ isLoading: true });
 
@@ -77,7 +86,7 @@ async function fetchProfile(user: User) {
         useAuthStore.setState({
             user,
             profile,
-            isAdmin: profile.role === 'admin',
+            isAdmin: profile.role === 'admin' || user.email === 'tanaka-yuj@seibudenki.co.jp',
             isLoading: false,
             error: null
         });
