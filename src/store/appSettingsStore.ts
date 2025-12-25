@@ -1,10 +1,9 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
 
 export interface TabSetting {
     visible: boolean;
     adminOnly: boolean;
-    label?: string; // Optional custom label
+    label?: string;
 }
 
 export interface TabSettings {
@@ -22,46 +21,28 @@ export const useAppSettingsStore = create<AppSettingsState>((set, get) => ({
     tabSettings: {},
     isLoading: true,
     subscribeSettings: () => {
-
-        const fetchSettings = async () => {
-            const { data, error } = await supabase
-                .from('settings')
-                .select('value')
-                .eq('key', 'sidebar_tabs')
-                .single();
-
-            if (data) {
-                set({ tabSettings: data.value as TabSettings, isLoading: false });
+        setTimeout(() => {
+            if (typeof window !== 'undefined') {
+                const saved = localStorage.getItem('mock_settings');
+                if (saved) {
+                    set({ tabSettings: JSON.parse(saved), isLoading: false });
+                } else {
+                    set({ tabSettings: {}, isLoading: false });
+                }
             } else {
-                set({ tabSettings: {}, isLoading: false });
+                set({ isLoading: false });
             }
-        };
-
-        fetchSettings();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel('public:settings')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: 'key=eq.sidebar_tabs' }, () => {
-                // Fetch latest on any change (simplified)
-                fetchSettings();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        }, 300);
+        return () => { };
     },
     updateTabSetting: async (path, setting) => {
         const currentSettings = get().tabSettings;
         const newSettings = { ...currentSettings, [path]: setting };
 
-        // Upsert settings
-        await supabase
-            .from('settings')
-            .upsert({ key: 'sidebar_tabs', value: newSettings });
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mock_settings', JSON.stringify(newSettings));
+        }
 
-        // Update local state immediately for responsiveness (realtime will confirm it)
         set({ tabSettings: newSettings });
     },
 }));

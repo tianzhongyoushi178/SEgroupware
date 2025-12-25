@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Loader2, LogIn, UserPlus } from 'lucide-react';
 
@@ -21,48 +20,26 @@ export default function LoginPage() {
         setMessage('');
 
         try {
-            if (isSignUp) {
-                const { error, data } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: {
-                            display_name: email.split('@')[0], // Default display name
-                        }
-                    }
-                });
-                if (error) throw error;
-                if (data.user && data.session) {
-                    // Auto logged in (if confirm off)
-                    router.push('/');
-                } else if (data.user && !data.session) {
-                    setMessage('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
-                }
-            } else {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
-                if (error) throw error;
-                router.push('/');
-            }
-        } catch (err: any) {
-            console.error(err);
-            // Local Admin Bypass
-            if (!isSignUp && email === 'tanaka-yuj@seibudenki.co.jp' && password === 'yuji0210') {
-                const { useAuthStore } = await import('@/store/authStore');
-                useAuthStore.getState().setLocalAdmin(email);
-                router.push('/');
-                return;
-            }
+            const { useAuthStore } = await import('@/store/authStore');
 
-            if (err.code === 'auth/invalid-credential') {
-                setError('メールアドレスまたはパスワードが正しくありません。');
-            } else if (err.code === 'auth/email-already-in-use' || err.message?.includes('registered')) { // Supabase err message varies
-                setError('このメールアドレスは既に登録されています。');
+            if (isSignUp) {
+                // Mock Sign Up
+                await useAuthStore.getState().login(email);
+                router.push('/');
             } else {
-                setError(err.message || 'エラーが発生しました。');
+                // Mock Login
+                // Simple password check for the specific user, otherwise allow any for mock
+                if (email === 'tanaka-yuj@seibudenki.co.jp' && password !== 'yuji0210') {
+                    throw new Error('パスワードが正しくありません。');
+                }
+
+                await useAuthStore.getState().login(email);
+                router.push('/');
             }
+        } catch (err) {
+            console.error(err);
+            const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました。';
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Notice } from '@/types/notice';
-import { supabase } from '@/lib/supabase';
 
 interface NoticeState {
     notices: Notice[];
@@ -8,94 +7,91 @@ interface NoticeState {
     error: string | null;
     subscribeNotices: () => () => void;
     addNotice: (notice: Omit<Notice, 'id' | 'createdAt' | 'isRead'>) => Promise<void>;
-    markAsRead: (id: string) => void; // Temporarily local only
+    markAsRead: (id: string) => void;
     deleteNotice: (id: string) => Promise<void>;
 }
 
-export const useNoticeStore = create<NoticeState>((set, get) => ({
+const mockNotices: Notice[] = [
+    {
+        id: '1',
+        title: 'システムメンテナンスのお知らせ',
+        content: '12月31日の22時からメンテナンスを行います。',
+        category: 'urgent',
+        createdAt: new Date().toISOString(),
+        author: '管理者',
+        isRead: false
+    },
+    {
+        id: '2',
+        title: '年末年始の営業について',
+        content: '年末年始は12/29〜1/3まで休業となります。',
+        category: 'general',
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        author: '総務部',
+        isRead: true
+    }
+];
+
+export const useNoticeStore = create<NoticeState>((set) => ({
     notices: [],
     isLoading: false,
     error: null,
     subscribeNotices: () => {
         set({ isLoading: true });
-
-        const fetchNotices = async () => {
-            const { data, error } = await supabase
-                .from('notices')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching notices:', error);
-                set({ error: 'お知らせの取得に失敗しました', isLoading: false });
-                return;
+        // Simulate fetch delay
+        setTimeout(() => {
+            // Load from localStorage if available, else mock
+            let storedNotices = mockNotices;
+            if (typeof window !== 'undefined') {
+                const saved = localStorage.getItem('mock_notices');
+                if (saved) {
+                    storedNotices = JSON.parse(saved);
+                }
             }
+            set({ notices: storedNotices, isLoading: false });
+        }, 500);
 
-            // Map keys if necessary (snake_case to camelCase)
-            // Assuming Supabase returns snake_case columns by default unless configured otherwise
-            const notices = (data || []).map((item: any) => ({
-                id: item.id,
-                title: item.title,
-                content: item.content,
-                category: item.category,
-                createdAt: item.created_at, // Mapping created_at to createdAt
-                author: item.author || 'System', // Map author, default to System
-                isRead: false // Default
-            }));
-
-            set({ notices, isLoading: false });
-        };
-
-        fetchNotices();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel('public:notices')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, () => {
-                fetchNotices(); // Reload on any change for simplicity
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { };
     },
     addNotice: async (notice) => {
-        try {
-            const { error } = await supabase
-                .from('notices')
-                .insert([{
-                    title: notice.title,
-                    content: notice.content,
-                    category: notice.category,
-                    author: notice.author,
-                    // created_at is default
-                }]);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const newNotice: Notice = {
+            id: Math.random().toString(36).substr(2, 9),
+            title: notice.title,
+            content: notice.content,
+            category: notice.category,
+            createdAt: new Date().toISOString(),
+            author: notice.author || 'system',
+            isRead: false
+        };
 
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error adding notice:', error);
-            throw error;
-        }
+        set(state => {
+            const updated = [newNotice, ...state.notices];
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('mock_notices', JSON.stringify(updated));
+            }
+            return { notices: updated };
+        });
     },
     markAsRead: (id) => {
-        set((state) => ({
-            notices: state.notices.map((n) =>
+        set((state) => {
+            const updated = state.notices.map((n) =>
                 n.id === id ? { ...n, isRead: true } : n
-            ),
-        }));
+            );
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('mock_notices', JSON.stringify(updated));
+            }
+            return { notices: updated };
+        });
     },
     deleteNotice: async (id) => {
-        try {
-            const { error } = await supabase
-                .from('notices')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error deleting notice:', error);
-            throw error;
-        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+        set(state => {
+            const updated = state.notices.filter(n => n.id !== id);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('mock_notices', JSON.stringify(updated));
+            }
+            return { notices: updated };
+        });
     },
 }));

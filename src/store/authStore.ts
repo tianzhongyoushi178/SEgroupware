@@ -1,17 +1,25 @@
 import { create } from 'zustand';
-import { User } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
-import { supabase } from '@/lib/supabase';
+
+// Mock User Type
+interface MockUser {
+    id: string;
+    email: string;
+    aud: string;
+    app_metadata: Record<string, unknown>;
+    user_metadata: Record<string, unknown>;
+    created_at: string;
+}
 
 interface AuthState {
-    user: User | null;
+    user: MockUser | null;
     profile: UserProfile | null;
     isLoading: boolean;
     error: string | null;
     isAdmin: boolean;
-    initialize: () => () => void;
+    login: (email: string) => Promise<void>;
     logout: () => Promise<void>;
-    setLocalAdmin: (email: string) => void;
+    initialize: () => () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -20,93 +28,77 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
     error: null,
     isAdmin: false,
-    setLocalAdmin: (email: string) => {
+
+    initialize: () => {
+        const cleanup = () => { };
+
+        // Mock initialization
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('mock_user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const isAdmin = user.email === 'tanaka-yuj@seibudenki.co.jp';
+                    set({
+                        user,
+                        profile: {
+                            uid: user.id,
+                            email: user.email,
+                            displayName: user.email.split('@')[0],
+                            role: isAdmin ? 'admin' : 'user',
+                            createdAt: new Date().toISOString()
+                        } as UserProfile,
+                        isAdmin,
+                        isLoading: false
+                    });
+                    return cleanup;
+                } catch (e) {
+                    console.error('Failed to parse mock user', e);
+                }
+            }
+        }
+        set({ isLoading: false });
+        return cleanup;
+    },
+
+    login: async (email: string) => {
+        set({ isLoading: true, error: null });
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+
+        const isAdmin = email === 'tanaka-yuj@seibudenki.co.jp';
+        const mockUser: MockUser = {
+            id: 'mock-user-id-' + Math.random().toString(36).substr(2, 9),
+            email,
+            aud: 'authenticated',
+            app_metadata: {},
+            user_metadata: {},
+            created_at: new Date().toISOString()
+        };
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mock_user', JSON.stringify(mockUser));
+        }
+
         set({
-            user: { id: 'local-admin', email, aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } as User,
-            profile: { uid: 'local-admin', email, role: 'admin', displayName: '管理者', department: 'System', createdAt: new Date().toISOString() } as UserProfile,
-            isAdmin: true,
+            user: mockUser,
+            profile: {
+                uid: mockUser.id,
+                email,
+                displayName: email.split('@')[0],
+                role: isAdmin ? 'admin' : 'user',
+                createdAt: new Date().toISOString()
+            } as UserProfile,
+            isAdmin,
             isLoading: false
         });
     },
-    initialize: () => {
-        set({ isLoading: true });
 
-        // Initial session check
-        // Initial session check with timeout
-        const sessionPromise = supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                fetchProfile(session.user);
-            } else {
-                set({ user: null, profile: null, isAdmin: false, isLoading: false });
-            }
-        });
-
-        // Timeout fallback (5 seconds)
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000));
-
-        Promise.race([sessionPromise, timeoutPromise]).catch((error) => {
-            console.error('Auth initialization error or timeout:', error);
-            set({ isLoading: false, error: '認証の初期化に失敗しました。ネットワーク接続を確認してください。' });
-        });
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (session?.user) {
-                await fetchProfile(session.user);
-            } else {
-                set({ user: null, profile: null, isAdmin: false, isLoading: false });
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    },
     logout: async () => {
-        try {
-            await supabase.auth.signOut();
-            set({ user: null, profile: null, isAdmin: false, error: null });
-        } catch (error) {
-            set({ error: 'ログアウトに失敗しました' });
+        set({ isLoading: true });
+        await new Promise(resolve => setTimeout(resolve, 300));
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('mock_user');
         }
+        set({ user: null, profile: null, isAdmin: false, isLoading: false });
     },
 }));
-
-async function fetchProfile(user: User) {
-    try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-        if (error) {
-            console.error('Error fetching user profile:', error);
-            // If profile doesn't exist, just set basic user info
-            useAuthStore.setState({
-                user,
-                profile: null,
-                isAdmin: false,
-                isLoading: false,
-                error: null
-            });
-            return;
-        }
-
-        const profile = data as UserProfile;
-        useAuthStore.setState({
-            user,
-            profile,
-            isAdmin: profile.role === 'admin' || user.email === 'tanaka-yuj@seibudenki.co.jp',
-            isLoading: false,
-            error: null
-        });
-
-    } catch (error) {
-        console.error('Unexpected error fetching profile:', error);
-        useAuthStore.setState({
-            user,
-            profile: null,
-            isAdmin: false,
-            isLoading: false
-        });
-    }
-}
