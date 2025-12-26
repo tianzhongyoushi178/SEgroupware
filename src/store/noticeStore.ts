@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Notice } from '@/types/notice';
+import { supabase } from '@/lib/supabase';
 
 interface NoticeState {
     notices: Notice[];
@@ -11,68 +12,115 @@ interface NoticeState {
     deleteNotice: (id: string) => Promise<void>;
 }
 
-const mockNotices: Notice[] = [];
-
-export const useNoticeStore = create<NoticeState>((set) => ({
+export const useNoticeStore = create<NoticeState>((set, get) => ({
     notices: [],
     isLoading: false,
     error: null,
+
     subscribeNotices: () => {
         set({ isLoading: true });
-        // Simulate fetch delay
-        setTimeout(() => {
-            // Load from localStorage if available, else mock
-            let storedNotices = mockNotices;
-            if (typeof window !== 'undefined') {
-                const saved = localStorage.getItem('mock_notices');
-                if (saved) {
-                    storedNotices = JSON.parse(saved);
-                }
-            }
-            set({ notices: storedNotices, isLoading: false });
-        }, 500);
 
-        return () => { };
-    },
-    addNotice: async (notice) => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const newNotice: Notice = {
-            id: Math.random().toString(36).substr(2, 9),
-            title: notice.title,
-            content: notice.content,
-            category: notice.category,
-            createdAt: new Date().toISOString(),
-            author: notice.author || 'system',
-            isRead: false
+        // Helper to merge server data with local read status
+        const mergeWithLocalReadStatus = (serverNotices: any[]) => {
+            if (typeof window === 'undefined') return serverNotices;
+
+            const readIds = JSON.parse(localStorage.getItem('read_notices') || '[]');
+            return serverNotices.map(notice => ({
+                ...notice,
+                isRead: readIds.includes(notice.id)
+            }));
         };
 
-        set(state => {
-            const updated = [newNotice, ...state.notices];
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('mock_notices', JSON.stringify(updated));
+        // Initial Fetch
+        const fetchNotices = async () => {
+            const { data, error } = await supabase
+                .from('notices')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching notices:', error);
+                set({ error: error.message, isLoading: false });
+                return;
             }
-            return { notices: updated };
-        });
+
+            // Map DB fields to Frontend types if necessary (snake_case to camelCase)
+            // Assuming DB columns match or we map them: created_at -> createdAt
+            const mappedNotices = (data || []).map(n => ({
+                ...n,
+                createdAt: n.created_at // Map snake_case from DB to camelCase
+            }));
+
+            set({ notices: mergeWithLocalReadStatus(mappedNotices), isLoading: false });
+        };
+
+        fetchNotices();
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('public:notices')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'notices' },
+                () => {
+                    // Re-fetch on any change to keep it simple and consistent
+                    fetchNotices();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     },
+
+    addNotice: async (notice) => {
+        // Optimistic update could go here, but for now we rely on realtime feedback
+        const { error } = await supabase
+            .from('notices')
+            .insert({
+                title: notice.title,
+                content: notice.content,
+                category: notice.category,
+                author: notice.author,
+                // created_at is handled by default gen
+            });
+
+        if (error) {
+            console.error('Error adding notice:', error);
+            throw error;
+        }
+    },
+
     markAsRead: (id) => {
         set((state) => {
+            // Update local state
             const updated = state.notices.map((n) =>
                 n.id === id ? { ...n, isRead: true } : n
             );
+
+            // Persist read status locally
             if (typeof window !== 'undefined') {
-                localStorage.setItem('mock_notices', JSON.stringify(updated));
+                const readIds = JSON.parse(localStorage.getItem('read_notices') || '[]');
+                if (!readIds.includes(id)) {
+                    readIds.push(id);
+                    localStorage.setItem('read_notices', JSON.stringify(readIds));
+                }
             }
+
             return { notices: updated };
         });
     },
+
     deleteNotice: async (id) => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        set(state => {
-            const updated = state.notices.filter(n => n.id !== id);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('mock_notices', JSON.stringify(updated));
-            }
-            return { notices: updated };
-        });
+        const { error } = await supabase
+            .from('notices')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting notice:', error);
+            throw error;
+        }
     },
 }));
