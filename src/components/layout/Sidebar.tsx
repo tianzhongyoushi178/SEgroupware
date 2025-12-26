@@ -35,7 +35,7 @@ export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <Image src="/logo.png" alt="Logo" width={32} height={32} style={{ borderRadius: '6px' }} />
+        <Image src="/logo.png" alt="Logo" width={48} height={48} style={{ borderRadius: '8px' }} />
         <span className={styles.logoText}>SALES HUB</span>
       </div>
 
