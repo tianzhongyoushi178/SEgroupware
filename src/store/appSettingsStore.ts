@@ -19,6 +19,7 @@ interface AppSettingsState {
     updateTabSetting: (path: string, setting: TabSetting) => Promise<void>;
     fetchUserPermissions: (userId: string) => Promise<UserPermission>;
     updateUserPermission: (userId: string, path: string, visible: boolean) => Promise<void>;
+    updateUserPermissions: (userId: string, permissions: UserPermission) => Promise<void>;
     getAllProfiles: () => Promise<any[]>;
 }
 
