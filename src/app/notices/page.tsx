@@ -17,7 +17,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticesPage() {
-    const { notices, markAsRead, deleteNotice } = useNoticeStore();
+    const { notices, markAsRead, deleteNotice, fetchNotices } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
@@ -25,11 +25,25 @@ export default function NoticesPage() {
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
+    // Polling for read status updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchNotices();
+        }, 60000); // Every 1 minute
+        return () => clearInterval(interval);
+    }, [fetchNotices]);
+
     // フィルタリングとソートの適用
     const filteredAndSortedNotices = notices
         .filter((notice) => {
             if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
-            if (showUnreadOnly && notice.isRead) return false;
+
+            // Correctly determine if read for the current user based on readStatus map
+            const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;
+
+            // If checking "Unread Only", hide if already read
+            if (showUnreadOnly && isRead) return false;
+
             return true;
         })
         .sort((a, b) => {
@@ -126,18 +140,22 @@ export default function NoticesPage() {
                 {filteredAndSortedNotices.map((notice) => {
                     const config = categoryConfig[notice.category];
                     const Icon = config.icon;
+                    const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;
 
                     return (
                         <div
                             key={notice.id}
                             className="glass-panel"
+                            onClick={() => setSelectedNotice(notice)}
                             style={{
                                 padding: '1.5rem',
                                 display: 'flex',
                                 gap: '1.5rem',
-                                opacity: notice.isRead ? 0.8 : 1,
+                                opacity: isRead ? 0.9 : 1,
                                 borderLeft: `4px solid ${config.color}`,
                                 transition: 'all 0.2s',
+                                cursor: 'pointer',
+                                background: isRead ? 'var(--background-secondary)' : 'var(--surface)',
                             }}
                         >
                             <div
@@ -156,7 +174,7 @@ export default function NoticesPage() {
                                 <Icon size={24} />
                             </div>
 
-                            <div style={{ flex: 1 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                                     <span
                                         style={{
@@ -178,40 +196,40 @@ export default function NoticesPage() {
                                     </span>
                                 </div>
 
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {notice.title}
                                 </h3>
-                                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                                    {notice.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
-                                        if (part.match(/(https?:\/\/[^\s]+)/g)) {
-                                            return (
-                                                <a
-                                                    key={i}
-                                                    href={part}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: 'var(--primary)', textDecoration: 'underline' }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {part}
-                                                </a>
-                                            );
-                                        }
-                                        return part;
-                                    })}
+                                <p style={{
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: '1.6',
+                                    fontSize: '0.9rem',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden'
+                                }}>
+                                    {notice.content}
                                 </p>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {!notice.isRead && user?.id && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px' }}>
+                                {!isRead && user?.id ? (
                                     <button
-                                        onClick={() => markAsRead(notice.id, user.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            markAsRead(notice.id, user.id);
+                                        }}
                                         className="btn btn-ghost"
                                         title="既読にする"
                                         style={{ color: 'var(--success)' }}
                                     >
-                                        <CheckCircle size={20} />
+                                        <CheckCircle size={28} />
                                     </button>
+                                ) : (
+                                    <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <CheckCircle size={24} />
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
+                                    </div>
                                 )}
 
                                 {(isAdmin || (user?.id && notice.authorId === user.id)) && (
@@ -242,6 +260,7 @@ export default function NoticesPage() {
             </div>
 
             <NoticeFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <NoticeDetailModal notice={selectedNotice} onClose={() => setSelectedNotice(null)} />
         </div>
     );
 }
