@@ -1,12 +1,41 @@
 'use client';
 
 import { useNoticeStore } from '@/store/noticeStore';
+import { useAuthStore } from '@/store/authStore';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
 import { Notice, NoticeCategory } from '@/types/notice';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+
+// Component to fetch/display user name efficiently
+const UserInfo = ({ userId }: { userId: string }) => {
+    const { getAllProfiles } = useAppSettingsStore();
+    const [name, setName] = useState('読み込み中...');
+
+    // Simple in-memory cache for this session to avoid spamming
+    // In a real app, use SWR or React Query
+    useEffect(() => {
+        let mounted = true;
+
+        // Check if we have a global cache or just fetch
+        // We will fetch all profiles once in the parent if possible, but here individually is safer for now
+        // Actually, getting all profiles is better.
+        // But for this patch, let's just fetch single user info if possible? 
+        // Stores usually don't have getUser(id).
+        // Let's use `getAllProfiles` once in parent and pass down map.
+        // But for minimal code change without refactoring parent deeply:
+        // We can just query supabase directly via helper? Or use the store.
+        // Let's defer to the store's getAllProfiles.
+        // Optimization: NoticeWidget should load profiles once.
+        return () => { mounted = false; };
+    }, [userId]);
+
+    // Placeholder - Logic moved to Parent
+    return <span className="badge" style={{ fontSize: '0.75rem', background: '#e2e8f0', padding: '2px 8px', borderRadius: '12px' }}>{userId}</span>;
+}
 
 const categoryConfig: Record<NoticeCategory, { label: string; color: string; icon: any }> = {
     system: { label: 'システム', color: '#2563eb', icon: Info },
@@ -15,12 +44,23 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticesWidget() {
-    const { notices } = useNoticeStore();
+    const { notices, markAsRead } = useNoticeStore();
+    const { user, isAdmin } = useAuthStore();
+    const { getAllProfiles } = useAppSettingsStore();
     const [mounted, setMounted] = useState(false);
     const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+    const [userMap, setUserMap] = useState<Record<string, string>>({});
 
     useEffect(() => {
         setMounted(true);
+        // Fetch profiles for names
+        getAllProfiles().then(profiles => {
+            const map: Record<string, string> = {};
+            profiles.forEach(p => {
+                map[p.id] = p.display_name || p.email?.split('@')[0] || 'Unknown';
+            });
+            setUserMap(map);
+        });
     }, []);
 
     // Hydration Mismatchを防ぐため、マウントされるまでレンダリングしない
@@ -188,13 +228,74 @@ export default function NoticesWidget() {
                             })}
                         </div>
 
-                        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setSelectedNotice(null)}
-                                className="btn btn-primary"
-                            >
-                                閉じる
-                            </button>
+                        {/* Read Status Section */}
+                        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                                {/* Mark as Read Button */}
+                                {user?.id && !selectedNotice.readStatus?.[user.id] && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (user?.id) {
+                                                markAsRead(selectedNotice.id, user.id);
+                                                // Ideally strictly optimistic update or fetch
+                                                // We can manually update selectedNotice state for immediate feedback
+                                                setSelectedNotice(prev => prev ? ({
+                                                    ...prev,
+                                                    readStatus: { ...prev.readStatus, [user.id]: new Date().toISOString() },
+                                                    isRead: true
+                                                }) : null);
+                                            }
+                                        }}
+                                        className="btn"
+                                        style={{
+                                            background: '#fff7ed',
+                                            color: '#c2410c',
+                                            border: '1px solid #fed7aa',
+                                            fontWeight: 'bold',
+                                        }}
+                                    >
+                                        チェックして既読にする
+                                    </button>
+                                )}
+                                {user?.id && selectedNotice.readStatus?.[user.id] && (
+                                    <div style={{ color: 'var(--success)', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                                        ✓ 既読済み
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button
+                                        onClick={() => setSelectedNotice(null)}
+                                        className="btn btn-primary"
+                                    >
+                                        閉じる
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Reader List */}
+                            {(selectedNotice.readStatusVisibleTo === 'all' || isAdmin) && (
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        既読状況 ({Object.keys(selectedNotice.readStatus || {}).length}人)
+                                    </h4>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {Object.keys(selectedNotice.readStatus || {}).length > 0 ? (
+                                            Object.keys(selectedNotice.readStatus || {}).map(readerId => {
+                                                const name = userMap[readerId] || '読み込み中...';
+                                                return (
+                                                    <span key={readerId} style={{ fontSize: '0.75rem', background: 'var(--background-secondary)', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                                        {name}
+                                                    </span>
+                                                );
+                                            })
+                                        ) : (
+                                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>まだ誰も読んでいません</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

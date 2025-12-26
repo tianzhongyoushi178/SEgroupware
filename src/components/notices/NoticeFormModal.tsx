@@ -17,6 +17,7 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState<NoticeCategory>('general');
+    const [isReadVisibleToAll, setIsReadVisibleToAll] = useState(true);
 
     // Auto-derive author name
     const authorName = profile?.displayName || profile?.email || '匿名';
@@ -30,12 +31,14 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
             content,
             category,
             author: authorName,
+            readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
         });
         onClose();
         // Reset form
         setTitle('');
         setContent('');
         setCategory('general');
+        setIsReadVisibleToAll(true);
     };
 
     return (
@@ -149,6 +152,23 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
                                 fontFamily: 'inherit',
                             }}
                         />
+                    </div>
+
+                    <div style={{ padding: '0.5rem', background: 'var(--background-secondary)', borderRadius: 'var(--radius-md)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={isReadVisibleToAll}
+                                onChange={(e) => setIsReadVisibleToAll(e.target.checked)}
+                                style={{ width: '1rem', height: '1rem' }}
+                            />
+                            <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>既読者を全員に公開する</span>
+                        </label>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: '1.5rem', marginTop: '0.2rem' }}>
+                            {isReadVisibleToAll
+                                ? 'お知らせを読んだ人の名前が全員に表示されます'
+                                : '既読者は投稿者と管理者のみ確認できます'}
+                        </p>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>

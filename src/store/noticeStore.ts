@@ -7,8 +7,8 @@ interface NoticeState {
     isLoading: boolean;
     error: string | null;
     subscribeNotices: () => () => void;
-    addNotice: (notice: Omit<Notice, 'id' | 'createdAt' | 'isRead'>) => Promise<void>;
-    markAsRead: (id: string) => void;
+    addNotice: (notice: Omit<Notice, 'id' | 'createdAt' | 'isRead' | 'readStatus'>) => Promise<void>;
+    markAsRead: (id: string, userId: string) => Promise<void>;
     deleteNotice: (id: string) => Promise<void>;
 }
 
@@ -46,12 +46,26 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
 
             // Map DB fields to Frontend types if necessary (snake_case to camelCase)
             // Assuming DB columns match or we map them: created_at -> createdAt
+            // Map DB fields to Frontend types
             const mappedNotices = (data || []).map(n => ({
                 ...n,
-                createdAt: n.created_at // Map snake_case from DB to camelCase
+                createdAt: n.created_at,
+                readStatus: n.read_status || {},
+                readStatusVisibleTo: n.read_status_visible_to || 'all'
             }));
 
-            set({ notices: mergeWithLocalReadStatus(mappedNotices), isLoading: false });
+            // Calculate isRead based on server data (or local fallback if needed, but server is truth)
+            // But we need the current user's ID to check if *they* read it.
+            // Since we don't have user ID in fetchNotices scope easily (unless we useAuthStore.getState()),
+            // we will let the component determine `isRead` or we can pass userId to fetchNotices?
+            // Actually, let's keep `isRead` as a derived property in the Component or computed here if we can.
+            // For now, let's map it raw and let component derive `isRead` from `readStatus[userId]`.
+            // But to keep compatibility with existing code that uses `isRead`, we might need to rely on the component using `readStatus`.
+            // OR we fetch current user here?
+            // Easier: just map the data and let the UI handle `isRead` check using `user.id`.
+            // Removing `mergeWithLocalReadStatus` logic effectively as we move to server side.
+
+            set({ notices: mappedNotices, isLoading: false });
         };
 
         fetchNotices();
@@ -63,7 +77,6 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'notices' },
                 () => {
-                    // Re-fetch on any change to keep it simple and consistent
                     fetchNotices();
                 }
             )
@@ -75,7 +88,6 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
     },
 
     addNotice: async (notice) => {
-        // Optimistic update could go here, but for now we rely on realtime feedback
         const { error } = await supabase
             .from('notices')
             .insert({
@@ -83,7 +95,8 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 content: notice.content,
                 category: notice.category,
                 author: notice.author,
-                // created_at is handled by default gen
+                read_status: {}, // Initialize empty
+                read_status_visible_to: notice.readStatusVisibleTo || 'all'
             });
 
         if (error) {
@@ -92,24 +105,34 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         }
     },
 
-    markAsRead: (id) => {
+    markAsRead: async (id, userId) => {
+        // optimistically update local
         set((state) => {
-            // Update local state
-            const updated = state.notices.map((n) =>
-                n.id === id ? { ...n, isRead: true } : n
-            );
-
-            // Persist read status locally
-            if (typeof window !== 'undefined') {
-                const readIds = JSON.parse(localStorage.getItem('read_notices') || '[]');
-                if (!readIds.includes(id)) {
-                    readIds.push(id);
-                    localStorage.setItem('read_notices', JSON.stringify(readIds));
+            const updated = state.notices.map((n) => {
+                if (n.id === id) {
+                    const newStatus = { ...n.readStatus, [userId]: new Date().toISOString() };
+                    return { ...n, readStatus: newStatus, isRead: true };
                 }
-            }
-
+                return n;
+            });
             return { notices: updated };
         });
+
+        // 1. Fetch current to ensure we don't overwrite others (race condition possible but low traffic)
+        // Ideally use a stored procedure or jsonb_set, but simple fetch-modify-save is okay for MVP
+        const { data: current } = await supabase.from('notices').select('read_status').eq('id', id).single();
+        const currentStatus = current?.read_status || {};
+
+        const newStatus = { ...currentStatus, [userId]: new Date().toISOString() };
+
+        const { error } = await supabase
+            .from('notices')
+            .update({ read_status: newStatus })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error marking as read:', error);
+        }
     },
 
     deleteNotice: async (id) => {

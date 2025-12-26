@@ -7,5 +7,7 @@ export interface Notice {
     category: NoticeCategory;
     createdAt: string;
     author: string;
-    isRead: boolean;
+    isRead: boolean; // Local computed property
+    readStatus?: Record<string, string>; // JSONB from DB: { userId: timestamp }
+    readStatusVisibleTo?: 'all' | 'author_admin';
 }
