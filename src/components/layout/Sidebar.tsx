@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText, ChevronDown, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './Sidebar.module.css';
 import { useAuthStore } from '@/store/authStore';
@@ -13,7 +13,7 @@ import { navigation } from '@/constants/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { isAdmin, user } = useAuthStore();
+  const { isAdmin, user, profile } = useAuthStore();
   const { tabSettings, fetchUserPermissions } = useAppSettingsStore();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
@@ -53,7 +53,30 @@ export default function Sidebar() {
     setOpenMenus(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const filteredNavigation = navigation.filter(item => {
+  // Merge custom links
+  const mergedNavigation = navigation.map(item => {
+    if (item.name === 'リンク集') {
+      const customLinks = profile?.preferences?.customLinks || [];
+      const customChildren = customLinks.map(link => ({
+        name: link.title,
+        href: link.url,
+        // Using a default icon for custom links since we can't easily dynamic import icons by name here
+        // If we want to import ExternalLink, we need to make sure it is available.
+        // But `item.children` elements usually have `.icon` component.
+        // Accessing the icon from one of the existing children or defaulting if imported?
+        // I need to import ExternalLink at the top if I want to use it.
+        // Or I can reuse the icon from the parent or just use a placeholder if I can't import easily?
+        // Navigation items have `icon` property which is a component.
+        // I'll import ExternalLink at top.
+        icon: ExternalLink // Reuse parent icon (Link) or I'll add ExternalLink to imports
+      }));
+      // @ts-ignore
+      return { ...item, children: [...(item.children || []), ...customChildren] };
+    }
+    return item;
+  });
+
+  const filteredNavigation = mergedNavigation.filter(item => {
     // Legacy support: global settings (if we still want to respect them as a base layer)
     // For now, let's assume User Permission overrides or is the primary source.
     // If permissionLoaded is false (loading), maybe show everything or skeleton? Show everything for now to avoid flicker if API fast?

@@ -5,9 +5,12 @@ import NoticesWidget from '@/components/dashboard/NoticesWidget';
 import { useAuthStore } from '@/store/authStore';
 import { useEffect, useState } from 'react';
 
+import NoticeFormModal from '@/components/notices/NoticeFormModal';
+
 export default function Home() {
   const { profile } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -49,7 +52,11 @@ export default function Home() {
               </a>
             )}
             {showNotice && (
-              <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+              <button
+                onClick={() => setIsNoticeModalOpen(true)}
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start' }}
+              >
                 📢 お知らせを投稿
               </button>
             )}
@@ -74,6 +81,11 @@ export default function Home() {
         {/* Notices Widget */}
         <NoticesWidget />
       </div>
+
+      <NoticeFormModal
+        isOpen={isNoticeModalOpen}
+        onClose={() => setIsNoticeModalOpen(false)}
+      />
     </div>
   );
 }

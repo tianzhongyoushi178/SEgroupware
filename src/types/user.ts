@@ -16,5 +16,10 @@ export interface UserProfile {
             title: string;
             url: string;
         }[];
+        customLinks?: {
+            id: string;
+            title: string;
+            url: string;
+        }[];
     };
 }
