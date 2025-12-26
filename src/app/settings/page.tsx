@@ -22,6 +22,7 @@ export default function SettingsPage() {
 
     // Hydration mismatch回避のため、マウント後にレンダリングする
     const [mounted, setMounted] = useState(false);
+    const [displayName, setDisplayName] = useState('');
 
     useEffect(() => {
         setMounted(true);
@@ -29,9 +30,21 @@ export default function SettingsPage() {
         return () => unsubscribe();
     }, []);
 
+    useEffect(() => {
+        if (profile?.displayName) {
+            setDisplayName(profile.displayName);
+        }
+    }, [profile?.displayName]);
+
     if (!mounted) {
         return null;
     }
+
+    const handleBlur = () => {
+        if (displayName !== profile?.displayName) {
+            updateProfileName(displayName);
+        }
+    };
 
     return (
         <div className={styles.container}>
@@ -53,8 +66,9 @@ export default function SettingsPage() {
                                 <label className={styles.label}>ユーザー名</label>
                                 <input
                                     type="text"
-                                    value={profile?.displayName || ''}
-                                    onChange={(e) => updateProfileName(e.target.value)}
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    onBlur={handleBlur}
                                     placeholder="投稿者名として使用されます"
                                     className={styles.input}
                                 />
