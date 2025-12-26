@@ -17,13 +17,11 @@ export default function SettingsPage() {
         sendTestNotification,
     } = useSettingsStore();
 
-    const { isAdmin, logout, profile, updateProfileName } = useAuthStore();
+    const { isAdmin, logout, profile, updateProfileName, updatePreferences } = useAuthStore();
     const {
         tabSettings,
-        updateTabSetting,
         subscribeSettings,
         getAllProfiles,
-        updateUserPermission,
         updateUserPermissions,
         fetchUserPermissions
     } = useAppSettingsStore();
@@ -31,6 +29,7 @@ export default function SettingsPage() {
     // Hydration mismatch回避のため、マウント後にレンダリングする
     const [mounted, setMounted] = useState(false);
     const [displayName, setDisplayName] = useState('');
+    const [activeTab, setActiveTab] = useState<'general' | 'admin'>('general');
 
     // Admin: User Management State
     const [users, setUsers] = useState<any[]>([]);
@@ -38,6 +37,11 @@ export default function SettingsPage() {
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    const QUICK_ACCESS_ITEMS = [
+        { id: 'meeting', label: '会議室を予約' },
+        { id: 'notice', label: 'お知らせを投稿' }
+    ];
 
     useEffect(() => {
         setMounted(true);
@@ -76,6 +80,12 @@ export default function SettingsPage() {
         }
     };
 
+    const handleQuickAccessChange = async (id: string, checked: boolean) => {
+        const currentQuickAccess = profile?.preferences?.quickAccess || {};
+        const newQuickAccess = { ...currentQuickAccess, [id]: checked };
+        await updatePreferences({ quickAccess: newQuickAccess });
+    };
+
     const handlePermissionChange = (path: string, checked: boolean) => {
         const newPermissions = { ...userPermissions, [path]: checked };
 
@@ -110,49 +120,215 @@ export default function SettingsPage() {
         <div className={styles.container}>
             <h1 className={styles.pageTitle}>設定</h1>
 
-            <div className={styles.sectionSpace}>
-                {/* プロフィール設定 */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerContent}>
-                            <User size={20} className="text-blue-600" style={{ color: '#2563eb' }} />
-                            <h2 className={styles.sectionTitle}>プロフィール設定</h2>
-                        </div>
-                        <p className={styles.sectionDescription}>アカウント情報の確認・変更ができます</p>
-                    </div>
-                    <div className={styles.content}>
-                        <div className={styles.grid}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>ユーザー名</label>
-                                <input
-                                    type="text"
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    onBlur={handleBlur}
-                                    placeholder="投稿者名として使用されます"
-                                    className={styles.input}
-                                />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>メールアドレス</label>
-                                <input
-                                    type="email"
-                                    value={profile?.email || ''}
-                                    readOnly
-                                    disabled
-                                    className={styles.input}
-                                    style={{ background: 'var(--background-secondary)', cursor: 'not-allowed', color: 'var(--text-secondary)' }}
-                                />
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                    ※メールアドレスは変更できません
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 管理者設定: ユーザー権限管理 */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)' }}>
+                <button
+                    onClick={() => setActiveTab('general')}
+                    style={{
+                        padding: '1rem',
+                        background: 'none',
+                        border: 'none',
+                        borderBottom: activeTab === 'general' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeTab === 'general' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: activeTab === 'general' ? 'bold' : 'normal',
+                        cursor: 'pointer'
+                    }}
+                >
+                    一般設定
+                </button>
                 {isAdmin && (
+                    <button
+                        onClick={() => setActiveTab('admin')}
+                        style={{
+                            padding: '1rem',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'admin' ? '2px solid var(--primary)' : '2px solid transparent',
+                            color: activeTab === 'admin' ? 'var(--primary)' : 'var(--text-secondary)',
+                            fontWeight: activeTab === 'admin' ? 'bold' : 'normal',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        管理者設定
+                    </button>
+                )}
+            </div>
+
+            <div className={styles.sectionSpace}>
+                {activeTab === 'general' && (
+                    <>
+                        {/* プロフィール設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <User size={20} className="text-blue-600" style={{ color: '#2563eb' }} />
+                                    <h2 className={styles.sectionTitle}>プロフィール設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>アカウント情報の確認・変更ができます</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div className={styles.grid}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>ユーザー名</label>
+                                        <input
+                                            type="text"
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                            onBlur={handleBlur}
+                                            placeholder="投稿者名として使用されます"
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>メールアドレス</label>
+                                        <input
+                                            type="email"
+                                            value={profile?.email || ''}
+                                            readOnly
+                                            disabled
+                                            className={styles.input}
+                                            style={{ background: 'var(--background-secondary)', cursor: 'not-allowed', color: 'var(--text-secondary)' }}
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                            ※メールアドレスは変更できません
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* クイックアクセス設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <Shield size={20} style={{ color: '#eab308' }} />
+                                    <h2 className={styles.sectionTitle}>クイックアクセス設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>ダッシュボードに表示するクイックアクセス項目を設定します</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                    {QUICK_ACCESS_ITEMS.map(item => {
+                                        const isVisible = profile?.preferences?.quickAccess?.[item.id] !== false;
+                                        return (
+                                            <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isVisible}
+                                                    onChange={(e) => handleQuickAccessChange(item.id, e.target.checked)}
+                                                    style={{ width: '1.25em', height: '1.25em' }}
+                                                />
+                                                <span style={{ fontWeight: '500' }}>{item.label}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 表示設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <Sun size={20} style={{ color: '#f97316' }} />
+                                    <h2 className={styles.sectionTitle}>表示設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>アプリケーションの見た目をカスタマイズします</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <p className={styles.toggleText}>テーマ設定</p>
+                                        <p className={styles.toggleSubtext}>ライトモードとダークモードを切り替えます</p>
+                                    </div>
+                                    <div className={styles.themeToggle}>
+                                        <button
+                                            onClick={() => setTheme('light')}
+                                            className={`${styles.themeButton} ${theme === 'light' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                        >
+                                            <Sun size={16} />
+                                            ライト
+                                        </button>
+                                        <button
+                                            onClick={() => setTheme('dark')}
+                                            className={`${styles.themeButton} ${theme === 'dark' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                        >
+                                            <Moon size={16} />
+                                            ダーク
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 通知設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <Bell size={20} style={{ color: '#9333ea' }} />
+                                    <h2 className={styles.sectionTitle}>通知設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>通知の受け取り方を設定します</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div className={styles.toggleRow}>
+                                    <div>
+                                        <p className={styles.toggleText}>デスクトップ通知</p>
+                                        <p className={styles.toggleSubtext}>ブラウザでのプッシュ通知を許可します</p>
+                                    </div>
+                                    <label className={styles.switch}>
+                                        <input
+                                            type="checkbox"
+                                            checked={notifications.desktop}
+                                            onChange={(e) => toggleDesktopNotification(e.target.checked)}
+                                        />
+                                        <span className={styles.slider}></span>
+                                    </label>
+                                </div>
+                                {notifications.desktop && (
+                                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button
+                                            onClick={sendTestNotification}
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                fontSize: '0.875rem',
+                                                color: '#2563eb',
+                                                background: '#eff6ff',
+                                                border: 'none',
+                                                borderRadius: '0.375rem',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            テスト通知を送信
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* セキュリティ設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <Shield size={20} style={{ color: '#16a34a' }} />
+                                    <h2 className={styles.sectionTitle}>セキュリティ</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>アカウントのセキュリティ設定を管理します</p>
+                            </div>
+                            <div className={styles.content}>
+                                <button
+                                    className={styles.logoutButton}
+                                    onClick={logout}
+                                    style={{ width: '100%', justifyContent: 'center' }}
+                                >
+                                    <LogOut size={20} />
+                                    ログアウト
+                                </button>
+                            </div>
+                        </section>
+                    </>
+                )}
+
+                {activeTab === 'admin' && isAdmin && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <div className={styles.headerContent}>
@@ -269,107 +445,6 @@ export default function SettingsPage() {
                         </div>
                     </section>
                 )}
-
-                {/* 表示設定 */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerContent}>
-                            <Sun size={20} style={{ color: '#f97316' }} />
-                            <h2 className={styles.sectionTitle}>表示設定</h2>
-                        </div>
-                        <p className={styles.sectionDescription}>アプリケーションの見た目をカスタマイズします</p>
-                    </div>
-                    <div className={styles.content}>
-                        <div className={styles.row}>
-                            <div>
-                                <p className={styles.toggleText}>テーマ設定</p>
-                                <p className={styles.toggleSubtext}>ライトモードとダークモードを切り替えます</p>
-                            </div>
-                            <div className={styles.themeToggle}>
-                                <button
-                                    onClick={() => setTheme('light')}
-                                    className={`${styles.themeButton} ${theme === 'light' ? styles.themeButtonActive : styles.themeButtonInactive}`}
-                                >
-                                    <Sun size={16} />
-                                    ライト
-                                </button>
-                                <button
-                                    onClick={() => setTheme('dark')}
-                                    className={`${styles.themeButton} ${theme === 'dark' ? styles.themeButtonActive : styles.themeButtonInactive}`}
-                                >
-                                    <Moon size={16} />
-                                    ダーク
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 通知設定 */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerContent}>
-                            <Bell size={20} style={{ color: '#9333ea' }} />
-                            <h2 className={styles.sectionTitle}>通知設定</h2>
-                        </div>
-                        <p className={styles.sectionDescription}>通知の受け取り方を設定します</p>
-                    </div>
-                    <div className={styles.content}>
-                        <div className={styles.toggleRow}>
-                            <div>
-                                <p className={styles.toggleText}>デスクトップ通知</p>
-                                <p className={styles.toggleSubtext}>ブラウザでのプッシュ通知を許可します</p>
-                            </div>
-                            <label className={styles.switch}>
-                                <input
-                                    type="checkbox"
-                                    checked={notifications.desktop}
-                                    onChange={(e) => toggleDesktopNotification(e.target.checked)}
-                                />
-                                <span className={styles.slider}></span>
-                            </label>
-                        </div>
-                        {notifications.desktop && (
-                            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                                <button
-                                    onClick={sendTestNotification}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        fontSize: '0.875rem',
-                                        color: '#2563eb',
-                                        background: '#eff6ff',
-                                        border: 'none',
-                                        borderRadius: '0.375rem',
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    テスト通知を送信
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* セキュリティ設定 */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerContent}>
-                            <Shield size={20} style={{ color: '#16a34a' }} />
-                            <h2 className={styles.sectionTitle}>セキュリティ</h2>
-                        </div>
-                        <p className={styles.sectionDescription}>アカウントのセキュリティ設定を管理します</p>
-                    </div>
-                    <div className={styles.content}>
-                        <button
-                            className={styles.logoutButton}
-                            onClick={logout}
-                            style={{ width: '100%', justifyContent: 'center' }}
-                        >
-                            <LogOut size={20} />
-                            ログアウト
-                        </button>
-                    </div>
-                </section>
             </div>
         </div>
     );
