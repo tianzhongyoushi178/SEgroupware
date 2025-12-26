@@ -7,6 +7,7 @@ import { ja } from 'date-fns/locale';
 import { Bell, Info, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
 import { NoticeCategory } from '@/types/notice';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
+import { useAuthStore } from '@/store/authStore';
 
 const categoryConfig: Record<NoticeCategory, { label: string; color: string; icon: any }> = {
     system: { label: 'システム', color: '#2563eb', icon: Info },
@@ -16,6 +17,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 
 export default function NoticesPage() {
     const { notices, markAsRead, deleteNotice } = useNoticeStore();
+    const { user } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
@@ -183,9 +185,9 @@ export default function NoticesPage() {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {!notice.isRead && (
+                                {!notice.isRead && user?.id && (
                                     <button
-                                        onClick={() => markAsRead(notice.id)}
+                                        onClick={() => markAsRead(notice.id, user.id)}
                                         className="btn btn-ghost"
                                         title="既読にする"
                                         style={{ color: 'var(--success)' }}
