@@ -7,4 +7,9 @@ export interface UserProfile {
     displayName: string;
     department?: string;
     createdAt: string;
+    preferences?: {
+        quickAccess?: {
+            [key: string]: boolean;
+        };
+    };
 }

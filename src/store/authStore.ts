@@ -13,6 +13,7 @@ interface AuthState {
     logout: () => Promise<void>;
     initialize: () => () => void;
     updateProfileName: (name: string) => Promise<void>;
+    updatePreferences: (preferences: any) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -61,6 +62,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isAdmin,
                 isLoading: false
             });
+        });
+
+        // Fetch extra profile data (preferences) if user is logged in
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (session?.user) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('preferences')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (data?.preferences) {
+                    set(state => ({
+                        profile: state.profile ? { ...state.profile, preferences: data.preferences } : null
+                    }));
+                }
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -123,6 +141,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (currentProfile) {
             set({
                 profile: { ...currentProfile, displayName: name }
+            });
+        }
+    },
+
+    updatePreferences: async (preferences: any) => {
+        const user = get().user;
+        if (!user) return;
+
+        // Merge with existing preferences
+        const currentProfile = get().profile;
+        const newPreferences = { ...(currentProfile?.preferences || {}), ...preferences };
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ preferences: newPreferences })
+            .eq('id', user.id);
+
+        if (error) throw error;
+
+        // Optimistic update
+        if (currentProfile) {
+            set({
+                profile: { ...currentProfile, preferences: newPreferences }
             });
         }
     }
