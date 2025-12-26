@@ -123,9 +123,73 @@ export default function Sidebar() {
     return true;
   });
 
-  // Responsive Font Size Calculation
-  // Base 15px at 280px width
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const responsiveFontSize = Math.max(12, Math.min(18, sidebarWidth / 18.6));
+
+  if (isMobile) {
+    return (
+      <aside
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          background: 'var(--surface-glass)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--border)',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 1rem',
+          overflowX: 'auto',
+          gap: '1rem',
+          scrollbarWidth: 'none'
+        }}
+      >
+        <Link href="/" style={{ marginRight: '0.5rem', flexShrink: 0 }}>
+          <Image src="/logo.png" alt="Logo" width={32} height={32} style={{ borderRadius: '6px' }} />
+        </Link>
+
+        {filteredNavigation.map((item) => {
+          const isActive = pathname === item.href;
+          // For mobile, flatten hierarchy or just show main items for simplicity
+          // Or we can use a dropdown for items with children? 
+          // For now, let's keep top-level items for better UX on small scrollable area
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={clsx(styles.navItem, isActive && styles.active)}
+              style={{
+                fontSize: '0.875rem',
+                padding: '0.5rem 0.75rem',
+                whiteSpace: 'nowrap',
+                background: isActive ? 'var(--primary-light)' : 'transparent',
+                borderRadius: '99px',
+                flexShrink: 0
+              }}
+            >
+              <item.icon size={18} />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
+
+        <Link href="/settings" className={styles.navItem} style={{ padding: '0.5rem', flexShrink: 0 }}>
+          <Settings size={18} />
+        </Link>
+      </aside>
+    );
+  }
 
   return (
     <aside className={styles.sidebar} style={{ width: `${sidebarWidth}px` }}>

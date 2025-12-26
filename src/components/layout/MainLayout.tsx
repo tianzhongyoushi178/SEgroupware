@@ -21,6 +21,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const activeTool = tools.find(t => t.path === pathname);
     const { sidebarWidth } = useAppSettingsStore();
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     const { subscribeNotices } = useNoticeStore();
 
     useEffect(() => {
@@ -31,8 +40,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <main
             style={{
-                marginLeft: `${sidebarWidth}px`,
-                padding: isFullScreenPage ? '0' : '2rem',
+                marginLeft: isMobile ? '0' : `${sidebarWidth}px`,
+                padding: isFullScreenPage ? '0' : (isMobile ? '1rem' : '2rem'),
+                paddingTop: isMobile && !isFullScreenPage ? '70px' : (isFullScreenPage ? '0' : '2rem'),
                 minHeight: '100vh',
                 height: isFullScreenPage ? '100vh' : 'auto',
                 display: 'flex',
