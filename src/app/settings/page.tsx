@@ -77,7 +77,17 @@ export default function SettingsPage() {
     };
 
     const handlePermissionChange = (path: string, checked: boolean) => {
-        setUserPermissions(prev => ({ ...prev, [path]: checked }));
+        const newPermissions = { ...userPermissions, [path]: checked };
+
+        // Find if this is a parent item and update children accordingly
+        const parentItem = navigation.find(item => item.href === path);
+        if (parentItem && parentItem.children) {
+            parentItem.children.forEach((child: any) => {
+                newPermissions[child.href] = checked;
+            });
+        }
+
+        setUserPermissions(newPermissions);
         setIsDirty(true);
     };
 
@@ -172,7 +182,7 @@ export default function SettingsPage() {
                                                     fontSize: '0.875rem'
                                                 }}
                                             >
-                                                <div style={{ fontWeight: 'bold' }}>{u.display_name || '未設定'}</div>
+                                                <div style={{ fontWeight: 'bold' }}>{u.display_name || u.email?.split('@')[0] || '未設定'}</div>
                                                 <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{u.email}</div>
                                             </button>
                                         ))}
