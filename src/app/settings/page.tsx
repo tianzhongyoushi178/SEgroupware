@@ -15,13 +15,17 @@ export default function SettingsPage() {
         setTheme,
         toggleDesktopNotification,
         sendTestNotification,
-        getAllProfiles,
-        updateUserPermission,
-        fetchUserPermissions
     } = useSettingsStore();
 
     const { isAdmin, logout, profile, updateProfileName } = useAuthStore();
-    const { tabSettings, updateTabSetting, subscribeSettings } = useAppSettingsStore();
+    const {
+        tabSettings,
+        updateTabSetting,
+        subscribeSettings,
+        getAllProfiles,
+        updateUserPermission,
+        fetchUserPermissions
+    } = useAppSettingsStore();
 
     // Hydration mismatch回避のため、マウント後にレンダリングする
     const [mounted, setMounted] = useState(false);
