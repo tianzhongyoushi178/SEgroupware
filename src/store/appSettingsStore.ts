@@ -83,6 +83,16 @@ export const useAppSettingsStore = create<AppSettingsState>((set, get) => ({
             throw error;
         }
     },
+    updateUserPermissions: async (userId: string, permissions: UserPermission) => {
+        const { error } = await supabase
+            .from('user_permissions')
+            .upsert({ user_id: userId, permissions, updated_at: new Date().toISOString() });
+
+        if (error) {
+            console.error('Error updating permissions:', error);
+            throw error;
+        }
+    },
     getAllProfiles: async () => {
         const { data, error } = await supabase.from('profiles').select('*');
         if (error) throw error;
