@@ -17,7 +17,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 
 export default function NoticesPage() {
     const { notices, markAsRead, deleteNotice } = useNoticeStore();
-    const { user } = useAuthStore();
+    const { user, isAdmin } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
@@ -180,7 +180,23 @@ export default function NoticesPage() {
                                     {notice.title}
                                 </h3>
                                 <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                                    {notice.content}
+                                    {notice.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+                                        if (part.match(/(https?:\/\/[^\s]+)/g)) {
+                                            return (
+                                                <a
+                                                    key={i}
+                                                    href={part}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: 'var(--primary)', textDecoration: 'underline' }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {part}
+                                                </a>
+                                            );
+                                        }
+                                        return part;
+                                    })}
                                 </p>
                             </div>
 
@@ -195,14 +211,22 @@ export default function NoticesPage() {
                                         <CheckCircle size={20} />
                                     </button>
                                 )}
-                                <button
-                                    onClick={() => deleteNotice(notice.id)}
-                                    className="btn btn-ghost"
-                                    title="削除"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                >
-                                    <Trash2 size={20} />
-                                </button>
+
+                                {(isAdmin || (user?.id && notice.authorId === user.id)) && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm('本当に削除しますか？')) {
+                                                deleteNotice(notice.id);
+                                            }
+                                        }}
+                                        className="btn btn-ghost"
+                                        title="削除"
+                                        style={{ color: 'var(--text-secondary)' }}
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );

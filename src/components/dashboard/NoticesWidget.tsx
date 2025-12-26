@@ -283,7 +283,7 @@ export default function NoticesWidget() {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                                         {Object.keys(selectedNotice.readStatus || {}).length > 0 ? (
                                             Object.keys(selectedNotice.readStatus || {}).map(readerId => {
-                                                const name = userMap[readerId] || '読み込み中...';
+                                                const name = userMap[readerId] || (Object.keys(userMap).length > 0 ? '不明なユーザー' : '読み込み中...');
                                                 return (
                                                     <span key={readerId} style={{ fontSize: '0.75rem', background: 'var(--background-secondary)', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                                         {name}

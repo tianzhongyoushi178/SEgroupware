@@ -13,7 +13,7 @@ interface NoticeFormModalProps {
 
 export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProps) {
     const addNotice = useNoticeStore((state) => state.addNotice);
-    const { profile } = useAuthStore();
+    const { user, profile } = useAuthStore();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState<NoticeCategory>('general');
@@ -31,6 +31,7 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
             content,
             category,
             author: authorName,
+            authorId: user?.id,
             readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
         });
         onClose();
