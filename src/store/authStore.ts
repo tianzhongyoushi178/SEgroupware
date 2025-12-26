@@ -99,11 +99,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     updateProfileName: async (name: string) => {
-        const { error } = await supabase.auth.updateUser({
+        const { data: { user }, error } = await supabase.auth.updateUser({
             data: { display_name: name }
         });
 
         if (error) throw error;
+
+        // Also update public.profiles
+        if (user) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ display_name: name })
+                .eq('id', user.id);
+
+            if (profileError) {
+                console.error('Failed to sync profile', profileError);
+                // Don't throw here, as auth update succeeded
+            }
+        }
 
         // Optimistic update
         const currentProfile = get().profile;
