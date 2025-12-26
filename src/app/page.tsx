@@ -1,8 +1,23 @@
+'use client';
+
 import { LayoutDashboard } from 'lucide-react';
 import NoticesWidget from '@/components/dashboard/NoticesWidget';
-
+import { useAuthStore } from '@/store/authStore';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const { profile } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const showMeeting = profile?.preferences?.quickAccess?.meeting !== false;
+  const showNotice = profile?.preferences?.quickAccess?.notice !== false;
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '2rem' }}>
@@ -22,18 +37,25 @@ export default function Home() {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>クイックアクセス</h2>
           </div>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
-            <a
-              href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-ghost"
-              style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
-            >
-              📅 会議室を予約
-            </a>
-            <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-              📢 お知らせを投稿
-            </button>
+            {showMeeting && (
+              <a
+                href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+              >
+                📅 会議室を予約
+              </a>
+            )}
+            {showNotice && (
+              <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+                📢 お知らせを投稿
+              </button>
+            )}
+            {!showMeeting && !showNotice && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>表示する項目がありません</p>
+            )}
           </div>
         </section>
 
