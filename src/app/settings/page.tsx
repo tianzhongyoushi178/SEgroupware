@@ -35,6 +35,8 @@ export default function SettingsPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
+    const [isDirty, setIsDirty] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -49,9 +51,11 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (selectedUser) {
+            setIsDirty(false);
             fetchUserPermissions(selectedUser).then(setUserPermissions);
         } else {
             setUserPermissions({});
+            setIsDirty(false);
         }
     }, [selectedUser]);
 
@@ -71,15 +75,23 @@ export default function SettingsPage() {
         }
     };
 
-    const handlePermissionChange = async (userId: string, path: string, checked: boolean) => {
-        // Optimistic update
+    const handlePermissionChange = (path: string, checked: boolean) => {
         setUserPermissions(prev => ({ ...prev, [path]: checked }));
+        setIsDirty(true);
+    };
+
+    const handleSavePermissions = async () => {
+        if (!selectedUser) return;
+        setIsSaving(true);
         try {
-            await updateUserPermission(userId, path, checked);
+            await updateUserPermissions(selectedUser, userPermissions);
+            setIsDirty(false);
+            alert('設定を保存しました');
         } catch (e) {
             console.error(e);
-            // Revert on error
-            setUserPermissions(prev => ({ ...prev, [path]: !checked }));
+            alert('保存に失敗しました');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -168,7 +180,28 @@ export default function SettingsPage() {
 
                                 {/* Permissions */}
                                 <div>
-                                    <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>表示設定</h3>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>表示設定</h3>
+                                        {selectedUser && (
+                                            <button
+                                                onClick={handleSavePermissions}
+                                                disabled={!isDirty || isSaving}
+                                                style={{
+                                                    padding: '0.25rem 0.75rem',
+                                                    fontSize: '0.75rem',
+                                                    background: isDirty ? 'var(--primary)' : 'var(--muted)',
+                                                    color: isDirty ? 'white' : 'var(--text-secondary)',
+                                                    border: 'none',
+                                                    borderRadius: '0.25rem',
+                                                    cursor: isDirty ? 'pointer' : 'default',
+                                                    opacity: isSaving ? 0.7 : 1
+                                                }}
+                                            >
+                                                {isSaving ? '保存中...' : '変更を保存'}
+                                            </button>
+                                        )}
+                                    </div>
+
                                     {selectedUser ? (
                                         <div style={{ display: 'grid', gap: '0.5rem' }}>
                                             {navigation.map((item) => {
@@ -189,7 +222,7 @@ export default function SettingsPage() {
                                                             <input
                                                                 type="checkbox"
                                                                 checked={isVisible}
-                                                                onChange={(e) => handlePermissionChange(selectedUser, item.href, e.target.checked)}
+                                                                onChange={(e) => handlePermissionChange(item.href, e.target.checked)}
                                                             />
                                                             {item.name}
                                                         </label>
@@ -203,7 +236,7 @@ export default function SettingsPage() {
                                                                             <input
                                                                                 type="checkbox"
                                                                                 checked={isChildVisible}
-                                                                                onChange={(e) => handlePermissionChange(selectedUser, child.href, e.target.checked)}
+                                                                                onChange={(e) => handlePermissionChange(child.href, e.target.checked)}
                                                                             />
                                                                             {child.name}
                                                                         </label>
