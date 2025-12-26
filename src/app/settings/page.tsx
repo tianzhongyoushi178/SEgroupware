@@ -15,6 +15,9 @@ export default function SettingsPage() {
         setTheme,
         toggleDesktopNotification,
         sendTestNotification,
+        getAllProfiles,
+        updateUserPermission,
+        fetchUserPermissions
     } = useSettingsStore();
 
     const { isAdmin, logout, profile, updateProfileName } = useAuthStore();
@@ -24,11 +27,29 @@ export default function SettingsPage() {
     const [mounted, setMounted] = useState(false);
     const [displayName, setDisplayName] = useState('');
 
+    // Admin: User Management State
+    const [users, setUsers] = useState<any[]>([]);
+    const [selectedUser, setSelectedUser] = useState<string | null>(null);
+    const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
+
     useEffect(() => {
         setMounted(true);
         const unsubscribe = subscribeSettings();
+
+        if (isAdmin) {
+            getAllProfiles().then(setUsers).catch(console.error);
+        }
+
         return () => unsubscribe();
-    }, []);
+    }, [isAdmin]);
+
+    useEffect(() => {
+        if (selectedUser) {
+            fetchUserPermissions(selectedUser).then(setUserPermissions);
+        } else {
+            setUserPermissions({});
+        }
+    }, [selectedUser]);
 
     useEffect(() => {
         if (profile?.displayName) {
@@ -43,6 +64,18 @@ export default function SettingsPage() {
     const handleBlur = () => {
         if (displayName !== profile?.displayName) {
             updateProfileName(displayName);
+        }
+    };
+
+    const handlePermissionChange = async (userId: string, path: string, checked: boolean) => {
+        // Optimistic update
+        setUserPermissions(prev => ({ ...prev, [path]: checked }));
+        try {
+            await updateUserPermission(userId, path, checked);
+        } catch (e) {
+            console.error(e);
+            // Revert on error
+            setUserPermissions(prev => ({ ...prev, [path]: !checked }));
         }
     };
 
@@ -91,55 +124,99 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
-                {/* 管理者設定 */}
+                {/* 管理者設定: ユーザー権限管理 */}
                 {isAdmin && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <div className={styles.headerContent}>
                                 <Lock size={20} style={{ color: '#dc2626' }} />
-                                <h2 className={styles.sectionTitle}>権限管理（管理者のみ）</h2>
+                                <h2 className={styles.sectionTitle}>ユーザー権限管理（管理者のみ）</h2>
                             </div>
-                            <p className={styles.sectionDescription}>各機能の表示/非表示やアクセス権限を設定します</p>
+                            <p className={styles.sectionDescription}>各ユーザーの機能アクセス権限を設定します</p>
                         </div>
                         <div className={styles.content}>
-                            <div style={{ display: 'grid', gap: '1rem' }}>
-                                {navigation.map((item) => {
-                                    const setting = tabSettings[item.href] || { visible: true, adminOnly: false };
-                                    return (
-                                        <div key={item.href} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '0.75rem',
-                                            background: '#f8fafc',
-                                            borderRadius: '0.375rem',
-                                            border: '1px solid var(--border)'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <item.icon size={18} color="var(--text-secondary)" />
-                                                <span style={{ fontWeight: '500' }}>{item.name}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '1.5rem' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={setting.visible}
-                                                        onChange={(e) => updateTabSetting(item.href, { ...setting, visible: e.target.checked })}
-                                                    />
-                                                    <span style={{ fontSize: '0.875rem' }}>表示</span>
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={setting.adminOnly}
-                                                        onChange={(e) => updateTabSetting(item.href, { ...setting, adminOnly: e.target.checked })}
-                                                    />
-                                                    <span style={{ fontSize: '0.875rem' }}>管理者のみ</span>
-                                                </label>
-                                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', alignItems: 'start' }}>
+                                {/* User List */}
+                                <div style={{ borderRight: '1px solid var(--border)', paddingRight: '1rem' }}>
+                                    <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>ユーザー選択</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                        {users.map(u => (
+                                            <button
+                                                key={u.id}
+                                                onClick={() => setSelectedUser(u.id)}
+                                                style={{
+                                                    textAlign: 'left',
+                                                    padding: '0.5rem',
+                                                    borderRadius: '0.25rem',
+                                                    background: selectedUser === u.id ? 'var(--primary)' : 'transparent',
+                                                    color: selectedUser === u.id ? 'white' : 'var(--text-main)',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                <div style={{ fontWeight: 'bold' }}>{u.display_name || '未設定'}</div>
+                                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{u.email}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Permissions */}
+                                <div>
+                                    <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>表示設定</h3>
+                                    {selectedUser ? (
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            {navigation.map((item) => {
+                                                // Default to true if not set (no record means accessible by default policy, unless we want strict deny)
+                                                // Let's assume default accessible for now unless explicitly unchecked.
+                                                // BUT, if record is empty object (fresh user), we consider true.
+                                                // userPermissions stores explicitly set values.
+                                                const isVisible = userPermissions[item.href] !== false;
+
+                                                return (
+                                                    <div key={item.href} style={{
+                                                        padding: '0.5rem',
+                                                        background: '#f8fafc',
+                                                        borderRadius: '0.25rem',
+                                                        border: '1px solid var(--border)'
+                                                    }}>
+                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: '500' }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isVisible}
+                                                                onChange={(e) => handlePermissionChange(selectedUser, item.href, e.target.checked)}
+                                                            />
+                                                            {item.name}
+                                                        </label>
+
+                                                        {item.children && item.children.length > 0 && (
+                                                            <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem', display: 'grid', gap: '0.5rem' }}>
+                                                                {item.children.map((child: any) => {
+                                                                    const isChildVisible = userPermissions[child.href] !== false;
+                                                                    return (
+                                                                        <label key={child.href} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem' }}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={isChildVisible}
+                                                                                onChange={(e) => handlePermissionChange(selectedUser, child.href, e.target.checked)}
+                                                                            />
+                                                                            {child.name}
+                                                                        </label>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                    );
-                                })}
+                                    ) : (
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                                            ユーザーを選択してください
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </section>
