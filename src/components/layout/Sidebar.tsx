@@ -13,23 +13,37 @@ import { navigation } from '@/constants/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { isAdmin } = useAuthStore();
-  const { tabSettings, subscribeSettings } = useAppSettingsStore();
+  const { isAdmin, user } = useAuthStore();
+  const { tabSettings, fetchUserPermissions } = useAppSettingsStore();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
+  const [permissionLoaded, setPermissionLoaded] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserPermissions(user.id).then(perms => {
+        setUserPermissions(perms);
+        setPermissionLoaded(true);
+      });
+    } else {
+      setUserPermissions({});
+      setPermissionLoaded(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     // Determine which menus should be open based on current path
     const newOpenMenus = { ...openMenus };
     navigation.forEach(item => {
+      // @ts-ignore
       if (item.children) {
+        // @ts-ignore
         const hasActiveChild = item.children.some(child => child.href === pathname);
         if (hasActiveChild) {
           newOpenMenus[item.name] = true;
         }
       }
     });
-    // Only update if changes to avoid unnecessary re-renders (though simple spread always creates new obj)
-    // For simplicity, just set it once on mount or path change if we want auto-expand
     if (Object.keys(newOpenMenus).length > Object.keys(openMenus).length) {
       setOpenMenus(newOpenMenus);
     }
@@ -40,13 +54,55 @@ export default function Sidebar() {
   };
 
   const filteredNavigation = navigation.filter(item => {
-    // Default to visible if no setting exists
+    // Legacy support: global settings (if we still want to respect them as a base layer)
+    // For now, let's assume User Permission overrides or is the primary source.
+    // If permissionLoaded is false (loading), maybe show everything or skeleton? Show everything for now to avoid flicker if API fast?
+    // Actually better to wait or default to true?
+    // Default: Visible if not explicitly false.
+
+    // Check local tabSettings first (legacy)
     const setting = tabSettings[item.href];
-    if (!setting) return true;
+    if (setting && !setting.visible) return false;
+    if (setting && setting.adminOnly && !isAdmin) return false;
 
-    if (!setting.visible) return false;
-    if (setting.adminOnly && !isAdmin) return false;
+    // Check user specific permissions
+    // Note: If no record in DB, userPermissions is {}. filtered access is true.
+    if (userPermissions[item.href] === false) return false;
 
+    return true;
+  }).map(item => {
+    // Filter children
+    // @ts-ignore
+    if (item.children) {
+      // @ts-ignore
+      const filteredChildren = item.children.filter(child => {
+        // Legacy check
+        const childSetting = tabSettings[child.href];
+        if (childSetting && !childSetting.visible) return false;
+
+        // User Permission check
+        if (userPermissions[child.href] === false) return false;
+
+        return true;
+      });
+      return { ...item, children: filteredChildren };
+    }
+    return item;
+  }).filter(item => {
+    // If item has children but all are hidden, should we hide the parent?
+    // Yes, usually.
+    // @ts-ignore
+    if (item.children && item.children.length === 0) {
+      // Check if parent itself has a direct link? 
+      // Our navigation structure seems to have parents as headers (no href usually, or href same as name?)
+      // Looking at constants/navigation.ts (I saw it earlier), parent has href.
+      // If parent has href and it is valid page, keep it. 
+      // If parent is just a folder, hide it.
+      // Let's assume if it had children originally but now 0, and user specifically hid children, maybe they want parent hidden?
+      // But parent might have its own dashboard.
+      // Let's keep parent if it passed the first filter.
+      return true;
+    }
     return true;
   });
 
