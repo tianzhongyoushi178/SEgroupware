@@ -443,26 +443,17 @@ export default function SettingsPage() {
                             </div>
                         </section>
 
-                        {/* セキュリティ設定 */}
-                        <section className={styles.section}>
-                            <div className={styles.sectionHeader}>
-                                <div className={styles.headerContent}>
-                                    <Shield size={20} style={{ color: '#16a34a' }} />
-                                    <h2 className={styles.sectionTitle}>セキュリティ</h2>
-                                </div>
-                                <p className={styles.sectionDescription}>アカウントのセキュリティ設定を管理します</p>
-                            </div>
-                            <div className={styles.content}>
-                                <button
-                                    className={styles.logoutButton}
-                                    onClick={logout}
-                                    style={{ width: '100%', justifyContent: 'center' }}
-                                >
-                                    <LogOut size={20} />
-                                    ログアウト
-                                </button>
-                            </div>
-                        </section>
+                        {/* ログアウト */}
+                        <div style={{ marginTop: '2rem', paddingBottom: '2rem' }}>
+                            <button
+                                className={styles.logoutButton}
+                                onClick={logout}
+                                style={{ width: '100%', justifyContent: 'center' }}
+                            >
+                                <LogOut size={20} />
+                                ログアウト
+                            </button>
+                        </div>
                     </>
                 )}
 
