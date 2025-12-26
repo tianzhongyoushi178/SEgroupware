@@ -14,8 +14,8 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: 'SEグループウェア',
-  description: 'Internal Groupware Application',
+  title: 'SALES HUB',
+  description: 'Sales Hub Application',
 };
 
 export default function RootLayout({

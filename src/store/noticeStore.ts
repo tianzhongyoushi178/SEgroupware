@@ -11,26 +11,7 @@ interface NoticeState {
     deleteNotice: (id: string) => Promise<void>;
 }
 
-const mockNotices: Notice[] = [
-    {
-        id: '1',
-        title: 'システムメンテナンスのお知らせ',
-        content: '12月31日の22時からメンテナンスを行います。',
-        category: 'urgent',
-        createdAt: new Date().toISOString(),
-        author: '管理者',
-        isRead: false
-    },
-    {
-        id: '2',
-        title: '年末年始の営業について',
-        content: '年末年始は12/29〜1/3まで休業となります。',
-        category: 'general',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        author: '総務部',
-        isRead: true
-    }
-];
+const mockNotices: Notice[] = [];
 
 export const useNoticeStore = create<NoticeState>((set) => ({
     notices: [],
