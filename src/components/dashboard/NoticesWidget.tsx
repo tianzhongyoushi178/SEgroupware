@@ -80,7 +80,15 @@ export default function NoticesWidget() {
         );
     }
 
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
     const recentNotices = [...notices]
+        .filter(notice => {
+            const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;
+            const isRecent = new Date(notice.createdAt) > oneWeekAgo;
+            return !isRead && isRecent;
+        })
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3);
 

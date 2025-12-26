@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Bell, Info, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { Bell, Info, AlertTriangle, CheckCircle, Trash2, Filter, ArrowUpDown } from 'lucide-react'; // Added icons
 import { Notice, NoticeCategory } from '@/types/notice';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
 import NoticeDetailModal from '@/components/notices/NoticeDetailModal';
@@ -26,6 +26,15 @@ export default function NoticesPage() {
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Responsive check
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Polling for read status updates
     useEffect(() => {
@@ -38,6 +47,11 @@ export default function NoticesPage() {
     // フィルタリングとソートの適用
     const filteredAndSortedNotices = notices
         .filter((notice) => {
+            // Retention Policy: 1 Month
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            if (new Date(notice.createdAt) < oneMonthAgo) return false;
+
             if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
 
             // Correctly determine if read for the current user based on readStatus map
@@ -55,90 +69,142 @@ export default function NoticesPage() {
         });
 
     return (
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <header style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '5rem' }}>
+            <header style={{ marginBottom: isMobile ? '1rem' : '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: isMobile ? '1rem' : '0' }}>
                     <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
                             お知らせ
                         </h1>
-                        <p style={{ color: 'var(--text-secondary)' }}>
-                            社内の最新情報やお知らせを確認できます。
-                        </p>
+                        {!isMobile && (
+                            <p style={{ color: 'var(--text-secondary)' }}>
+                                社内の最新情報やお知らせを確認できます。（保存期間: 1ヶ月）
+                            </p>
+                        )}
                     </div>
-                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
-                        新規作成
+                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ padding: isMobile ? '0.5rem 1rem' : undefined }}>
+                        {isMobile ? '投稿' : '新規作成'}
                     </button>
                 </div>
 
-                {/* フィルター・ソートコントロール */}
-                <div style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    padding: '1rem',
-                    background: 'var(--surface)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                    flexWrap: 'wrap',
-                    alignItems: 'center'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>並び替え:</span>
-                        <select
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                {/* Mobile Tabs */}
+                {isMobile ? (
+                    <div style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 10,
+                        background: 'var(--background)',
+                        padding: '0.5rem 1rem',
+                        borderBottom: '1px solid var(--border)',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap',
+                        scrollbarWidth: 'none'
+                    }}>
+                        <button
+                            onClick={() => setFilterCategory('all')}
                             style={{
-                                padding: '0.5rem',
-                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '999px',
+                                background: filterCategory === 'all' ? 'var(--primary)' : 'var(--surface)',
+                                color: filterCategory === 'all' ? 'white' : 'var(--text-secondary)',
                                 border: '1px solid var(--border)',
-                                background: 'var(--background)',
-                                color: 'var(--text-main)',
-                                fontSize: '0.875rem'
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold'
                             }}
                         >
-                            <option value="newest">新しい順</option>
-                            <option value="oldest">古い順</option>
-                        </select>
+                            すべて
+                        </button>
+                        {Object.entries(categoryConfig).map(([key, config]) => (
+                            <button
+                                key={key}
+                                onClick={() => setFilterCategory(key as NoticeCategory)}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '999px',
+                                    background: filterCategory === key ? config.color : 'var(--surface)',
+                                    color: filterCategory === key ? 'white' : config.color,
+                                    border: FILTER_CATEGORY === key ? 'none' : `1px solid ${config.color}30`,
+                                    fontSize: '0.875rem',
+                                    fontWeight: 'bold',
+                                    opacity: filterCategory === key || filterCategory === 'all' ? 1 : 0.6
+                                }}
+                            >
+                                {config.label}
+                            </button>
+                        ))}
                     </div>
+                ) : (
+                    /* Desktop Controls */
+                    <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        padding: '1rem',
+                        background: 'var(--surface)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border)',
+                        flexWrap: 'wrap',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ArrowUpDown size={16} />
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--background)',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.875rem'
+                                }}
+                            >
+                                <option value="newest">新しい順</option>
+                                <option value="oldest">古い順</option>
+                            </select>
+                        </div>
 
-                    <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+                        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>カテゴリ:</span>
-                        <select
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value as NoticeCategory | 'all')}
-                            style={{
-                                padding: '0.5rem',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid var(--border)',
-                                background: 'var(--background)',
-                                color: 'var(--text-main)',
-                                fontSize: '0.875rem'
-                            }}
-                        >
-                            <option value="all">すべて</option>
-                            <option value="system">システム</option>
-                            <option value="general">一般</option>
-                            <option value="urgent">重要</option>
-                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Filter size={16} />
+                            <select
+                                value={filterCategory}
+                                onChange={(e) => setFilterCategory(e.target.value as NoticeCategory | 'all')}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--background)',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.875rem'
+                                }}
+                            >
+                                <option value="all">すべて</option>
+                                <option value="system">システム</option>
+                                <option value="general">一般</option>
+                                <option value="urgent">重要</option>
+                            </select>
+                        </div>
+
+                        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={showUnreadOnly}
+                                onChange={(e) => setShowUnreadOnly(e.target.checked)}
+                                style={{ width: '16px', height: '16px' }}
+                            />
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>未読のみ表示</span>
+                        </label>
                     </div>
-
-                    <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={showUnreadOnly}
-                            onChange={(e) => setShowUnreadOnly(e.target.checked)}
-                            style={{ width: '16px', height: '16px' }}
-                        />
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>未読のみ表示</span>
-                    </label>
-                </div>
+                )}
             </header>
 
-            <div style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{ display: 'grid', gap: '1rem', padding: isMobile ? '0 1rem' : '0' }}>
                 {filteredAndSortedNotices.map((notice) => {
                     const config = categoryConfig[notice.category];
                     const Icon = config.icon;
@@ -147,7 +213,7 @@ export default function NoticesPage() {
                     return (
                         <div
                             key={notice.id}
-                            className="glass-panel"
+                            className={isMobile ? '' : 'glass-panel'}
                             onClick={() => setSelectedNoticeId(notice.id)}
                             style={{
                                 padding: '1.5rem',
@@ -158,6 +224,8 @@ export default function NoticesPage() {
                                 transition: 'all 0.2s',
                                 cursor: 'pointer',
                                 background: isRead ? 'var(--background-secondary)' : 'var(--surface)',
+                                boxShadow: isMobile ? '0 1px 3px rgba(0,0,0,0.1)' : undefined,
+                                borderRadius: isMobile ? '0.5rem' : undefined,
                             }}
                         >
                             <div
@@ -191,11 +259,13 @@ export default function NoticesPage() {
                                         {config.label}
                                     </span>
                                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                        {format(new Date(notice.createdAt), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
+                                        {format(new Date(notice.createdAt), 'yyyy/MM/dd HH:mm', { locale: ja })}
                                     </span>
-                                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                        by {notice.author}
-                                    </span>
+                                    {!isMobile && (
+                                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                            by {notice.author}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -214,49 +284,51 @@ export default function NoticesPage() {
                                 </p>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px' }}>
-                                {!isRead && user?.id ? (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            markAsRead(notice.id, user.id);
-                                        }}
-                                        className="btn btn-ghost"
-                                        title="既読にする"
-                                        style={{ color: 'var(--success)' }}
-                                    >
-                                        <CheckCircle size={28} />
-                                    </button>
-                                ) : (
-                                    <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <CheckCircle size={24} />
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
-                                    </div>
-                                )}
+                            {!isMobile && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px' }}>
+                                    {!isRead && user?.id ? (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                markAsRead(notice.id, user.id);
+                                            }}
+                                            className="btn btn-ghost"
+                                            title="既読にする"
+                                            style={{ color: 'var(--success)' }}
+                                        >
+                                            <CheckCircle size={28} />
+                                        </button>
+                                    ) : (
+                                        <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <CheckCircle size={24} />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
+                                        </div>
+                                    )}
 
-                                {(isAdmin || (user?.id && notice.authorId === user.id)) && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('本当に削除しますか？')) {
-                                                deleteNotice(notice.id);
-                                            }
-                                        }}
-                                        className="btn btn-ghost"
-                                        title="削除"
-                                        style={{ color: 'var(--text-secondary)' }}
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
-                                )}
-                            </div>
+                                    {(isAdmin || (user?.id && notice.authorId === user.id)) && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('本当に削除しますか？')) {
+                                                    deleteNotice(notice.id);
+                                                }
+                                            }}
+                                            className="btn btn-ghost"
+                                            title="削除"
+                                            style={{ color: 'var(--text-secondary)' }}
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
 
                 {filteredAndSortedNotices.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                        条件に一致するお知らせはありません。
+                        お知らせはありません。
                     </div>
                 )}
             </div>
