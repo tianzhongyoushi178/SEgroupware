@@ -172,13 +172,15 @@ export default function NoticesWidget() {
                     <div
                         style={{
                             background: 'var(--surface)',
-                            padding: '2rem',
+                            padding: '1.5rem',
                             borderRadius: 'var(--radius-lg)',
-                            width: '90%',
+                            width: '95%',
                             maxWidth: '600px',
-                            maxHeight: '80vh',
+                            maxHeight: '90vh',
                             overflowY: 'auto',
                             boxShadow: 'var(--shadow-lg)',
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
