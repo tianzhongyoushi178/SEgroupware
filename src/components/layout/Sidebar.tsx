@@ -135,6 +135,16 @@ export default function Sidebar() {
   const responsiveFontSize = Math.max(12, Math.min(18, sidebarWidth / 18.6));
 
   if (isMobile) {
+    // Flatten navigation for mobile to show leaf nodes directly
+    const mobileNavigation = filteredNavigation.flatMap(item => {
+      // @ts-ignore
+      if (item.children && item.children.length > 0) {
+        // @ts-ignore
+        return item.children;
+      }
+      return item;
+    });
+
     return (
       <aside
         style={{
@@ -159,12 +169,15 @@ export default function Sidebar() {
         </Link>
 
         <div style={{ display: 'flex', flex: 1, justifyContent: 'space-around', flexWrap: 'wrap', gap: '2px' }}>
-          {filteredNavigation.map((item) => {
+          {mobileNavigation.map((item: any) => {
             const isActive = pathname === item.href;
+            const isExternal = item.href.startsWith('http');
             return (
               <Link
                 key={item.name}
                 href={item.href}
+                target={isExternal ? '_blank' : undefined}
+                rel={isExternal ? 'noopener noreferrer' : undefined}
                 className={clsx(styles.navItem, isActive && styles.active)}
                 title={item.name} // Tooltip for desktop/long press
                 style={{
@@ -178,7 +191,8 @@ export default function Sidebar() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   width: '36px', // Fixed width for consistent grid
-                  height: '36px'
+                  height: '36px',
+                  color: isExternal ? 'var(--text-secondary)' : 'inherit'
                 }}
               >
                 <item.icon size={20} />
