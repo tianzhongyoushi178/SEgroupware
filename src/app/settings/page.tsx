@@ -24,6 +24,7 @@ export default function SettingsPage() {
         subscribeSettings,
         getAllProfiles,
         updateUserPermission,
+        updateUserPermissions,
         fetchUserPermissions
     } = useAppSettingsStore();
 
