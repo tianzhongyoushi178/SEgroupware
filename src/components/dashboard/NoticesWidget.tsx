@@ -152,18 +152,11 @@ export default function NoticesWidget() {
                 </div>
             </section>
 
-        </div >
-            </section >
-
-        {/* Detail Modal */ }
-        < NoticeDetailModal
-    notice = { selectedNotice }
-    onClose = {() => setSelectedNotice(null)
-}
+            {/* Detail Modal */}
+            <NoticeDetailModal
+                notice={selectedNotice}
+                onClose={() => setSelectedNotice(null)}
             />
-        </>
-    );
-}
         </>
     );
 }
