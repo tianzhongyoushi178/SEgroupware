@@ -14,10 +14,38 @@ import { navigation } from '@/constants/navigation';
 export default function Sidebar() {
   const pathname = usePathname();
   const { isAdmin, user, profile } = useAuthStore();
-  const { tabSettings, fetchUserPermissions } = useAppSettingsStore();
+  const { tabSettings, fetchUserPermissions, sidebarWidth, setSidebarWidth } = useAppSettingsStore();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const [permissionLoaded, setPermissionLoaded] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Resize handler
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = Math.max(200, Math.min(600, e.clientX)); // Min 200, Max 600
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none'; // Prevent text selection
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, setSidebarWidth]);
 
   useEffect(() => {
     if (user?.id) {
@@ -60,15 +88,7 @@ export default function Sidebar() {
       const customChildren = customLinks.map(link => ({
         name: link.title,
         href: link.url,
-        // Using a default icon for custom links since we can't easily dynamic import icons by name here
-        // If we want to import ExternalLink, we need to make sure it is available.
-        // But `item.children` elements usually have `.icon` component.
-        // Accessing the icon from one of the existing children or defaulting if imported?
-        // I need to import ExternalLink at the top if I want to use it.
-        // Or I can reuse the icon from the parent or just use a placeholder if I can't import easily?
-        // Navigation items have `icon` property which is a component.
-        // I'll import ExternalLink at top.
-        icon: ExternalLink // Reuse parent icon (Link) or I'll add ExternalLink to imports
+        icon: ExternalLink
       }));
       // @ts-ignore
       return { ...item, children: [...(item.children || []), ...customChildren] };
@@ -77,63 +97,46 @@ export default function Sidebar() {
   });
 
   const filteredNavigation = mergedNavigation.filter(item => {
-    // Legacy support: global settings (if we still want to respect them as a base layer)
-    // For now, let's assume User Permission overrides or is the primary source.
-    // If permissionLoaded is false (loading), maybe show everything or skeleton? Show everything for now to avoid flicker if API fast?
-    // Actually better to wait or default to true?
-    // Default: Visible if not explicitly false.
-
-    // Check local tabSettings first (legacy)
     const setting = tabSettings[item.href];
     if (setting && !setting.visible) return false;
     if (setting && setting.adminOnly && !isAdmin) return false;
-
-    // Check user specific permissions
-    // Note: If no record in DB, userPermissions is {}. filtered access is true.
     if (userPermissions[item.href] === false) return false;
-
     return true;
   }).map(item => {
-    // Filter children
     // @ts-ignore
     if (item.children) {
       // @ts-ignore
       const filteredChildren = item.children.filter(child => {
-        // Legacy check
         const childSetting = tabSettings[child.href];
         if (childSetting && !childSetting.visible) return false;
-
-        // User Permission check
         if (userPermissions[child.href] === false) return false;
-
         return true;
       });
       return { ...item, children: filteredChildren };
     }
     return item;
   }).filter(item => {
-    // If item has children but all are hidden, should we hide the parent?
-    // Yes, usually.
     // @ts-ignore
     if (item.children && item.children.length === 0) {
-      // Check if parent itself has a direct link? 
-      // Our navigation structure seems to have parents as headers (no href usually, or href same as name?)
-      // Looking at constants/navigation.ts (I saw it earlier), parent has href.
-      // If parent has href and it is valid page, keep it. 
-      // If parent is just a folder, hide it.
-      // Let's assume if it had children originally but now 0, and user specifically hid children, maybe they want parent hidden?
-      // But parent might have its own dashboard.
-      // Let's keep parent if it passed the first filter.
       return true;
     }
     return true;
   });
 
+  // Responsive Font Size Calculation
+  // Base 15px at 280px width
+  const responsiveFontSize = Math.max(12, Math.min(18, sidebarWidth / 18.6));
+
   return (
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} style={{ width: `${sidebarWidth}px` }}>
+      <div
+        className={`${styles.resizer} ${isResizing ? styles.resizerActive : ''}`}
+        onMouseDown={() => setIsResizing(true)}
+      />
+
       <div className={styles.logo}>
         <Image src="/logo.png" alt="Logo" width={64} height={48} style={{ borderRadius: '8px' }} />
-        <span className={styles.logoText}>SALES HUB</span>
+        <span className={styles.logoText} style={{ fontSize: `${Math.max(1.2, responsiveFontSize / 10)}rem` }}>SALES HUB</span>
       </div>
 
       <nav className={styles.nav}>
@@ -149,10 +152,11 @@ export default function Sidebar() {
                 <button
                   className={clsx(styles.navItem, isActive && styles.active)}
                   onClick={() => toggleMenu(item.name)}
+                  style={{ fontSize: `${responsiveFontSize}px` }}
                 >
-                  <item.icon className={styles.icon} size={20} />
-                  <span style={{ flex: 1 }}>{item.name}</span>
-                  <ChevronDown size={16} className={clsx(isOpen && styles.rotate)} />
+                  <item.icon className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                  <ChevronDown size={Math.max(14, responsiveFontSize)} className={clsx(isOpen && styles.rotate)} />
                 </button>
                 {isOpen && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -167,9 +171,10 @@ export default function Sidebar() {
                           target={isExternal ? '_blank' : undefined}
                           rel={isExternal ? 'noopener noreferrer' : undefined}
                           className={clsx(styles.subNavItem, isChildActive && styles.active)}
+                          style={{ fontSize: `${responsiveFontSize}px` }}
                         >
-                          <child.icon className={styles.icon} size={18} />
-                          <span>{child.name}</span>
+                          <child.icon className={styles.icon} size={Math.max(14, responsiveFontSize + 2)} />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{child.name}</span>
                         </Link>
                       );
                     })}
@@ -184,18 +189,19 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={clsx(styles.navItem, isActive && styles.active)}
+              style={{ fontSize: `${responsiveFontSize}px` }}
             >
-              <item.icon className={styles.icon} size={20} />
-              <span>{item.name}</span>
+              <item.icon className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
       <div className={styles.footer}>
-        <Link href="/settings" className={styles.navItem}>
-          <Settings className={styles.icon} size={20} />
-          <span>設定</span>
+        <Link href="/settings" className={styles.navItem} style={{ fontSize: `${responsiveFontSize}px` }}>
+          <Settings className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>設定</span>
         </Link>
       </div>
     </aside>

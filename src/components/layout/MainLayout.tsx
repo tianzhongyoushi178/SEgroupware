@@ -13,10 +13,13 @@ const tools = [
     { path: '/ocr-tools', title: 'OCRツール', url: 'https://ocr-768252222357.us-west1.run.app/' },
 ];
 
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isFullScreenPage = [...tools.map(t => t.path)].includes(pathname);
     const activeTool = tools.find(t => t.path === pathname);
+    const { sidebarWidth } = useAppSettingsStore();
 
     const { subscribeNotices } = useNoticeStore();
 
@@ -28,7 +31,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <main
             style={{
-                marginLeft: '280px',
+                marginLeft: `${sidebarWidth}px`,
                 padding: isFullScreenPage ? '0' : '2rem',
                 minHeight: '100vh',
                 height: isFullScreenPage ? '100vh' : 'auto',

@@ -21,10 +21,14 @@ interface AppSettingsState {
     updateUserPermission: (userId: string, path: string, visible: boolean) => Promise<void>;
     updateUserPermissions: (userId: string, permissions: UserPermission) => Promise<void>;
     getAllProfiles: () => Promise<any[]>;
+    sidebarWidth: number;
+    setSidebarWidth: (width: number) => void;
 }
 
 export const useAppSettingsStore = create<AppSettingsState>((set, get) => ({
     tabSettings: {},
+    sidebarWidth: 280,
+    setSidebarWidth: (width) => set({ sidebarWidth: width }),
     isLoading: true,
     subscribeSettings: () => {
         // Mock default settings for now, will start using DB permissions soon
