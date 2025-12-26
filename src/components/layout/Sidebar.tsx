@@ -134,10 +134,10 @@ export default function Sidebar() {
         onMouseDown={() => setIsResizing(true)}
       />
 
-      <div className={styles.logo}>
+      <Link href="/" className={styles.logo} style={{ textDecoration: 'none', color: 'inherit' }}>
         <Image src="/logo.png" alt="Logo" width={64} height={48} style={{ borderRadius: '8px' }} />
         <span className={styles.logoText} style={{ fontSize: `${Math.max(1.2, responsiveFontSize / 10)}rem` }}>SALES HUB</span>
-      </div>
+      </Link>
 
       <nav className={styles.nav}>
         {filteredNavigation.map((item) => {
