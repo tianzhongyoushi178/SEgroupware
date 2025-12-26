@@ -10,12 +10,12 @@ export default function ThemeInitializer() {
         const root = document.documentElement;
         if (theme === 'dark') {
             root.classList.add('dark');
-            root.style.setProperty('--background', '#020617'); // Slate 950
-            root.style.setProperty('--surface', '#0f172a'); // Slate 900
-            root.style.setProperty('--surface-glass', 'rgba(2, 6, 23, 0.8)'); // Dark glass
-            root.style.setProperty('--text-main', '#ffffff'); // White
-            root.style.setProperty('--text-secondary', '#94a3b8'); // Slate 400
-            root.style.setProperty('--border', '#1e293b'); // Slate 800
+            root.style.setProperty('--background', '#111827'); // Gray 900
+            root.style.setProperty('--surface', '#1f2937'); // Gray 800
+            root.style.setProperty('--surface-glass', 'rgba(17, 24, 39, 0.85)'); // Gray 900 glass
+            root.style.setProperty('--text-main', '#f9fafb'); // Gray 50
+            root.style.setProperty('--text-secondary', '#d1d5db'); // Gray 300 (Lighter for better readability)
+            root.style.setProperty('--border', '#374151'); // Gray 700
         } else {
             root.classList.remove('dark');
             root.style.removeProperty('--background');

@@ -168,8 +168,24 @@ export default function NoticesWidget() {
                             </p>
                         </header>
 
+
                         <div style={{ lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-                            {selectedNotice.content}
+                            {selectedNotice.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+                                if (part.match(/(https?:\/\/[^\s]+)/g)) {
+                                    return (
+                                        <a
+                                            key={i}
+                                            href={part}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'var(--primary)', textDecoration: 'underline' }}
+                                        >
+                                            {part}
+                                        </a>
+                                    );
+                                }
+                                return part;
+                            })}
                         </div>
 
                         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>

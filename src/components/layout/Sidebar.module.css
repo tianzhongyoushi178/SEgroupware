@@ -40,6 +40,23 @@
     flex-direction: column;
     gap: var(--spacing-xs);
     flex: 1;
+    overflow-y: auto;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) transparent;
+}
+
+.nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.nav::-webkit-scrollbar-thumb {
+    background-color: var(--secondary);
+    border-radius: 4px;
+}
+
+.nav::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .navItem {
