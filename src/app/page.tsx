@@ -22,12 +22,15 @@ export default function Home() {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>クイックアクセス</h2>
           </div>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
-            <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-              📝 新しい日報を作成
-            </button>
-            <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+            <a
+              href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost"
+              style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+            >
               📅 会議室を予約
-            </button>
+            </a>
             <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
               📢 お知らせを投稿
             </button>
