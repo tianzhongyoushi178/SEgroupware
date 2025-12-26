@@ -4,7 +4,7 @@ import { useNoticeStore } from '@/store/noticeStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
-import { NoticeCategory } from '@/types/notice';
+import { Notice, NoticeCategory } from '@/types/notice';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -16,7 +16,8 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 
 export default function NoticesWidget() {
     const { notices } = useNoticeStore();
-    const [selectedNotice, setSelectedNotice] = useState<any | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
     useEffect(() => {
         setMounted(true);
