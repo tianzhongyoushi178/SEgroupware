@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import IframeViewer from '@/components/common/IframeViewer';
 
 import { useNoticeStore } from '@/store/noticeStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const tools = [
     { path: '/ai-chat', title: 'AI出張旅費アシスタント', url: 'https://ai-768252222357.us-west1.run.app/' },
