@@ -123,12 +123,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         if (error) throw error;
 
-        // Also update public.profiles
+        // Also update public.profiles using upsert to ensure record exists
         if (user) {
             const { error: profileError } = await supabase
                 .from('profiles')
-                .update({ display_name: name })
-                .eq('id', user.id);
+                .upsert({
+                    id: user.id,
+                    email: user.email,
+                    display_name: name
+                }, { onConflict: 'id' });
 
             if (profileError) {
                 console.error('Failed to sync profile', profileError);
@@ -155,8 +158,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         const { error } = await supabase
             .from('profiles')
-            .update({ preferences: newPreferences })
-            .eq('id', user.id);
+            .upsert({
+                id: user.id,
+                email: user.email,
+                preferences: newPreferences
+            }, { onConflict: 'id' });
 
         if (error) throw error;
 
