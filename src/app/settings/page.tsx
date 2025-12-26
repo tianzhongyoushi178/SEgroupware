@@ -288,6 +288,81 @@ export default function SettingsPage() {
                             </div>
                         </section>
 
+                        {/* リンク集設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                                        <span style={{ fontSize: '20px' }}>🔗</span>
+                                    </div>
+                                    <h2 className={styles.sectionTitle}>リンク集設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>サイドバーの「リンク集」に追加する項目を設定します</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    {profile?.preferences?.customLinks?.map((item: any) => (
+                                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
+                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                                <div style={{ fontWeight: '500' }}>{item.title}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const current = profile?.preferences?.customLinks || [];
+                                                    const updated = current.filter((i: any) => i.id !== item.id);
+                                                    updatePreferences({ customLinks: updated });
+                                                }}
+                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                            >
+                                                削除
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(!profile?.preferences?.customLinks || profile.preferences.customLinks.length === 0) && (
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>追加されたリンクはありません</div>
+                                    )}
+                                </div>
+
+                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: '#f8fafc' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>新しいリンクを追加</h4>
+                                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                        <input
+                                            id="newSidebarLinkTitle"
+                                            type="text"
+                                            placeholder="タイトル (例: 社内ポータル)"
+                                            className={styles.input}
+                                        />
+                                        <input
+                                            id="newSidebarLinkUrl"
+                                            type="text"
+                                            placeholder="URL (例: http://portal...)"
+                                            className={styles.input}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const titleInput = document.getElementById('newSidebarLinkTitle') as HTMLInputElement;
+                                                const urlInput = document.getElementById('newSidebarLinkUrl') as HTMLInputElement;
+                                                const title = titleInput.value.trim();
+                                                const url = urlInput.value.trim();
+
+                                                if (title && url) {
+                                                    const current = profile?.preferences?.customLinks || [];
+                                                    const newItem = { id: crypto.randomUUID(), title, url };
+                                                    updatePreferences({ customLinks: [...current, newItem] });
+                                                    titleInput.value = '';
+                                                    urlInput.value = '';
+                                                }
+                                            }}
+                                            style={{ padding: '0.5rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold', marginTop: '0.25rem' }}
+                                        >
+                                            追加
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                         {/* 表示設定 */}
                         <section className={styles.section}>
                             <div className={styles.sectionHeader}>
