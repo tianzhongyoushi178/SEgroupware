@@ -148,7 +148,7 @@ export default function NoticesPage() {
                         <div
                             key={notice.id}
                             className="glass-panel"
-                            onClick={() => setSelectedNotice(notice)}
+                            onClick={() => setSelectedNoticeId(notice.id)}
                             style={{
                                 padding: '1.5rem',
                                 display: 'flex',
@@ -262,7 +262,7 @@ export default function NoticesPage() {
             </div>
 
             <NoticeFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-            <NoticeDetailModal notice={selectedNotice} onClose={() => setSelectedNotice(null)} />
+            <NoticeDetailModal notice={selectedNotice} onClose={() => setSelectedNoticeId(null)} />
         </div>
     );
 }
