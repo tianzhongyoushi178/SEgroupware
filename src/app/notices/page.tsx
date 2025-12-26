@@ -5,8 +5,9 @@ import { useNoticeStore } from '@/store/noticeStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Bell, Info, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
-import { NoticeCategory } from '@/types/notice';
+import { Notice, NoticeCategory } from '@/types/notice';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
+import NoticeDetailModal from '@/components/notices/NoticeDetailModal';
 import { useAuthStore } from '@/store/authStore';
 
 const categoryConfig: Record<NoticeCategory, { label: string; color: string; icon: any }> = {
@@ -19,6 +20,7 @@ export default function NoticesPage() {
     const { notices, markAsRead, deleteNotice } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
