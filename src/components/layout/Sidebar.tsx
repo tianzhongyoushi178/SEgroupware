@@ -135,8 +135,11 @@ export default function Sidebar() {
   const responsiveFontSize = Math.max(12, Math.min(18, sidebarWidth / 18.6));
 
   if (isMobile) {
-    // Flatten navigation for mobile to show leaf nodes directly
+    // Flatten navigation for mobile to show leaf nodes directly, specifically for AI Tools
+    // Filter out 'リンク集' and '設定' (Settings is manually added below normally, but we skip it here)
     const mobileNavigation = filteredNavigation.flatMap(item => {
+      if (item.name === 'リンク集') return []; // Hide Link Collection on mobile
+
       // @ts-ignore
       if (item.children && item.children.length > 0) {
         // @ts-ignore
@@ -200,10 +203,6 @@ export default function Sidebar() {
             );
           })}
         </div>
-
-        <Link href="/settings" className={styles.navItem} style={{ padding: '0.5rem', flexShrink: 0, width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Settings size={20} />
-        </Link>
       </aside>
     );
   }
