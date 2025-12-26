@@ -136,10 +136,13 @@ export default function Sidebar() {
                     {/* @ts-ignore */}
                     {item.children.map((child) => {
                       const isChildActive = pathname === child.href;
+                      const isExternal = child.href.startsWith('http');
                       return (
                         <Link
                           key={child.name}
                           href={child.href}
+                          target={isExternal ? '_blank' : undefined}
+                          rel={isExternal ? 'noopener noreferrer' : undefined}
                           className={clsx(styles.subNavItem, isChildActive && styles.active)}
                         >
                           <child.icon className={styles.icon} size={18} />

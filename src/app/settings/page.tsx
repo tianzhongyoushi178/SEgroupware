@@ -206,7 +206,8 @@ export default function SettingsPage() {
                                 <p className={styles.sectionDescription}>ダッシュボードに表示するクイックアクセス項目を設定します</p>
                             </div>
                             <div className={styles.content}>
-                                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>標準項目</h3>
+                                <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1.5rem' }}>
                                     {QUICK_ACCESS_ITEMS.map(item => {
                                         const isVisible = profile?.preferences?.quickAccess?.[item.id] !== false;
                                         return (
@@ -221,6 +222,68 @@ export default function SettingsPage() {
                                             </label>
                                         );
                                     })}
+                                </div>
+
+                                <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>カスタムリンク</h3>
+                                <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    {profile?.preferences?.customQuickAccess?.map((item: any) => (
+                                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
+                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                                <div style={{ fontWeight: '500' }}>{item.title}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const current = profile?.preferences?.customQuickAccess || [];
+                                                    const updated = current.filter((i: any) => i.id !== item.id);
+                                                    updatePreferences({ customQuickAccess: updated });
+                                                }}
+                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                            >
+                                                削除
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(!profile?.preferences?.customQuickAccess || profile.preferences.customQuickAccess.length === 0) && (
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>カスタムリンクは設定されていません</div>
+                                    )}
+                                </div>
+
+                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: '#f8fafc' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>新しいリンクを追加</h4>
+                                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                        <input
+                                            id="newLinkTitle"
+                                            type="text"
+                                            placeholder="タイトル (例: Google)"
+                                            className={styles.input}
+                                        />
+                                        <input
+                                            id="newLinkUrl"
+                                            type="text"
+                                            placeholder="URL (例: https://google.com)"
+                                            className={styles.input}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const titleInput = document.getElementById('newLinkTitle') as HTMLInputElement;
+                                                const urlInput = document.getElementById('newLinkUrl') as HTMLInputElement;
+                                                const title = titleInput.value.trim();
+                                                const url = urlInput.value.trim();
+
+                                                if (title && url) {
+                                                    const current = profile?.preferences?.customQuickAccess || [];
+                                                    const newItem = { id: crypto.randomUUID(), title, url };
+                                                    updatePreferences({ customQuickAccess: [...current, newItem] });
+                                                    titleInput.value = '';
+                                                    urlInput.value = '';
+                                                }
+                                            }}
+                                            style={{ padding: '0.5rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold', marginTop: '0.25rem' }}
+                                        >
+                                            追加
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </section>

@@ -53,7 +53,19 @@ export default function Home() {
                 📢 お知らせを投稿
               </button>
             )}
-            {!showMeeting && !showNotice && (
+            {profile?.preferences?.customQuickAccess?.map((item: any) => (
+              <a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+              >
+                🔗 {item.title}
+              </a>
+            ))}
+            {!showMeeting && !showNotice && (!profile?.preferences?.customQuickAccess || profile.preferences.customQuickAccess.length === 0) && (
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>表示する項目がありません</p>
             )}
           </div>

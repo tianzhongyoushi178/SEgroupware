@@ -11,5 +11,10 @@ export interface UserProfile {
         quickAccess?: {
             [key: string]: boolean;
         };
+        customQuickAccess?: {
+            id: string;
+            title: string;
+            url: string;
+        }[];
     };
 }

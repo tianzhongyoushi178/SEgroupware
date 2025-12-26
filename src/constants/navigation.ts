@@ -1,4 +1,4 @@
-import { LayoutDashboard, Bell, MessageSquare, Wrench, FileText, Bot } from 'lucide-react';
+import { LayoutDashboard, Bell, MessageSquare, Wrench, FileText, Bot, Link, ExternalLink } from 'lucide-react';
 
 export const navigation = [
     { name: 'ダッシュボード', href: '/', icon: LayoutDashboard },
@@ -13,4 +13,15 @@ export const navigation = [
             { name: 'OCRツール', href: '/ocr-tools', icon: FileText },
         ]
     },
+    {
+        name: 'リンク集',
+        href: '#links',
+        icon: Link,
+        children: [
+            { name: "desknet'sNEO", href: 'http://10.1.1.39/Scripts/dneo/zinfo.exe?cmd=infoindex#fid=0&cmd=inforefer&id=2806', icon: ExternalLink },
+            { name: 'NI Collabo 360', href: 'http://10.1.27.101/ni/niware/portal/index.php?hkey=clbheader_677ca37a278c9ee84282d13070ceb44c', icon: ExternalLink },
+            { name: 'Salesforce', href: 'https://seibudenki.my.salesforce.com/?ec=302&startURL=%2Fvisualforce%2Fsession%3Furl%3Dhttps%253A%252F%252Fseibudenki.lightning.force.com%252Flightning%252Fpage%252Fhome', icon: ExternalLink },
+        ]
+    },
 ];
+
