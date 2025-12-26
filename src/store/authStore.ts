@@ -1,8 +1,5 @@
 import { create } from 'zustand';
 import { UserProfile } from '@/types/user';
-
-import { create } from 'zustand';
-import { UserProfile } from '@/types/user';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 
