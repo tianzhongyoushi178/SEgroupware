@@ -1,28 +1,24 @@
 import { create } from 'zustand';
 import { UserProfile } from '@/types/user';
 
-// Mock User Type
-interface MockUser {
-    id: string;
-    email: string;
-    aud: string;
-    app_metadata: Record<string, unknown>;
-    user_metadata: Record<string, unknown>;
-    created_at: string;
-}
+import { create } from 'zustand';
+import { UserProfile } from '@/types/user';
+import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 interface AuthState {
-    user: MockUser | null;
+    user: User | null;
     profile: UserProfile | null;
     isLoading: boolean;
     error: string | null;
     isAdmin: boolean;
-    login: (email: string) => Promise<void>;
+    login: (email: string, password: string, isSignUp?: boolean) => Promise<void>;
     logout: () => Promise<void>;
     initialize: () => () => void;
+    updateProfileName: (name: string) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     profile: null,
     isLoading: true,
@@ -30,75 +26,94 @@ export const useAuthStore = create<AuthState>((set) => ({
     isAdmin: false,
 
     initialize: () => {
-        const cleanup = () => { };
+        // Initial session check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            const user = session?.user ?? null;
+            const isAdmin = user?.email === 'tanaka-yuj@seibudenki.co.jp';
 
-        // Mock initialization
-        if (typeof window !== 'undefined') {
-            const storedUser = localStorage.getItem('mock_user');
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    const isAdmin = user.email === 'tanaka-yuj@seibudenki.co.jp';
-                    set({
-                        user,
-                        profile: {
-                            uid: user.id,
-                            email: user.email,
-                            displayName: user.email.split('@')[0],
-                            role: isAdmin ? 'admin' : 'user',
-                            createdAt: new Date().toISOString()
-                        } as UserProfile,
-                        isAdmin,
-                        isLoading: false
-                    });
-                    return cleanup;
-                } catch (e) {
-                    console.error('Failed to parse mock user', e);
-                }
-            }
-        }
-        set({ isLoading: false });
-        return cleanup;
+            set({
+                user,
+                profile: user ? {
+                    uid: user.id,
+                    email: user.email!,
+                    displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
+                    role: isAdmin ? 'admin' : 'user',
+                    createdAt: user.created_at
+                } : null,
+                isAdmin,
+                isLoading: false
+            });
+        });
+
+        // Listen for changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            const user = session?.user ?? null;
+            const isAdmin = user?.email === 'tanaka-yuj@seibudenki.co.jp';
+
+            set({
+                user,
+                profile: user ? {
+                    uid: user.id,
+                    email: user.email!,
+                    displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
+                    role: isAdmin ? 'admin' : 'user',
+                    createdAt: user.created_at
+                } : null,
+                isAdmin,
+                isLoading: false
+            });
+        });
+
+        return () => subscription.unsubscribe();
     },
 
-    login: async (email: string) => {
+    login: async (email, password, isSignUp = false) => {
         set({ isLoading: true, error: null });
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
 
-        const isAdmin = email === 'tanaka-yuj@seibudenki.co.jp';
-        const mockUser: MockUser = {
-            id: 'mock-user-id-' + Math.random().toString(36).substr(2, 9),
-            email,
-            aud: 'authenticated',
-            app_metadata: {},
-            user_metadata: {},
-            created_at: new Date().toISOString()
-        };
-
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('mock_user', JSON.stringify(mockUser));
+        try {
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+            }
+        } catch (error: any) {
+            console.error('Auth error:', error);
+            set({ error: error.message, isLoading: false });
+            throw error;
+        } finally {
+            set({ isLoading: false });
         }
-
-        set({
-            user: mockUser,
-            profile: {
-                uid: mockUser.id,
-                email,
-                displayName: email.split('@')[0],
-                role: isAdmin ? 'admin' : 'user',
-                createdAt: new Date().toISOString()
-            } as UserProfile,
-            isAdmin,
-            isLoading: false
-        });
     },
 
     logout: async () => {
         set({ isLoading: true });
-        await new Promise(resolve => setTimeout(resolve, 300));
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('mock_user');
-        }
+        await supabase.auth.signOut();
         set({ user: null, profile: null, isAdmin: false, isLoading: false });
     },
+
+    updateProfileName: async (name: string) => {
+        const { error } = await supabase.auth.updateUser({
+            data: { display_name: name }
+        });
+
+        if (error) throw error;
+
+        // Optimistic update
+        const currentProfile = get().profile;
+        if (currentProfile) {
+            set({
+                profile: { ...currentProfile, displayName: name }
+            });
+        }
+    }
 }));

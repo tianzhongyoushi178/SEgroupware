@@ -12,14 +12,12 @@ export default function SettingsPage() {
     const {
         theme,
         notifications,
-        profile,
         setTheme,
         toggleDesktopNotification,
-        updateProfile,
         sendTestNotification,
     } = useSettingsStore();
 
-    const { isAdmin, logout } = useAuthStore();
+    const { isAdmin, logout, profile, updateProfileName } = useAuthStore();
     const { tabSettings, updateTabSetting, subscribeSettings } = useAppSettingsStore();
 
     // Hydration mismatch回避のため、マウント後にレンダリングする
@@ -55,8 +53,9 @@ export default function SettingsPage() {
                                 <label className={styles.label}>ユーザー名</label>
                                 <input
                                     type="text"
-                                    value={profile.name}
-                                    onChange={(e) => updateProfile({ name: e.target.value })}
+                                    value={profile?.displayName || ''}
+                                    onChange={(e) => updateProfileName(e.target.value)}
+                                    placeholder="投稿者名として使用されます"
                                     className={styles.input}
                                 />
                             </div>
@@ -64,10 +63,15 @@ export default function SettingsPage() {
                                 <label className={styles.label}>メールアドレス</label>
                                 <input
                                     type="email"
-                                    value={profile.email}
-                                    onChange={(e) => updateProfile({ email: e.target.value })}
+                                    value={profile?.email || ''}
+                                    readOnly
+                                    disabled
                                     className={styles.input}
+                                    style={{ background: 'var(--background-secondary)', cursor: 'not-allowed', color: 'var(--text-secondary)' }}
                                 />
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                    ※メールアドレスは変更できません
+                                </p>
                             </div>
                         </div>
                     </div>

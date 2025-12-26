@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
+import { useAuthStore } from '@/store/authStore';
 import { NoticeCategory } from '@/types/notice';
 import { X } from 'lucide-react';
 
@@ -12,10 +13,13 @@ interface NoticeFormModalProps {
 
 export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProps) {
     const addNotice = useNoticeStore((state) => state.addNotice);
+    const { profile } = useAuthStore();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState<NoticeCategory>('general');
-    const [author, setAuthor] = useState('');
+
+    // Auto-derive author name
+    const authorName = profile?.displayName || profile?.email || '匿名';
 
     if (!isOpen) return null;
 
@@ -25,14 +29,13 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
             title,
             content,
             category,
-            author: author || '匿名',
+            author: authorName,
         });
         onClose();
         // Reset form
         setTitle('');
         setContent('');
         setCategory('general');
-        setAuthor('');
     };
 
     return (
@@ -110,17 +113,23 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>投稿者名</label>
                         <input
                             type="text"
-                            value={author}
-                            onChange={(e) => setAuthor(e.target.value)}
-                            placeholder="あなたの名前"
+                            value={authorName}
+                            readOnly
+                            disabled
                             style={{
                                 width: '100%',
                                 padding: '0.75rem',
                                 borderRadius: 'var(--radius-md)',
                                 border: '1px solid var(--border)',
                                 outline: 'none',
+                                background: 'var(--background-secondary)',
+                                color: 'var(--text-secondary)',
+                                cursor: 'not-allowed'
                             }}
                         />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                            ※プロフィール設定のユーザー名が自動入力されます
+                        </p>
                     </div>
 
                     <div>

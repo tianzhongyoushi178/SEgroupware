@@ -19,28 +19,36 @@ export default function LoginPage() {
         setError('');
         setMessage('');
 
+        // Domain Check
+        if (!email.endsWith('@seibudenki.co.jp')) {
+            setError('ログインは @seibudenki.co.jp のメールアドレスのみ可能です。');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const { useAuthStore } = await import('@/store/authStore');
 
-            if (isSignUp) {
-                // Mock Sign Up
-                await useAuthStore.getState().login(email);
-                router.push('/');
-            } else {
-                // Mock Login
-                // Simple password check for the specific user, otherwise allow any for mock
-                if (email === 'tanaka-yuj@seibudenki.co.jp' && password !== 'yuji0210') {
-                    throw new Error('パスワードが正しくありません。');
-                }
+            // Call Supabase Auth
+            await useAuthStore.getState().login(email, password, isSignUp);
 
-                await useAuthStore.getState().login(email);
+            if (isSignUp) {
+                setMessage('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
+                setIsLoading(false);
+            } else {
                 router.push('/');
             }
         } catch (err) {
             console.error(err);
             const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました。';
-            setError(errorMessage);
-        } finally {
+            // Translate common Supabase errors
+            if (errorMessage.includes('Invalid login credentials')) {
+                setError('メールアドレスまたはパスワードが間違っています。');
+            } else if (errorMessage.includes('User already registered')) {
+                setError('このメールアドレスは既に登録されています。');
+            } else {
+                setError(errorMessage);
+            }
             setIsLoading(false);
         }
     };
