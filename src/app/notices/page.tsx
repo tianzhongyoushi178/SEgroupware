@@ -125,7 +125,7 @@ export default function NoticesPage() {
                                     borderRadius: '999px',
                                     background: filterCategory === key ? config.color : 'var(--surface)',
                                     color: filterCategory === key ? 'white' : config.color,
-                                    border: FILTER_CATEGORY === key ? 'none' : `1px solid ${config.color}30`,
+                                    border: filterCategory === key ? 'none' : `1px solid ${config.color}30`,
                                     fontSize: '0.875rem',
                                     fontWeight: 'bold',
                                     opacity: filterCategory === key || filterCategory === 'all' ? 1 : 0.6
