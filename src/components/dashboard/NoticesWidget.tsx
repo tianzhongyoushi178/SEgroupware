@@ -49,7 +49,8 @@ export default function NoticesWidget() {
     const { user, isAdmin } = useAuthStore();
     const { getAllProfiles } = useAppSettingsStore();
     const [mounted, setMounted] = useState(false);
-    const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+    const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
+    const selectedNotice = notices.find(n => n.id === selectedNoticeId) || null;
     const [userMap, setUserMap] = useState<Record<string, string>>({});
 
     useEffect(() => {
@@ -107,7 +108,7 @@ export default function NoticesWidget() {
                             return (
                                 <div
                                     key={notice.id}
-                                    onClick={() => setSelectedNotice(notice)}
+                                    onClick={() => setSelectedNoticeId(notice.id)}
                                     style={{
                                         padding: '0.75rem',
                                         borderLeft: `3px solid ${config.color}`,
@@ -155,7 +156,7 @@ export default function NoticesWidget() {
             {/* Detail Modal */}
             <NoticeDetailModal
                 notice={selectedNotice}
-                onClose={() => setSelectedNotice(null)}
+                onClose={() => setSelectedNoticeId(null)}
             />
         </>
     );

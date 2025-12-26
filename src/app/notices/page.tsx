@@ -20,7 +20,9 @@ export default function NoticesPage() {
     const { notices, markAsRead, deleteNotice, fetchNotices } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+    const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
+
+    const selectedNotice = notices.find(n => n.id === selectedNoticeId) || null;
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
