@@ -432,7 +432,7 @@ export default function TutorialOverlay() {
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
                         className={`
-                            px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all
+                            px-4 py-2 rounded-lg text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-all
                             ${stepIndex === 0 ? 'invisible' : ''}
                         `}
                     >
@@ -443,14 +443,13 @@ export default function TutorialOverlay() {
                         onClick={handleNext}
                         disabled={!canProceed}
                         className={`
-                            flex items-center gap-3 px-6 py-3 rounded-xl text-base font-bold transition-all
+                            flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-sm
                             ${canProceed
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg hover:-translate-y-0.5'
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
-                        {stepIndex === steps.length - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
                     </button>
                 </div>
             </div>
