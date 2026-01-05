@@ -399,7 +399,7 @@ export default function SettingsPage() {
                         </section>
 
                         {/* 通知設定 */}
-                        <section className={styles.section}>
+                        <section id="tutorial-settings-notifications" className={styles.section}>
                             <div className={styles.sectionHeader}>
                                 <div className={styles.headerContent}>
                                     <Bell size={20} style={{ color: '#9333ea' }} />

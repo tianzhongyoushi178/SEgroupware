@@ -12,7 +12,7 @@ interface Step {
     position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
     requireAction?: boolean;
     path?: string;
-    onEnter?: () => void; // Action to perform when step starts
+    onEnter?: () => void;
 }
 
 export default function TutorialOverlay() {
@@ -64,11 +64,27 @@ export default function TutorialOverlay() {
             position: 'center',
             requireAction: true
         },
-        // Dashboard
+        // Dashboard Tab Highlight
+        {
+            target: '#tutorial-nav-dashboard',
+            title: 'ダッシュボード',
+            content: (
+                <div>
+                    <p className="mb-2">これが「ダッシュボード」です。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        ログイン後、最初に表示されるホーム画面です。<br />
+                        ここから日々の業務を開始します。
+                    </p>
+                </div>
+            ),
+            position: 'right',
+            path: '/'
+        },
+        // Dashboard Content
         {
             path: '/',
             target: '#tutorial-dashboard-quickaccess',
-            title: 'ダッシュボード：クイックアクセス',
+            title: 'クイックアクセス',
             content: (
                 <div>
                     <p className="mb-2">よく使う機能へすぐにアクセスできます。</p>
@@ -83,18 +99,33 @@ export default function TutorialOverlay() {
         {
             path: '/',
             target: '#tutorial-dashboard-notices',
-            title: 'ダッシュボード：最新のお知らせ',
+            title: '最新のお知らせ',
             content: (
                 <div>
                     <p className="mb-2">直近の重要なお知らせがここに表示されます。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        クリックすると詳細画面が開き、内容を確認したり既読をつけることができます。
+                        未読のお知らせを一目で確認できます。
                     </p>
                 </div>
             ),
             position: 'left'
         },
-        // Notices
+        // Notices Tab Highlight
+        {
+            target: '#tutorial-nav-notices',
+            title: 'お知らせメニュー',
+            content: (
+                <div>
+                    <p className="mb-2">「お知らせ」メニューです。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        会社全体、または部署内の連絡事項を確認・発信するときはここをクリックします。
+                    </p>
+                </div>
+            ),
+            position: 'right',
+            // No path change yet, just highlighting the tab
+        },
+        // Notices Content
         {
             path: '/notices',
             target: '#tutorial-notice-create-btn',
@@ -111,7 +142,7 @@ export default function TutorialOverlay() {
         },
         {
             path: '/notices',
-            target: '#tutorial-notice-modal', // Modal ID
+            target: '#tutorial-notice-modal',
             title: 'お知らせ作成フォーム',
             content: (
                 <div>
@@ -122,26 +153,36 @@ export default function TutorialOverlay() {
                     </p>
                 </div>
             ),
-            position: 'right', // Place to the right of the modal if possible, or adjust
+            position: 'right',
             onEnter: () => {
                 document.getElementById('tutorial-notice-create-btn')?.click();
             }
         },
-        // Chat
+        // Chat Tab Highlight
+        {
+            target: '#tutorial-nav-chat',
+            title: 'チャットメニュー',
+            content: (
+                <div>
+                    <p className="mb-2">「チャット」メニューです。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        チームメンバーとのリアルタイムなやり取りはここから行います。
+                    </p>
+                </div>
+            ),
+            position: 'right',
+        },
+        // Chat Content
         {
             path: '/chat',
             target: '#tutorial-chat-create-btn',
-            title: 'チャット機能',
+            title: 'スレッドの作成',
             content: (
                 <div>
                     <p className="mb-2">新しいトピックについて話し合いたいときは、ここからスレッドを作成します。</p>
                 </div>
             ),
             position: 'bottom',
-            onEnter: () => {
-                // Ensure manual close of previous modal if it persisted? 
-                // Since we navigated, React unmounts previous page components hopefully, or route change handles it.
-            }
         },
         {
             path: '/chat',
@@ -163,9 +204,52 @@ export default function TutorialOverlay() {
                 document.getElementById('tutorial-chat-create-btn')?.click();
             }
         },
+        // Settings Tab Highlight
+        {
+            target: '#tutorial-nav-settings',
+            title: '設定メニュー',
+            content: (
+                <div>
+                    <p className="mb-2">最後に、「設定」メニューです。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        個人の設定やアプリケーションの表示設定はここから変更します。
+                    </p>
+                </div>
+            ),
+            position: 'right',
+        },
+        // Settings Content
+        {
+            path: '/settings',
+            target: '#tutorial-settings-theme',
+            title: 'テーマ設定',
+            content: (
+                <div>
+                    <p className="mb-2">自分好みの見た目にカスタマイズできます。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        ダークモードへの切り替えや、アクセントカラーの変更が可能です。
+                    </p>
+                </div>
+            ),
+            position: 'bottom'
+        },
+        {
+            path: '/settings',
+            target: '#tutorial-settings-notifications',
+            title: '通知設定',
+            content: (
+                <div>
+                    <p className="mb-2">通知の受け取り方を調整します。</p>
+                    <p className="text-base text-gray-600 leading-relaxed">
+                        重要な連絡を見逃さないよう、適切に設定しましょう。
+                    </p>
+                </div>
+            ),
+            position: 'bottom'
+        },
         {
             title: '準備完了！',
-            content: <p className="text-lg">さあ、始めましょう。不明な点があれば、いつでも管理者に問い合わせてください。</p>,
+            content: <p className="text-lg">これでツアーは終了です。さあ、Sales Hubでの業務を始めましょう！</p>,
             position: 'center'
         }
     ];
@@ -174,44 +258,43 @@ export default function TutorialOverlay() {
     const isNameStep = stepIndex === 1;
     const canProceed = isNameStep ? !!tempName.trim() : true;
 
-    // Position Calculation
     const updateHighlight = useCallback(() => {
         if (!currentStep.target) {
             setHighlightRect(null);
             return;
         }
 
-        const el = document.querySelector(currentStep.target);
-        if (el) {
-            const rect = el.getBoundingClientRect();
-            setHighlightRect(rect);
+        // Wait slightly for DOM if navigating
+        setTimeout(() => {
+            const el = document.querySelector(currentStep.target!);
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                setHighlightRect(rect);
 
-            // Scroll into view if needed
-            const isInViewport = (
-                rect.top >= 0 &&
-                rect.left >= 0 &&
-                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
+                const isInViewport = (
+                    rect.top >= 0 &&
+                    rect.left >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                );
 
-            if (!isInViewport) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else {
-            // If target not found yet (maybe mounting), clear logic or retry
-            // Mobile fallback logic
-            if (currentStep.target === '#tutorial-notice-filter-desktop') {
-                const mobileEl = document.querySelector('#tutorial-notice-filter-mobile');
-                if (mobileEl) {
-                    setHighlightRect(mobileEl.getBoundingClientRect());
-                    return;
+                if (!isInViewport) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+            } else {
+                // Mobile fallback logic
+                if (currentStep.target === '#tutorial-notice-filter-desktop') {
+                    const mobileEl = document.querySelector('#tutorial-notice-filter-mobile');
+                    if (mobileEl) {
+                        setHighlightRect(mobileEl.getBoundingClientRect());
+                        return;
+                    }
+                }
+                setHighlightRect(null);
             }
-            setHighlightRect(null);
-        }
+        }, 100);
     }, [currentStep.target]);
 
-    // Handle Page Navigation & Step Transitions
     useEffect(() => {
         if (!isVisible) return;
 
@@ -219,23 +302,19 @@ export default function TutorialOverlay() {
             if (currentStep.path && pathname !== currentStep.path) {
                 setIsNavigating(true);
                 await router.push(currentStep.path);
-                // Allow time for navigation and mount
                 setTimeout(() => {
                     setIsNavigating(false);
-                    // Trigger enter action after nav
                     if (currentStep.onEnter) currentStep.onEnter();
                 }, 800);
             } else {
                 setIsNavigating(false);
-                // Trigger enter action immediately if same page
                 if (currentStep.onEnter) currentStep.onEnter();
             }
         };
 
         handleTransition();
-    }, [stepIndex, isVisible, currentStep.path, pathname]); // Intentionally minimal deps
+    }, [stepIndex, isVisible, currentStep.path, pathname]);
 
-    // Continuous update for scroll/resize
     useEffect(() => {
         if (isNavigating || !isVisible) return;
 
@@ -244,7 +323,6 @@ export default function TutorialOverlay() {
         window.addEventListener('resize', updateHighlight);
         window.addEventListener('scroll', updateHighlight);
 
-        // Polling for dynamic elements (modals)
         const interval = setInterval(updateHighlight, 500);
 
         return () => {
@@ -252,8 +330,7 @@ export default function TutorialOverlay() {
             window.removeEventListener('scroll', updateHighlight);
             clearInterval(interval);
         };
-    }, [isNavigating, isVisible, updateHighlight]);
-
+    }, [isNavigating, isVisible, updateHighlight]); // Removed 'stepIndex' to rely on updateHighlight derived from currentStep
 
     if (!isVisible || !profile || isNavigating) return null;
 
@@ -275,7 +352,6 @@ export default function TutorialOverlay() {
         setIsVisible(false);
     };
 
-    // Styles
     const highlightStyle: React.CSSProperties = highlightRect ? {
         position: 'fixed',
         top: highlightRect.top - 8,
@@ -300,15 +376,13 @@ export default function TutorialOverlay() {
         background: 'white',
         padding: '2rem',
         borderRadius: '16px',
-        width: '480px', // Wider
+        width: '480px',
         maxWidth: '95vw',
         boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
     };
 
-    // Smart positioning relative to highlight
     if (highlightRect) {
-        // Default to right of element
         let top = highlightRect.top;
         let left = highlightRect.right + 24;
 
@@ -318,16 +392,14 @@ export default function TutorialOverlay() {
             top = highlightRect.bottom + 24;
             left = highlightRect.left;
         } else if (currentStep.position === 'top') {
-            top = highlightRect.top - 200 - 24; // approx height
+            top = highlightRect.top - 200 - 24;
             left = highlightRect.left;
         }
 
-        // Boundary Checks (Keep on screen)
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
 
         if (left + 480 > windowWidth) {
-            // Flip to left if easy, or just pin right
             left = windowWidth - 480 - 24;
         }
         if (left < 0) left = 24;
@@ -338,7 +410,6 @@ export default function TutorialOverlay() {
 
         modalStyle = { ...modalStyle, top, left };
     } else {
-        // Center
         modalStyle = { ...modalStyle, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     }
 

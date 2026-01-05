@@ -290,6 +290,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              id={`tutorial-nav-${item.href.replace('/', '') || 'dashboard'}`}
               className={clsx(styles.navItem, isActive && styles.active)}
               style={{ fontSize: `${responsiveFontSize}px`, position: 'relative' }}
             >
