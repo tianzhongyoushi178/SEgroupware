@@ -11,6 +11,7 @@ import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useNoticeStore } from '@/store/noticeStore';
 import { useEffect, useState } from 'react';
 import { navigation } from '@/constants/navigation';
+import { useChatStore } from '@/store/chatStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -57,6 +58,14 @@ export default function Sidebar() {
     } else {
       setUserPermissions({});
       setPermissionLoaded(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      useChatStore.getState().initialize(user.id);
+      const unsubscribe = useChatStore.getState().subscribeToAll();
+      return () => unsubscribe();
     }
   }, [user?.id]);
 
@@ -292,9 +301,20 @@ export default function Sidebar() {
                 </span>
               )}
               {item.name === 'チャット' && (
-                // Placeholder for chat badge logic or use store if available
-                // For now we don't have accurate unread count logic implemented in store yet
-                null
+                (() => {
+                  const unreadCount = useChatStore.getState().threads.reduce((acc, thread) => acc + (thread.unreadCount || 0), 0);
+                  if (unreadCount > 0) {
+                    return (
+                      <span style={{
+                        marginLeft: 'auto', background: 'red', color: 'white',
+                        fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
+                      }}>
+                        {unreadCount}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()
               )}
             </Link>
           );
