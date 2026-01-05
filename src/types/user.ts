@@ -6,7 +6,6 @@ export interface UserProfile {
     role: UserRole;
     displayName: string;
     department?: string;
-    department?: string;
     createdAt: string;
     isTutorialCompleted?: boolean;
     preferences?: {

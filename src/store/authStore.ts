@@ -70,13 +70,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             if (session?.user) {
                 const { data } = await supabase
                     .from('profiles')
-                    .select('preferences')
+                    .select('preferences, is_tutorial_completed')
                     .eq('id', session.user.id)
                     .single();
 
-                if (data?.preferences) {
+                if (data) {
                     set(state => ({
-                        profile: state.profile ? { ...state.profile, preferences: data.preferences } : null
+                        profile: state.profile ? {
+                            ...state.profile,
+                            preferences: data.preferences,
+                            isTutorialCompleted: data.is_tutorial_completed
+                        } : null
                     }));
                 }
             }
@@ -168,10 +172,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (error) throw error;
 
         // Optimistic update
-        if (currentProfile) {
-            set({
-                profile: { ...currentProfile, preferences: newPreferences }
+        profile: { ...currentProfile, preferences: newPreferences
+}
             });
         }
+    },
+
+completeTutorial: async () => {
+    const user = get().user;
+    if (!user) return;
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ is_tutorial_completed: true })
+        .eq('id', user.id);
+
+    if (error) {
+        console.error('Failed to complete tutorial:', error);
+        return;
     }
+
+    const currentProfile = get().profile;
+    if (currentProfile) {
+        set({
+            profile: { ...currentProfile, isTutorialCompleted: true }
+        });
+    }
+}
 }));
