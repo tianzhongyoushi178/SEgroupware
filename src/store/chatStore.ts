@@ -187,25 +187,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [prompt] })
+                    body: JSON.stringify({ messages: [prompt], threadId }) // Pass threadId for server-side insert
                 });
 
                 if (!response.ok) {
                     console.error('AI API Error');
+                    // Maybe insert a local error message?
                     return;
                 }
 
-                const data = await response.json();
-                if (data.response) {
-                    await supabase
-                        .from('messages')
-                        .insert({
-                            thread_id: threadId,
-                            content: data.response,
-                            author_id: '00000000-0000-0000-0000-000000000000', // AI ID
-                            author_name: 'AI',
-                        });
-                }
+                // Client no longer needs to insert the message. 
+                // The API inserts it, and Supabase Realtime will push it to us!
+
             } catch (aiError) {
                 console.error('AI Processing Error:', aiError);
             }
