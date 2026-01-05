@@ -213,7 +213,8 @@ export default function ChatRoomPage() {
                                     position: 'relative',
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                                     wordBreak: 'break-word',
-                                    lineHeight: '1.5'
+                                    lineHeight: '1.5',
+                                    whiteSpace: 'pre-wrap'
                                 }}>
                                     {msg.content}
                                     {msg.attachment_url && (
