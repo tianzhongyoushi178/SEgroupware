@@ -14,6 +14,7 @@ interface AuthState {
     initialize: () => () => void;
     updateProfileName: (name: string) => Promise<void>;
     updatePreferences: (preferences: any) => Promise<void>;
+    completeTutorial: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
