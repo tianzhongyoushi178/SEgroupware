@@ -250,6 +250,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
 
         if (error) throw error;
+
+        // Auto-mark as read for the sender
+        await get().markThreadAsRead(threadId);
     },
 
     updateThreadSettings: async (threadId: string, isPrivate: boolean, participantIds: string[]) => {

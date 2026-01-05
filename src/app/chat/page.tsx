@@ -170,7 +170,19 @@ export default function ChatListPage() {
                                 <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     {thread.title}
                                     {thread.unreadCount && thread.unreadCount > 0 ? (
-                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'red', display: 'inline-block' }} />
+                                        <span style={{
+                                            background: 'red',
+                                            color: 'white',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 'bold',
+                                            padding: '0.1rem 0.5rem',
+                                            borderRadius: '1rem',
+                                            minWidth: '20px',
+                                            textAlign: 'center',
+                                            display: 'inline-block'
+                                        }}>
+                                            {thread.unreadCount}
+                                        </span>
                                     ) : null}
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
