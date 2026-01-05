@@ -208,7 +208,7 @@ export default function Sidebar() {
                   color: isExternal ? 'var(--text-secondary)' : 'inherit'
                 }}
               >
-                <item.icon size={20} />
+                {item.icon ? <item.icon size={20} /> : <span style={{ fontSize: '10px' }}>?</span>}
               </Link>
             );
           })}
