@@ -292,30 +292,43 @@ export default function Sidebar() {
             >
               <item.icon className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
-              {item.name === 'お知らせ' && useNoticeStore.getState().notices.filter(n => !n.isRead).length > 0 && (
-                <span style={{
-                  marginLeft: 'auto', background: 'red', color: 'white',
-                  fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
-                }}>
-                  {useNoticeStore.getState().notices.filter(n => !n.isRead).length}
-                </span>
-              )}
-              {item.name === 'チャット' && (
-                (() => {
-                  const unreadCount = useChatStore.getState().threads.reduce((acc, thread) => acc + (thread.unreadCount || 0), 0);
-                  if (unreadCount > 0) {
-                    return (
-                      <span style={{
-                        marginLeft: 'auto', background: 'red', color: 'white',
-                        fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
-                      }}>
-                        {unreadCount}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()
-              )}
+
+              {item.name === 'お知らせ' && (() => {
+                const { notices } = useNoticeStore();
+                // Filter notices where current user has NOT read
+                const unreadCount = notices.filter(n => {
+                  if (!user?.id) return false;
+                  return !n.readStatus?.[user.id];
+                }).length;
+
+                if (unreadCount > 0) {
+                  return (
+                    <span style={{
+                      marginLeft: 'auto', background: 'red', color: 'white',
+                      fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
+                    }}>
+                      {unreadCount}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+
+              {item.name === 'チャット' && (() => {
+                const { threads } = useChatStore();
+                const unreadCount = threads.reduce((acc, thread) => acc + (thread.unreadCount || 0), 0);
+                if (unreadCount > 0) {
+                  return (
+                    <span style={{
+                      marginLeft: 'auto', background: 'red', color: 'white',
+                      fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
+                    }}>
+                      {unreadCount}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
             </Link>
           );
         })}
