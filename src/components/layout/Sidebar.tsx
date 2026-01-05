@@ -17,6 +17,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { isAdmin, user, profile } = useAuthStore();
   const { tabSettings, fetchUserPermissions, sidebarWidth, setSidebarWidth } = useAppSettingsStore();
+  const { notices } = useNoticeStore();
+  const { threads } = useChatStore();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const [permissionLoaded, setPermissionLoaded] = useState(false);
@@ -295,7 +297,6 @@ export default function Sidebar() {
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
 
               {item.name === 'お知らせ' && (() => {
-                const { notices } = useNoticeStore();
                 // Filter notices where current user has NOT read
                 const unreadCount = notices.filter(n => {
                   if (!user?.id) return false;
@@ -316,7 +317,6 @@ export default function Sidebar() {
               })()}
 
               {item.name === 'チャット' && (() => {
-                const { threads } = useChatStore();
                 const unreadCount = threads.reduce((acc, thread) => acc + (thread.unreadCount || 0), 0);
                 if (unreadCount > 0) {
                   return (
