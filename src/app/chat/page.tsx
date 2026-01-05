@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
 import { Plus, MessageSquare, Clock, CheckCircle, XCircle, Check } from 'lucide-react';
 import Link from 'next/link';
