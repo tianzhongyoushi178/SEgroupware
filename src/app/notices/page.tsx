@@ -82,14 +82,14 @@ export default function NoticesPage() {
                             </p>
                         )}
                     </div>
-                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ padding: isMobile ? '0.5rem 1rem' : undefined }}>
+                    <button id="tutorial-notice-create-btn" onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ padding: isMobile ? '0.5rem 1rem' : undefined }}>
                         {isMobile ? '投稿' : '新規作成'}
                     </button>
                 </div>
 
                 {/* Mobile Tabs */}
                 {isMobile ? (
-                    <div style={{
+                    <div id="tutorial-notice-filter-mobile" style={{
                         position: 'sticky',
                         top: 0,
                         zIndex: 10,
@@ -137,7 +137,7 @@ export default function NoticesPage() {
                     </div>
                 ) : (
                     /* Desktop Controls */
-                    <div style={{
+                    <div id="tutorial-notice-filter-desktop" style={{
                         display: 'flex',
                         gap: '1rem',
                         padding: '1rem',

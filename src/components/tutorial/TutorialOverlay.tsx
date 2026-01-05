@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter, usePathname } from 'next/navigation';
 import { X, ChevronRight, Check, ArrowRight } from 'lucide-react';
-import { useAppSettingsStore } from '@/store/appSettingsStore';
 
 interface Step {
     target?: string; // CSS selector for highlighting
@@ -12,6 +11,7 @@ interface Step {
     content: React.ReactNode;
     position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
     requireAction?: boolean; // If true, Next button is disabled until condition met
+    path?: string; // Path to navigate to before showing this step
 }
 
 export default function TutorialOverlay() {
@@ -21,6 +21,7 @@ export default function TutorialOverlay() {
     const [stepIndex, setStepIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const [tempName, setTempName] = useState('');
+    const [isNavigating, setIsNavigating] = useState(false);
 
     useEffect(() => {
         // Wait for profile to load
@@ -30,6 +31,19 @@ export default function TutorialOverlay() {
         }
     }, [profile]);
 
+    // Navigation logic
+    useEffect(() => {
+        if (!isVisible) return;
+
+        const currentStep = steps[stepIndex];
+        if (currentStep.path && pathname !== currentStep.path) {
+            setIsNavigating(true);
+            router.push(currentStep.path);
+        } else {
+            setIsNavigating(false);
+        }
+    }, [stepIndex, isVisible, pathname]); // Re-run when path changes
+
     if (!isVisible || !profile) return null;
 
     const steps: Step[] = [
@@ -38,7 +52,7 @@ export default function TutorialOverlay() {
             content: (
                 <div>
                     <p className="mb-4">新しいグループウェア「Sales Hub」へようこそ。</p>
-                    <p>ここで日々の業務を効率化するための主な機能をご紹介します。</p>
+                    <p>あなたとチームの業務効率化をサポートする、パワフルなプラットフォームです。</p>
                 </div>
             ),
             position: 'center'
@@ -47,7 +61,7 @@ export default function TutorialOverlay() {
             title: '基本設定（必須）',
             content: (
                 <div>
-                    <p className="mb-4 text-sm text-gray-600">まずは、他のメンバーに表示されるあなたの名前を設定してください。</p>
+                    <p className="mb-4 text-sm text-gray-600">まずは、チームメンバーに表示するあなたの名前を設定してください。</p>
                     <div className="mb-2">
                         <label className="block text-xs font-bold mb-1">表示名</label>
                         <input
@@ -64,37 +78,76 @@ export default function TutorialOverlay() {
             position: 'center',
             requireAction: true
         },
+        // Notices Section
         {
+            path: '/notices',
             target: 'nav a[href="/notices"]',
             title: 'お知らせ機能',
             content: (
                 <div>
-                    <p className="mb-2">重要なお知らせはここで確認できます。</p>
-                    <p className="text-sm text-gray-600">
-                        右上の「＋新規作成」ボタンから、新しいお知らせを投稿することも可能です。<br />
-                        全社員向け、または部署限定のお知らせを発信できます。
-                    </p>
+                    <p className="mb-2">全社やチームへの連絡事項は「お知らせ」で共有します。</p>
+                    <p className="text-sm text-gray-600">重要度やカテゴリ分けされた情報を一覧で確認できます。</p>
                 </div>
             ),
             position: 'right'
         },
         {
+            path: '/notices',
+            target: '#tutorial-notice-create-btn',
+            title: 'お知らせを作成',
+            content: (
+                <div>
+                    <p className="mb-2">ここから新しいお知らせを作成できます。</p>
+                    <p className="text-sm text-gray-600">
+                        全社員向け、または特定のラベルを付けて発信できます。<br />
+                        重要な情報は「重要」ラベルを付けることで目立たせることができます。
+                    </p>
+                </div>
+            ),
+            position: 'bottom'
+        },
+        {
+            path: '/notices',
+            target: '#tutorial-notice-filter-desktop', // Fallback will handle mobile if desktop ID missing? Need handling or simple distinct steps
+            title: '検索とフィルタリング',
+            content: (
+                <div>
+                    <p className="mb-2">お知らせをカテゴリで絞り込んだり、未読のみ表示することができます。</p>
+                    <p className="text-sm text-gray-600">過去のお知らせもここから簡単に検索可能です。</p>
+                </div>
+            ),
+            position: 'bottom'
+        },
+        // Chat Section
+        {
+            path: '/chat',
             target: 'nav a[href="/chat"]',
             title: 'チャット機能',
             content: (
                 <div>
-                    <p className="mb-2">リアルタイムなコミュニケーションはこちら。</p>
-                    <p className="text-sm text-gray-600">
-                        プロジェクトごとのスレッド作成や、特定のメンバーとのプライベートな会話も可能です。<br />
-                        ファイルの添付やAIアシスタントの利用もサポートしています。
-                    </p>
+                    <p className="mb-2">リアルタイムなコミュニケーションは「チャット」で行います。</p>
+                    <p className="text-sm text-gray-600">プロジェクトやトピックごとにスレッドを作成し、議論を深めましょう。</p>
                 </div>
             ),
             position: 'right'
         },
         {
+            path: '/chat',
+            target: '#tutorial-chat-create-btn',
+            title: 'スレッドの作成',
+            content: (
+                <div>
+                    <p className="mb-2">新しいトピックについて話し合いたいときは、ここからスレッドを作成します。</p>
+                    <p className="text-sm text-gray-600">
+                        「プライベートスレッド」を選択すれば、招待したメンバーだけで秘密の会話も可能です。
+                    </p>
+                </div>
+            ),
+            position: 'bottom'
+        },
+        {
             title: '準備完了！',
-            content: <p>さあ、始めましょう。右上の設定アイコンから、いつでもダークモードや各種設定を変更できます。</p>,
+            content: <p>さあ、始めましょう。不明な点があれば、いつでも管理者に問い合わせてください。</p>,
             position: 'center'
         }
     ];
@@ -102,6 +155,11 @@ export default function TutorialOverlay() {
     const currentStep = steps[stepIndex];
     const isNameStep = stepIndex === 1; // Index 1 is the name setting step
     const canProceed = isNameStep ? !!tempName.trim() : true;
+
+    // Loading State during navigation
+    if (isNavigating) {
+        return null; // Or a spinner
+    }
 
     const handleNext = async () => {
         if (isNameStep) {
@@ -124,10 +182,19 @@ export default function TutorialOverlay() {
 
     // Calculate Highlight Position
     let highlightStyle: React.CSSProperties = {};
+    let targetEl = null;
+
     if (currentStep.target && typeof document !== 'undefined') {
-        const el = document.querySelector(currentStep.target);
-        if (el) {
-            const rect = el.getBoundingClientRect();
+        // Try to find target
+        targetEl = document.querySelector(currentStep.target);
+
+        // Mobile fallback for notices filter
+        if (!targetEl && currentStep.target === '#tutorial-notice-filter-desktop') {
+            targetEl = document.querySelector('#tutorial-notice-filter-mobile');
+        }
+
+        if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
             highlightStyle = {
                 position: 'fixed',
                 top: rect.top - 4,
@@ -141,8 +208,19 @@ export default function TutorialOverlay() {
                 transition: 'all 0.3s ease'
             };
         }
-    } else {
-        // Full screen overlay if no target highlight
+    }
+
+    // If no target found but one was specified (e.g. element not rendered yet), revert to center
+    if (!targetEl && currentStep.target) {
+        // fallback to center overlay
+        highlightStyle = {
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 9998
+        };
+    } else if (!currentStep.target) {
+        // Full screen overlay for steps without target
         highlightStyle = {
             position: 'fixed',
             inset: 0,
@@ -150,6 +228,7 @@ export default function TutorialOverlay() {
             zIndex: 9998
         };
     }
+
 
     // Floating Modal Style
     let modalStyle: React.CSSProperties = {
@@ -164,17 +243,22 @@ export default function TutorialOverlay() {
         transition: 'all 0.3s ease'
     };
 
-    if (currentStep.position === 'center') {
+    if (currentStep.position === 'center' || (!targetEl && currentStep.target)) {
         modalStyle = { ...modalStyle, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
-    } else if (currentStep.target && typeof document !== 'undefined') {
-        const el = document.querySelector(currentStep.target);
-        if (el) {
-            const rect = el.getBoundingClientRect();
-            if (currentStep.position === 'right') {
-                modalStyle = { ...modalStyle, top: rect.top, left: rect.right + 20 };
-            }
-            // Add other positions if needed
+    } else if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+
+        if (currentStep.position === 'right') {
+            modalStyle = { ...modalStyle, top: rect.top, left: rect.right + 20 };
+        } else if (currentStep.position === 'bottom') {
+            modalStyle = { ...modalStyle, top: rect.bottom + 20, left: rect.left };
+        } else if (currentStep.position === 'left') {
+            modalStyle = { ...modalStyle, top: rect.top, right: window.innerWidth - rect.left + 20 };
         }
+
+        // Boundary check (rudimentary)
+        // If goes off screen bottom
+        // ... implementation omitted for brevity, keeping simple
     }
 
     return (

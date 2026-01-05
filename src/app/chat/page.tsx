@@ -85,6 +85,7 @@ export default function ChatListPage() {
                     <MessageSquare /> チャットルーム
                 </h1>
                 <button
+                    id="tutorial-chat-create-btn"
                     onClick={() => setIsModalOpen(true)}
                     style={{
                         padding: '0.5rem 1rem',
