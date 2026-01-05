@@ -3,6 +3,8 @@ import { Inter, Noto_Sans_JP } from 'next/font/google';
 import Sidebar from '@/components/layout/Sidebar';
 import MainLayout from '@/components/layout/MainLayout';
 import ThemeInitializer from '@/components/common/ThemeInitializer';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import AuthGuard from '@/components/auth/AuthGuard';
 import './globals.css';
 
@@ -25,12 +27,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${inter.className} ${notoSansJP.className}`}>
-        <ThemeInitializer />
-        <AuthGuard>
-          <Sidebar />
-          <MainLayout>{children}</MainLayout>
-        </AuthGuard>
+      <body className={inter.className}>
+        <ErrorBoundary>
+          <ThemeInitializer />
+          <MainLayout>
+            {children}
+          </MainLayout>
+          {/* Notifications */}
+          <Toaster />
+        </ErrorBoundary>
       </body>
     </html>
   );
