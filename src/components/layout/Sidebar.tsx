@@ -337,7 +337,7 @@ export default function Sidebar() {
       </nav>
 
       <div className={styles.footer}>
-        <Link href="/settings" className={styles.navItem} style={{ fontSize: `${responsiveFontSize}px` }}>
+        <Link href="/settings" id="tutorial-nav-settings" className={styles.navItem} style={{ fontSize: `${responsiveFontSize}px` }}>
           <Settings className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>設定</span>
         </Link>
