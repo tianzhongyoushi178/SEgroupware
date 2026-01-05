@@ -166,7 +166,12 @@ export default function ChatListPage() {
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{thread.title}</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {thread.title}
+                                    {thread.unreadCount && thread.unreadCount > 0 ? (
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'red', display: 'inline-block' }} />
+                                    ) : null}
+                                </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                                     {activeTab === 'pending' ? `申請理由: ${thread.request_reason}` : `作成日: ${new Date(thread.created_at).toLocaleDateString()}`}
                                 </div>

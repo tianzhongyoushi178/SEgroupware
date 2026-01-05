@@ -316,6 +316,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const userId = get().currentUserId;
         if (!userId) return;
 
+        // Optimistically update local state to remove unread badge immediately
+        set(state => ({
+            threads: state.threads.map(t =>
+                t.id === threadId ? { ...t, unreadCount: 0 } : t
+            )
+        }));
+
         const now = new Date().toISOString();
         const { error } = await supabase
             .from('thread_participants')
@@ -326,8 +333,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }, { onConflict: 'thread_id,user_id' }); // Use the constraint name if known, or just columns
 
         if (error) console.error(error);
-
-        // Update local state if we tracked unread count
     },
 
     fetchThreadParticipants: async (threadId: string) => {
