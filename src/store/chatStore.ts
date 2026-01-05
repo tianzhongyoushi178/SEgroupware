@@ -44,6 +44,7 @@ interface ChatState {
 
     markThreadAsRead: (threadId: string) => Promise<void>;
     updateThreadSettings: (threadId: string, isPrivate: boolean, participantIds: string[]) => Promise<void>;
+    deleteThread: (threadId: string) => Promise<void>;
 
     // For notifications
     subscribeToAll: () => () => void;
@@ -268,6 +269,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 if (deleteError) throw deleteError;
             }
         }
+    },
+
+    deleteThread: async (threadId) => {
+        const { error } = await supabase
+            .from('threads')
+            .delete()
+            .eq('id', threadId);
+
+        if (error) throw error;
+        get().fetchThreads(); // Refresh list to remove deleted thread if viewing list (optional here)
     },
 
     markThreadAsRead: async (threadId) => {

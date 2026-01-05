@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check, Trash2 } from 'lucide-react';
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
@@ -20,10 +20,11 @@ export default function ChatRoomPage() {
         subscribeToAll,
         markThreadAsRead,
         updateThreadSettings,
-        fetchThreadParticipants
+        fetchThreadParticipants,
+        deleteThread
     } = useChatStore();
 
-    const { users: allUsers, fetchUsers } = useUserStore();
+    const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
 
     const [newMessage, setNewMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -107,6 +108,18 @@ export default function ChatRoomPage() {
             alert('設定の保存に失敗しました');
         }
     };
+
+    const handleDeleteThread = async () => {
+        if (!confirm('本当にこのスレッドを削除しますか？\nメッセージもすべて削除され、元に戻すことはできません。')) return;
+
+        try {
+            await deleteThread(threadId);
+            router.push('/chat'); // Back to list
+        } catch (e) {
+            console.error(e);
+            alert('削除に失敗しました');
+        }
+    }
 
     if (!currentThread && threads.length > 0) {
         // If threads loaded but not found
@@ -380,7 +393,12 @@ export default function ChatRoomPage() {
                                     border: '1px solid #ddd', borderRadius: '4px',
                                     maxHeight: '250px', overflowY: 'auto'
                                 }}>
-                                    {allUsers.length === 0 && <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーを読み込み中...</div>}
+                                    {isUsersLoading && allUsers.length === 0 && (
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーを読み込み中...</div>
+                                    )}
+                                    {!isUsersLoading && allUsers.length === 0 && (
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーが見つかりません</div>
+                                    )}
                                     {allUsers.map(u => (
                                         <label key={u.id} style={{
                                             display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -411,25 +429,40 @@ export default function ChatRoomPage() {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                            {/* Delete Button */}
                             <button
-                                onClick={() => setIsSettingsOpen(false)}
+                                onClick={handleDeleteThread}
                                 style={{
-                                    padding: '0.6rem 1.2rem', background: '#f0f0f0', color: '#333',
-                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                    padding: '0.6rem 1.2rem', background: 'transparent', color: '#d32f2f',
+                                    border: '1px solid #d32f2f', borderRadius: '4px', cursor: 'pointer',
+                                    fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem'
                                 }}
                             >
-                                キャンセル
+                                <Trash2 size={16} />
+                                スレッドを削除
                             </button>
-                            <button
-                                onClick={handleSaveSettings}
-                                style={{
-                                    padding: '0.6rem 1.2rem', background: '#007bff', color: 'white',
-                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
-                                }}
-                            >
-                                保存する
-                            </button>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    onClick={() => setIsSettingsOpen(false)}
+                                    style={{
+                                        padding: '0.6rem 1.2rem', background: '#f0f0f0', color: '#333',
+                                        border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                    }}
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    onClick={handleSaveSettings}
+                                    style={{
+                                        padding: '0.6rem 1.2rem', background: '#007bff', color: 'white',
+                                        border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                    }}
+                                >
+                                    保存する
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
