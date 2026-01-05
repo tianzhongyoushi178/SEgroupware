@@ -34,7 +34,7 @@ export default function Home() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {/* Quick Access Widget */}
-        <section className="glass-panel" style={{ padding: '1.5rem' }}>
+        <section id="tutorial-dashboard-quickaccess" className="glass-panel" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <LayoutDashboard size={20} color="var(--primary)" />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>クイックアクセス</h2>
@@ -79,7 +79,9 @@ export default function Home() {
         </section>
 
         {/* Notices Widget */}
-        <NoticesWidget />
+        <div id="tutorial-dashboard-notices" style={{ display: 'contents' }}>
+          <NoticesWidget />
+        </div>
       </div>
 
       <NoticeFormModal

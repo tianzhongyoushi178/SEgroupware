@@ -364,7 +364,7 @@ export default function SettingsPage() {
                         </section>
 
                         {/* 表示設定 */}
-                        <section className={styles.section}>
+                        <section id="tutorial-settings-theme" className={styles.section}>
                             <div className={styles.sectionHeader}>
                                 <div className={styles.headerContent}>
                                     <Sun size={20} style={{ color: '#f97316' }} />
