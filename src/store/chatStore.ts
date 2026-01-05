@@ -180,30 +180,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
 
         if (error) throw error;
-
-        // AI Chat Logic
-        if (content.trim().toUpperCase().startsWith('@AI')) {
-            try {
-                const prompt = content.replace(/^@AI/i, '').trim();
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [prompt], threadId }) // Pass threadId for server-side insert
-                });
-
-                if (!response.ok) {
-                    console.error('AI API Error');
-                    // Maybe insert a local error message?
-                    return;
-                }
-
-                // Client no longer needs to insert the message. 
-                // The API inserts it, and Supabase Realtime will push it to us!
-
-            } catch (aiError) {
-                console.error('AI Processing Error:', aiError);
-            }
-        }
     },
 
     updateThreadSettings: async (threadId: string, isPrivate: boolean, participantIds: string[]) => {

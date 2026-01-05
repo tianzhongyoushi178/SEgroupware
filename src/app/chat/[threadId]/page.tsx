@@ -318,11 +318,16 @@ export default function ChatRoomPage() {
                     >
                         <Paperclip size={24} />
                     </button>
-                    <input
-                        type="text"
+                    <textarea
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
-                        placeholder="メッセージを入力 (@AI でAIと会話)"
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend(e);
+                            }
+                        }}
+                        placeholder="メッセージを入力"
                         style={{
                             flex: 1,
                             padding: '0.75rem 1rem',
@@ -330,7 +335,11 @@ export default function ChatRoomPage() {
                             border: '1px solid #ccc',
                             background: 'white',
                             outline: 'none',
-                            fontSize: '0.95rem'
+                            fontSize: '0.95rem',
+                            resize: 'none',
+                            minHeight: '44px',
+                            maxHeight: '120px',
+                            fontFamily: 'inherit'
                         }}
                     />
                     <button
