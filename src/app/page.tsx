@@ -41,6 +41,24 @@ export default function Home() {
           </div>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             {showMeeting && (
+              <a
+                href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+              >
+                📅 会議室を予約
+              </a>
+            )}
+            {showNotice && (
+              <button
+                onClick={() => setIsNoticeModalOpen(true)}
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start' }}
+              >
+                📢 お知らせを投稿
+              </button>
             )}
             {profile?.preferences?.customQuickAccess?.map((item: any) => (
               <a
