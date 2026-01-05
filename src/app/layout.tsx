@@ -30,10 +30,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ErrorBoundary>
           <ThemeInitializer />
-          <MainLayout>
-            {children}
-          </MainLayout>
-          {/* Notifications */}
+          <AuthGuard>
+            <Sidebar />
+            <MainLayout>
+              {children}
+            </MainLayout>
+          </AuthGuard>
           <Toaster />
         </ErrorBoundary>
       </body>
