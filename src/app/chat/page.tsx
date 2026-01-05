@@ -292,7 +292,10 @@ export default function ChatListPage() {
                                                         }}
                                                         style={{ width: '1rem', height: '1rem' }}
                                                     />
-                                                    <span style={{ fontSize: '0.9rem' }}>{u.display_name}</span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{u.display_name}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: '#888' }}>{u.email}</span>
+                                                    </div>
                                                     {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
                                                 </label>
                                             ))}
