@@ -78,6 +78,34 @@ export default function TutorialOverlay() {
             position: 'center',
             requireAction: true
         },
+        // Dashboard Section
+        {
+            path: '/',
+            target: '#tutorial-dashboard-quickaccess',
+            title: 'ダッシュボード：クイックアクセス',
+            content: (
+                <div>
+                    <p className="mb-2">よく使う機能へすぐにアクセスできます。</p>
+                    <p className="text-sm text-gray-600">
+                        勤怠管理や経費精算など、頻繁に利用するツールへのリンク集です。<br />
+                        ご自身でよく使うリンクを追加・カスタマイズすることも可能です。
+                    </p>
+                </div>
+            ),
+            position: 'right'
+        },
+        {
+            path: '/',
+            target: '#tutorial-dashboard-notices',
+            title: 'ダッシュボード：最新のお知らせ',
+            content: (
+                <div>
+                    <p className="mb-2">直近の重要なお知らせがここに表示されます。</p>
+                    <p className="text-sm text-gray-600">クリックすると詳細画面が開き、内容を確認したり既読をつけることができます。</p>
+                </div>
+            ),
+            position: 'left'
+        },
         // Notices Section
         {
             path: '/notices',
@@ -98,9 +126,9 @@ export default function TutorialOverlay() {
             content: (
                 <div>
                     <p className="mb-2">ここから新しいお知らせを作成できます。</p>
-                    <p className="text-sm text-gray-600">
-                        全社員向け、または特定のラベルを付けて発信できます。<br />
-                        重要な情報は「重要」ラベルを付けることで目立たせることができます。
+                    <p className="text-sm text-gray-600 border-l-4 border-blue-500 pl-2 my-2 bg-gray-50 p-1">
+                        ボタンを押すと<strong>作成画面</strong>が開きます。<br />
+                        タイトル、本文を入力し、<strong>重要度（一般・重要など）</strong>を選択して投稿します。
                     </p>
                 </div>
             ),
@@ -138,8 +166,12 @@ export default function TutorialOverlay() {
             content: (
                 <div>
                     <p className="mb-2">新しいトピックについて話し合いたいときは、ここからスレッドを作成します。</p>
-                    <p className="text-sm text-gray-600">
-                        「プライベートスレッド」を選択すれば、招待したメンバーだけで秘密の会話も可能です。
+                    <p className="text-sm text-gray-600 border-l-4 border-blue-500 pl-2 my-2 bg-gray-50 p-1">
+                        ボタンを押すと<strong>スレッド作成画面</strong>が開きます。<br />
+                        <ul>
+                            <li>・スレッド名と作成理由を入力</li>
+                            <li>・<strong>プライベート設定</strong>をオンにすると、招待したメンバーのみ閲覧可能な秘密の部屋を作成できます</li>
+                        </ul>
                     </p>
                 </div>
             ),
