@@ -96,8 +96,8 @@ export default function Sidebar() {
     if (item.name === 'リンク集') {
       const customLinks = profile?.preferences?.customLinks || [];
       const customChildren = customLinks.map(link => ({
-        name: link.title,
-        href: link.url,
+        name: link.title || 'No Title',
+        href: link.url || '#',
         icon: ExternalLink
       }));
       // @ts-ignore
@@ -183,8 +183,9 @@ export default function Sidebar() {
 
         <div style={{ display: 'flex', flex: 1, justifyContent: 'space-around', flexWrap: 'wrap', gap: '2px' }}>
           {mobileNavigation.map((item: any) => {
+            if (!item || !item.href) return null; // Safety check
             const isActive = pathname === item.href;
-            const isExternal = item.href.startsWith('http');
+            const isExternal = typeof item.href === 'string' && item.href.startsWith('http');
             return (
               <Link
                 key={item.name}
