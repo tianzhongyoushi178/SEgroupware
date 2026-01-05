@@ -12,6 +12,7 @@ export interface ChatThread {
     created_at: string;
     unreadCount?: number;
     last_message_at?: string;
+    is_private?: boolean;
 }
 
 export interface ChatMessage {
@@ -42,9 +43,11 @@ interface ChatState {
     sendMessage: (threadId: string, content: string, authorName: string, file?: File) => Promise<void>;
 
     markThreadAsRead: (threadId: string) => Promise<void>;
+    updateThreadSettings: (threadId: string, isPrivate: boolean, participantIds: string[]) => Promise<void>;
 
     // For notifications
     subscribeToAll: () => () => void;
+    fetchThreadParticipants: (threadId: string) => Promise<string[]>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -176,6 +179,102 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
 
         if (error) throw error;
+
+        // AI Chat Logic
+        if (content.trim().toUpperCase().startsWith('@AI')) {
+            try {
+                const prompt = content.replace(/^@AI/i, '').trim();
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [prompt] })
+                });
+
+                if (!response.ok) {
+                    console.error('AI API Error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.response) {
+                    await supabase
+                        .from('messages')
+                        .insert({
+                            thread_id: threadId,
+                            content: data.response,
+                            author_id: '00000000-0000-0000-0000-000000000000', // AI ID
+                            author_name: 'AI',
+                        });
+                }
+            } catch (aiError) {
+                console.error('AI Processing Error:', aiError);
+            }
+        }
+    },
+
+    updateThreadSettings: async (threadId: string, isPrivate: boolean, participantIds: string[]) => {
+        // 1. Update thread privacy
+        const { error: threadError } = await supabase
+            .from('threads')
+            .update({ is_private: isPrivate })
+            .eq('id', threadId);
+
+        if (threadError) throw threadError;
+
+        // 2. Manage participants
+        // First, get current participants to avoid duplicates or identify removals if needed
+        // For simplicity, we can delete non-selected (except owner) or just upsert all selected.
+        // A safer approach for "set participants":
+        // simple approach: just insert ignore duplicates? 
+        // Better:
+        // If isPrivate is true, ensure these users are in thread_participants.
+
+        if (isPrivate && participantIds.length > 0) {
+            const participantsData = participantIds.map(uid => ({
+                thread_id: threadId,
+                user_id: uid,
+                last_read_at: new Date().toISOString() // Set initial read time or keep existing?
+            }));
+
+            // We use upsert to keep existing last_read_at if exists, but we need to match keys.
+            // However, the standard insert might fail if exists. 
+            // thread_participants has primary key (thread_id, user_id).
+            // Let's use upsert with ignoreDuplicates if we want to preserve read status?
+            // Actually, if we just want to GRANT access, we just need them to be in the table.
+
+            const { error: partError } = await supabase
+                .from('thread_participants')
+                .upsert(participantsData, { onConflict: 'thread_id,user_id', ignoreDuplicates: true });
+
+            if (partError) throw partError;
+        }
+
+        // Note: Removing participants who are NOT in the list is also important if we uncheck them.
+        // But the requirement says "select display target".
+        // If I limit visibility, I should probably remove those who are not selected?
+        // Let's implement full sync: remove those not in list (excluding creator/current user if needed).
+        // For safely, let's just ADD for now as per common "Invite" pattern, 
+        // OR if it's "Settings" it implies "Restriction".
+        // "表示対象者を選択できる" -> "Select viewers". Implies Only these users can view.
+        // So we should remove others.
+
+        if (isPrivate) {
+            // Remove users NOT in participantIds (and not the creator ideally, but creator should be in list or handled by RLS)
+            // We can't easily do "delete where user_id not in ..." without a complex query or multiple steps.
+            // Given the complexity, let's assume the UI sends the FULL list of desired participants.
+            // We will delete all and re-insert? No, that loses read status.
+            // We will delete where thread_id = id AND user_id NOT IN (ids).
+
+            if (participantIds.length > 0) {
+                const { error: deleteError } = await supabase
+                    .from('thread_participants')
+                    .delete()
+                    .eq('thread_id', threadId)
+                    .not('user_id', 'in', `(${participantIds.join(',')})`);
+
+                if (deleteError) throw deleteError;
+            }
+        }
     },
 
     markThreadAsRead: async (threadId) => {
@@ -194,6 +293,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (error) console.error(error);
 
         // Update local state if we tracked unread count
+    },
+
+    fetchThreadParticipants: async (threadId: string) => {
+        const { data, error } = await supabase
+            .from('thread_participants')
+            .select('user_id')
+            .eq('thread_id', threadId);
+
+        if (error) {
+            console.error('Error fetching participants', error);
+            return [];
+        }
+        return data.map(p => p.user_id);
     },
 
     subscribeToAll: () => {

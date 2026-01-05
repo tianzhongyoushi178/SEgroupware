@@ -5,11 +5,12 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon } from 'lucide-react';
+import { useUserStore } from '@/store/userStore';
+import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check } from 'lucide-react';
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
-    const { user, profile } = useAuthStore();
+    const { user, profile, isAdmin } = useAuthStore();
     const {
         messages,
         threads,
@@ -17,11 +18,19 @@ export default function ChatRoomPage() {
         sendMessage,
         initialize,
         subscribeToAll,
-        markThreadAsRead
+        markThreadAsRead,
+        updateThreadSettings,
+        fetchThreadParticipants
     } = useChatStore();
+
+    const { users: allUsers, fetchUsers } = useUserStore();
 
     const [newMessage, setNewMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -53,6 +62,20 @@ export default function ChatRoomPage() {
         }
     }, [currentMessages, user, threadId]);
 
+    // Fetch settings when modal opens
+    useEffect(() => {
+        if (isSettingsOpen) {
+            fetchUsers();
+            if (currentThread) {
+                setIsPrivate(currentThread.is_private || false);
+                // Fetch current participants
+                fetchThreadParticipants(threadId).then(ids => {
+                    setSelectedParticipants(ids);
+                });
+            }
+        }
+    }, [isSettingsOpen, threadId, currentThread]);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if ((!newMessage.trim() && !selectedFile) || !user || !profile) return;
@@ -74,6 +97,17 @@ export default function ChatRoomPage() {
         }
     };
 
+    const handleSaveSettings = async () => {
+        try {
+            await updateThreadSettings(threadId, isPrivate, selectedParticipants);
+            setIsSettingsOpen(false);
+            alert('設定を保存しました');
+        } catch (e) {
+            console.error(e);
+            alert('設定の保存に失敗しました');
+        }
+    };
+
     if (!currentThread && threads.length > 0) {
         // If threads loaded but not found
         return <div>Thread not found</div>;
@@ -86,7 +120,8 @@ export default function ChatRoomPage() {
             flexDirection: 'column',
             background: '#7297d2', // LINE-like background color
             borderRadius: '8px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative'
         }}>
             {/* Header */}
             <div style={{
@@ -95,17 +130,30 @@ export default function ChatRoomPage() {
                 display: 'flex', alignItems: 'center', gap: '1rem',
                 background: 'rgba(255,255,255,0.9)',
                 backdropFilter: 'blur(10px)',
-                zIndex: 10
+                zIndex: 10,
+                justifyContent: 'space-between'
             }}>
-                <button
-                    onClick={() => router.back()}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#333' }}
-                >
-                    <ArrowLeft />
-                </button>
-                <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
-                    {currentThread ? currentThread.title : 'Loading...'}
-                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button
+                        onClick={() => router.back()}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#333' }}
+                    >
+                        <ArrowLeft />
+                    </button>
+                    <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
+                        {currentThread ? currentThread.title : 'Loading...'}
+                        {currentThread?.is_private && <span style={{ fontSize: '0.8rem', marginLeft: '0.5rem', color: '#666' }}>🔒</span>}
+                    </h1>
+                </div>
+                {/* Settings Button (Only for creator or admin) */}
+                {(isAdmin || currentThread?.created_by === user?.id) && (
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}
+                    >
+                        <Settings size={20} />
+                    </button>
+                )}
             </div>
 
             {/* Messages Area */}
@@ -119,6 +167,7 @@ export default function ChatRoomPage() {
             }}>
                 {currentMessages.map((msg) => {
                     const isMe = msg.author_id === user?.id;
+                    const isAI = msg.author_name === 'AI';
                     return (
                         <div
                             key={msg.id}
@@ -144,7 +193,7 @@ export default function ChatRoomPage() {
                                 <div style={{
                                     padding: '0.75rem 1rem',
                                     borderRadius: '1.2rem',
-                                    background: isMe ? '#8de055' : 'white', // LINE green for me, white for others
+                                    background: isMe ? '#8de055' : (isAI ? '#eee' : 'white'), // AI messages slightly different?
                                     color: 'black',
                                     borderTopRightRadius: isMe ? '0' : '1.2rem',
                                     borderTopLeftRadius: !isMe ? '0' : '1.2rem',
@@ -259,7 +308,7 @@ export default function ChatRoomPage() {
                         type="text"
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
-                        placeholder="メッセージを入力"
+                        placeholder="メッセージを入力 (@AI でAIと会話)"
                         style={{
                             flex: 1,
                             padding: '0.75rem 1rem',
@@ -289,6 +338,102 @@ export default function ChatRoomPage() {
                     </button>
                 </form>
             </div>
+
+            {/* Settings Modal */}
+            {isSettingsOpen && (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.5)', zIndex: 100,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center'
+                }}>
+                    <div style={{
+                        background: 'white', borderRadius: '8px', padding: '1.5rem',
+                        width: '90%', maxWidth: '500px', maxHeight: '90%', overflowY: 'auto',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>スレッド設定</h2>
+                            <button onClick={() => setIsSettingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem' }}><X size={24} /></button>
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={isPrivate}
+                                    onChange={e => setIsPrivate(e.target.checked)}
+                                    style={{ width: '1.2rem', height: '1.2rem' }}
+                                />
+                                プライベートスレッド（参加者限定）
+                            </label>
+                            <p style={{ fontSize: '0.85rem', color: '#666', marginLeft: '2rem', marginTop: '0.5rem' }}>
+                                チェックを入れると、選択したユーザーのみがこのスレッドを閲覧・投稿できるようになります。
+                            </p>
+                        </div>
+
+                        {isPrivate && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#555' }}>
+                                    参加者を選択 ({selectedParticipants.length}名)
+                                </h3>
+                                <div style={{
+                                    border: '1px solid #ddd', borderRadius: '4px',
+                                    maxHeight: '250px', overflowY: 'auto'
+                                }}>
+                                    {allUsers.length === 0 && <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーを読み込み中...</div>}
+                                    {allUsers.map(u => (
+                                        <label key={u.id} style={{
+                                            display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                            padding: '0.75rem', borderBottom: '1px solid #eee', cursor: 'pointer',
+                                            background: selectedParticipants.includes(u.id) ? '#f0f9ff' : 'white',
+                                            transition: 'background 0.2s'
+                                        }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedParticipants.includes(u.id)}
+                                                onChange={e => {
+                                                    if (e.target.checked) {
+                                                        setSelectedParticipants(prev => [...prev, u.id]);
+                                                    } else {
+                                                        setSelectedParticipants(prev => prev.filter(id => id !== u.id));
+                                                    }
+                                                }}
+                                                style={{ width: '1.1rem', height: '1.1rem' }}
+                                            />
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontWeight: '500' }}>{u.display_name || '名称未設定'}</span>
+                                                <span style={{ fontSize: '0.75rem', color: '#888' }}>{u.email}</span>
+                                            </div>
+                                            {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                            <button
+                                onClick={() => setIsSettingsOpen(false)}
+                                style={{
+                                    padding: '0.6rem 1.2rem', background: '#f0f0f0', color: '#333',
+                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                }}
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={handleSaveSettings}
+                                style={{
+                                    padding: '0.6rem 1.2rem', background: '#007bff', color: 'white',
+                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                }}
+                            >
+                                保存する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
