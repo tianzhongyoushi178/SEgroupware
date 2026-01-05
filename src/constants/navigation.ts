@@ -3,6 +3,7 @@ import { LayoutDashboard, Bell, MessageSquare, Wrench, FileText, Bot, Link, Exte
 export const navigation = [
     { name: 'ダッシュボード', href: '/', icon: LayoutDashboard },
     { name: 'お知らせ', href: '/notices', icon: Bell },
+    { name: 'チャット', href: '/chat', icon: MessageSquare },
     {
         name: 'AIツール',
         href: '#ai-tools',

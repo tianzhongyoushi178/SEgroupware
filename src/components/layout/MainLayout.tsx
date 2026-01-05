@@ -13,7 +13,11 @@ const tools = [
     { path: '/ocr-tools', title: 'OCRツール', url: 'https://ocr-768252222357.us-west1.run.app/' },
 ];
 
+import { useChatStore } from '@/store/chatStore';
+import { requestNotificationPermission } from '@/lib/notifications';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
+
+import { useAuthStore } from '@/store/authStore';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -31,11 +35,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, []);
 
     const { subscribeNotices } = useNoticeStore();
+    const { subscribeToAll: subscribeChat, initialize: initChat } = useChatStore();
+    const { user } = useAuthStore();
 
     useEffect(() => {
-        const unsubscribe = subscribeNotices();
-        return () => unsubscribe();
-    }, []);
+        // Request notification permission
+        requestNotificationPermission();
+
+        const unsubscribeNotices = subscribeNotices();
+        let unsubscribeChat = () => { };
+
+        if (user) {
+            initChat(user.id);
+            unsubscribeChat = subscribeChat();
+        }
+
+        return () => {
+            unsubscribeNotices();
+            unsubscribeChat();
+        };
+    }, [user]);
 
     return (
         <main

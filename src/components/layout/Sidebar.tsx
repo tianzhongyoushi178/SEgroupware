@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import styles from './Sidebar.module.css';
 import { useAuthStore } from '@/store/authStore';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useNoticeStore } from '@/store/noticeStore';
 import { useEffect, useState } from 'react';
 import { navigation } from '@/constants/navigation';
 
@@ -216,15 +217,24 @@ export default function Sidebar() {
 
       <Link href="/" className={styles.logo} style={{ textDecoration: 'none', color: 'inherit' }}>
         <Image src="/logo.png" alt="Logo" width={64} height={48} style={{ borderRadius: '8px' }} />
-        <span className={styles.logoText} style={{ fontSize: `${Math.max(1.2, responsiveFontSize / 10)}rem` }}>SALES HUB</span>
+        <span className={styles.logoText} style={{ fontSize: `${Math.max(1.2, responsiveFontSize / 10)}rem` }}>Sales Hub</span>
       </Link>
 
       <nav className={styles.nav}>
         {filteredNavigation.map((item) => {
-          // @ts-ignore - Dynamic type handling
+          // @ts-ignore
           const hasChildren = item.children && item.children.length > 0;
           const isActive = pathname === item.href;
           const isOpen = openMenus[item.name];
+
+          // Badge Logic
+          let badgeCount = 0;
+          // Note: using direct store access inside map is fine for small items, or better use hooks above.
+          // For simplicity/performance in this file context:
+          if (item.name === 'お知らせ') {
+            // We need to access the store state. Since we can't call hooks inside callback,
+            // we should compute badges outside.
+          }
 
           if (hasChildren) {
             return (
@@ -269,10 +279,23 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={clsx(styles.navItem, isActive && styles.active)}
-              style={{ fontSize: `${responsiveFontSize}px` }}
+              style={{ fontSize: `${responsiveFontSize}px`, position: 'relative' }}
             >
               <item.icon className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+              {item.name === 'お知らせ' && useNoticeStore.getState().notices.filter(n => !n.isRead).length > 0 && (
+                <span style={{
+                  marginLeft: 'auto', background: 'red', color: 'white',
+                  fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '1rem'
+                }}>
+                  {useNoticeStore.getState().notices.filter(n => !n.isRead).length}
+                </span>
+              )}
+              {item.name === 'チャット' && (
+                // Placeholder for chat badge logic or use store if available
+                // For now we don't have accurate unread count logic implemented in store yet
+                null
+              )}
             </Link>
           );
         })}

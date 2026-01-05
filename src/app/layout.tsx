@@ -14,7 +14,7 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: 'SALES HUB',
+  title: 'Sales Hub',
   description: 'Sales Hub Application',
 };
 
