@@ -5,6 +5,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import ThemeInitializer from '@/components/common/ThemeInitializer';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import TutorialOverlay from '@/components/tutorial/TutorialOverlay';
 import AuthGuard from '@/components/auth/AuthGuard';
 import './globals.css';
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             <MainLayout>
               {children}
             </MainLayout>
+            <TutorialOverlay />
           </AuthGuard>
           <Toaster />
         </ErrorBoundary>
