@@ -437,7 +437,7 @@ export default function TutorialOverlay() {
                             color: '#374151'
                         }}
                         className={`
-                            px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-all shadow-sm
+                            px-8 py-3 rounded-full text-base font-bold hover:bg-gray-50 transition-all shadow-sm
                             ${stepIndex === 0 ? 'invisible' : ''}
                         `}
                     >
@@ -453,8 +453,8 @@ export default function TutorialOverlay() {
                             border: 'none'
                         }}
                         className={`
-                            flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-sm
-                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700'}
+                            flex items-center gap-2 px-10 py-3 rounded-full text-lg font-bold transition-all shadow-md
+                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
