@@ -32,7 +32,7 @@ interface ChatState {
 
     initialize: (userId: string) => void;
     fetchThreads: () => Promise<void>;
-    startThread: (title: string, reason: string) => Promise<void>;
+    startThread: (title: string, reason: string, initialStatus?: 'pending' | 'approved') => Promise<void>;
     updateThreadStatus: (threadId: string, status: 'approved' | 'rejected') => Promise<void>;
 
     fetchMessages: (threadId: string) => Promise<void>;
@@ -86,7 +86,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ threads: threads as ChatThread[], isLoading: false });
     },
 
-    startThread: async (title, reason) => {
+    startThread: async (title, reason, initialStatus = 'pending') => {
         const userId = get().currentUserId;
         if (!userId) return;
 
@@ -95,7 +95,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .insert({
                 title,
                 request_reason: reason,
-                status: 'pending',
+                status: initialStatus,
                 created_by: userId
             });
 

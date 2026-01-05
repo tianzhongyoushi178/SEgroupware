@@ -28,11 +28,16 @@ export default function ChatListPage() {
     const handleCreateThread = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await startThread(newThreadTitle, newThreadReason);
+            const status = isAdmin ? 'approved' : 'pending';
+            await startThread(newThreadTitle, newThreadReason, status);
             setIsModalOpen(false);
             setNewThreadTitle('');
             setNewThreadReason('');
-            alert('スレッド作成を申請しました。管理者の承認をお待ちください。');
+            if (isAdmin) {
+                alert('スレッドを作成しました。');
+            } else {
+                alert('スレッド作成を申請しました。管理者の承認をお待ちください。');
+            }
         } catch (error) {
             alert('エラーが発生しました');
         }
@@ -184,7 +189,9 @@ export default function ChatListPage() {
                         background: 'var(--surface)', padding: '2rem', borderRadius: '1rem',
                         width: '90%', maxWidth: '500px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}>
-                        <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>新規スレッド作成申請</h2>
+                        <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                            {isAdmin ? '新規スレッド作成' : '新規スレッド作成申請'}
+                        </h2>
                         <form onSubmit={handleCreateThread}>
                             <div style={{ marginBottom: '1rem' }}>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>スレッド名</label>
@@ -232,7 +239,7 @@ export default function ChatListPage() {
                                         border: 'none', borderRadius: '0.5rem', cursor: 'pointer'
                                     }}
                                 >
-                                    申請する
+                                    {isAdmin ? '作成する' : '申請する'}
                                 </button>
                             </div>
                         </form>
