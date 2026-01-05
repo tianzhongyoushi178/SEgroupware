@@ -219,7 +219,7 @@ export default function ChatListPage() {
                     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                    <div style={{
+                    <div id="tutorial-chat-modal" style={{
                         background: 'var(--surface)', padding: '2rem', borderRadius: '1rem',
                         width: '90%', maxWidth: '500px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}>

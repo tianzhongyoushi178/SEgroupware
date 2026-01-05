@@ -44,6 +44,7 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
 
     return (
         <div
+            id='tutorial-notice-modal'
             style={{
                 position: 'fixed',
                 top: 0,
