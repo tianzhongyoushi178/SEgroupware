@@ -431,22 +431,30 @@ export default function TutorialOverlay() {
                 <div className="flex justify-between items-center pt-6 mt-2 border-t border-gray-100">
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
+                        style={{
+                            background: 'white',
+                            border: '1px solid #d1d5db',
+                            color: '#374151'
+                        }}
                         className={`
-                            px-4 py-2 rounded-lg text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-all
+                            px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-all shadow-sm
                             ${stepIndex === 0 ? 'invisible' : ''}
                         `}
                     >
-                        前に戻る
+                        戻る
                     </button>
 
                     <button
                         onClick={handleNext}
                         disabled={!canProceed}
+                        style={{
+                            background: canProceed ? '#2563eb' : '#e5e7eb',
+                            color: canProceed ? 'white' : '#9ca3af',
+                            border: 'none'
+                        }}
                         className={`
                             flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-sm
-                            ${canProceed
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
