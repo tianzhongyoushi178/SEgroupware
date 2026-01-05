@@ -38,7 +38,7 @@ export default function TutorialOverlay() {
             content: (
                 <div>
                     <p className="mb-4">新しいグループウェア「Sales Hub」へようこそ。</p>
-                    <p>あなたとチームの業務効率化をサポートする、パワフルなプラットフォームです。</p>
+                    <p>あなたとチームの業務効率化をサポートする、<br />パワフルなプラットフォームです。</p>
                 </div>
             ),
             position: 'center'
@@ -47,7 +47,7 @@ export default function TutorialOverlay() {
             title: '基本設定（必須）',
             content: (
                 <div>
-                    <p className="mb-4 text-base text-gray-600">まずは、チームメンバーに表示するあなたの名前を設定してください。</p>
+                    <p className="mb-4 text-base text-gray-600">まずは、チームメンバーに表示するあなたの名前を<br />設定してください。</p>
                     <div className="mb-2">
                         <label className="block text-sm font-bold mb-1">表示名</label>
                         <input
@@ -89,8 +89,10 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">よく使う機能へすぐにアクセスできます。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        勤怠管理や経費精算など、頻繁に利用するツールへのリンク集です。<br />
-                        ご自身でよく使うリンクを追加・カスタマイズすることも可能です。
+                        勤怠管理や経費精算など、頻繁に利用するツールへの<br />
+                        リンク集です。<br />
+                        ご自身でよく使うリンクを追加・<br />
+                        カスタマイズすることも可能です。
                     </p>
                 </div>
             ),
@@ -118,7 +120,8 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">「お知らせ」メニューです。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        会社全体、または部署内の連絡事項を確認・発信するときはここをクリックします。
+                        部署内の連絡事項を確認・<br />
+                        発信するときはここをクリックします。
                     </p>
                 </div>
             ),
@@ -133,9 +136,6 @@ export default function TutorialOverlay() {
             content: (
                 <div>
                     <p className="mb-2">ここから新しいお知らせを作成できます。</p>
-                    <p className="text-base text-gray-600 leading-relaxed">
-                        全社員向け、または部署限定など、ターゲットを絞って発信できます。
-                    </p>
                 </div>
             ),
             position: 'bottom',
@@ -148,8 +148,9 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">作成画面が開きました。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        タイトル、本文を入力し、<strong>重要度</strong>を選択して投稿します。<br />
-                        ここで入力した内容は全社員に通知されます。
+                        タイトル、本文を入力し、重要度を選択して<br />
+                        投稿します。<br />
+                        ここで入力した内容は全ツール使用者に通知されます。
                     </p>
                 </div>
             ),
@@ -166,7 +167,8 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">「チャット」メニューです。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        チームメンバーとのリアルタイムなやり取りはここから行います。
+                        チームメンバーとのリアルタイムなやり取りは<br />
+                        ここから行います。
                     </p>
                 </div>
             ),
@@ -179,7 +181,7 @@ export default function TutorialOverlay() {
             title: 'スレッドの作成',
             content: (
                 <div>
-                    <p className="mb-2">新しいトピックについて話し合いたいときは、ここからスレッドを作成します。</p>
+                    <p className="mb-2">新しいトピックについて話し合いたいときは、<br />ここからスレッドを作成します。</p>
                 </div>
             ),
             position: 'bottom',
@@ -192,10 +194,9 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">スレッドの設定画面です。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        <ul>
-                            <li className="mb-1">・<strong>プライベート設定</strong>：招待したメンバーのみ閲覧可能な秘密の部屋を作成できます。</li>
-                            <li>・参加者を選択して、すぐに議論を開始できます。</li>
-                        </ul>
+                        ・プライベート設定：招待したメンバーのみ<br />
+                        閲覧可能な秘密の部屋を作成できます。<br />
+                        ・参加者を選択して、すぐに議論を開始できます。
                     </p>
                 </div>
             ),
@@ -212,7 +213,8 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">最後に、「設定」メニューです。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        個人の設定やアプリケーションの表示設定はここから変更します。
+                        個人の設定やアプリケーションの表示設定は<br />
+                        ここから変更します。
                     </p>
                 </div>
             ),
@@ -227,7 +229,8 @@ export default function TutorialOverlay() {
                 <div>
                     <p className="mb-2">自分好みの見た目にカスタマイズできます。</p>
                     <p className="text-base text-gray-600 leading-relaxed">
-                        ダークモードへの切り替えや、アクセントカラーの変更が可能です。
+                        ダークモードへの切り替えや、<br />
+                        アクセントカラーの変更が可能です。
                     </p>
                 </div>
             ),
@@ -249,7 +252,14 @@ export default function TutorialOverlay() {
         },
         {
             title: '準備完了！',
-            content: <p className="text-lg">これでツアーは終了です。さあ、Sales Hubでの業務を始めましょう！</p>,
+            content: (
+                <div>
+                    <p className="text-lg">
+                        これでツアーは終了です。<br />
+                        さあ、Sales Hubでの業務を始めましょう！
+                    </p>
+                </div>
+            ),
             position: 'center'
         }
     ];
