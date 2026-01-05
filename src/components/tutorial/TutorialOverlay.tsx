@@ -428,7 +428,18 @@ export default function TutorialOverlay() {
                     {currentStep.content}
                 </div>
 
-                <div className="flex justify-between items-center pt-8 mt-10 border-t border-gray-100">
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '40px',
+                        paddingTop: '24px',
+                        borderTop: '1px solid #f3f4f6',
+                        width: '100%'
+                    }}
+                >
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
                         style={{
@@ -442,7 +453,8 @@ export default function TutorialOverlay() {
                             fontWeight: 'bold',
                             display: 'flex',
                             justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            cursor: 'pointer'
                         }}
                         className={`
                             hover:bg-gray-50 transition-all shadow-sm
@@ -467,11 +479,12 @@ export default function TutorialOverlay() {
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            cursor: canProceed ? 'pointer' : 'not-allowed'
                         }}
                         className={`
                             transition-all shadow-md
-                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}
+                            ${!canProceed ? '' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
