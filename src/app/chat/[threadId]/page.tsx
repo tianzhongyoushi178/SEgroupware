@@ -70,25 +70,43 @@ export default function ChatRoomPage() {
     }
 
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+            height: 'calc(100vh - 4rem)', // Adjust for MainLayout padding
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#7297d2', // LINE-like background color
+            borderRadius: '8px',
+            overflow: 'hidden'
+        }}>
             {/* Header */}
             <div style={{
-                padding: '1rem', borderBottom: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--surface)'
+                padding: '1rem',
+                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                display: 'flex', alignItems: 'center', gap: '1rem',
+                background: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'blur(10px)',
+                zIndex: 10
             }}>
                 <button
                     onClick={() => router.back()}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#333' }}
                 >
                     <ArrowLeft />
                 </button>
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
                     {currentThread ? currentThread.title : 'Loading...'}
                 </h1>
             </div>
 
             {/* Messages Area */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
                 {currentMessages.map((msg) => {
                     const isMe = msg.author_id === user?.id;
                     return (
@@ -98,29 +116,39 @@ export default function ChatRoomPage() {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: isMe ? 'flex-end' : 'flex-start',
-                                maxWidth: '70%',
+                                maxWidth: '80%',
                                 alignSelf: isMe ? 'flex-end' : 'flex-start'
                             }}
                         >
                             {!isMe && (
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'white', marginBottom: '0.25rem', paddingLeft: '0.5rem' }}>
                                     {msg.author_name}
                                 </span>
                             )}
                             <div style={{
-                                padding: '0.75rem 1rem',
-                                borderRadius: '1rem',
-                                background: isMe ? 'var(--primary)' : 'var(--surface-active)',
-                                color: isMe ? 'white' : 'var(--text)',
-                                borderTopRightRadius: isMe ? '0' : '1rem',
-                                borderTopLeftRadius: !isMe ? '0' : '1rem',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                display: 'flex',
+                                alignItems: 'flex-end',
+                                gap: '0.5rem',
+                                flexDirection: isMe ? 'row-reverse' : 'row'
                             }}>
-                                {msg.content}
+                                <div style={{
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '1.2rem',
+                                    background: isMe ? '#8de055' : 'white', // LINE green for me, white for others
+                                    color: 'black',
+                                    borderTopRightRadius: isMe ? '0' : '1.2rem',
+                                    borderTopLeftRadius: !isMe ? '0' : '1.2rem',
+                                    position: 'relative',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                                    wordBreak: 'break-word',
+                                    lineHeight: '1.5'
+                                }}>
+                                    {msg.content}
+                                </div>
+                                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
+                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
                             </div>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
                         </div>
                     );
                 })}
@@ -131,30 +159,45 @@ export default function ChatRoomPage() {
             <form
                 onSubmit={handleSend}
                 style={{
-                    padding: '1rem', background: 'var(--surface)', borderTop: '1px solid var(--border)',
-                    display: 'flex', gap: '0.5rem'
+                    padding: '0.75rem 1rem',
+                    background: '#f0f0f0',
+                    borderTop: '1px solid #ddd',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'center'
                 }}
             >
                 <input
                     type="text"
                     value={newMessage}
                     onChange={e => setNewMessage(e.target.value)}
-                    placeholder="メッセージを入力..."
+                    placeholder="メッセージを入力"
                     style={{
-                        flex: 1, padding: '0.75rem', borderRadius: '0.5rem',
-                        border: '1px solid var(--border)', background: 'var(--background)'
+                        flex: 1,
+                        padding: '0.75rem 1rem',
+                        borderRadius: '20px',
+                        border: '1px solid #ccc',
+                        background: 'white',
+                        outline: 'none',
+                        fontSize: '0.95rem'
                     }}
                 />
                 <button
                     type="submit"
                     disabled={!newMessage.trim()}
                     style={{
-                        padding: '0.5rem 1rem', background: 'var(--primary)', color: 'white',
-                        border: 'none', borderRadius: '0.5rem', cursor: 'pointer',
-                        opacity: !newMessage.trim() ? 0.5 : 1
+                        background: 'transparent',
+                        color: newMessage.trim() ? '#007bff' : '#ccc',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0.5rem',
+                        transition: 'color 0.2s'
                     }}
                 >
-                    <Send />
+                    <Send size={24} />
                 </button>
             </form>
         </div>
