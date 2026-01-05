@@ -21,6 +21,9 @@ export interface ChatMessage {
     author_id: string;
     author_name: string;
     created_at: string;
+    attachment_url?: string;
+    attachment_type?: string;
+    attachment_name?: string;
 }
 
 interface ChatState {
@@ -36,7 +39,7 @@ interface ChatState {
     updateThreadStatus: (threadId: string, status: 'approved' | 'rejected') => Promise<void>;
 
     fetchMessages: (threadId: string) => Promise<void>;
-    sendMessage: (threadId: string, content: string, authorName: string) => Promise<void>;
+    sendMessage: (threadId: string, content: string, authorName: string, file?: File) => Promise<void>;
 
     markThreadAsRead: (threadId: string) => Promise<void>;
 
@@ -130,9 +133,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
     },
 
-    sendMessage: async (threadId, content, authorName) => {
+    sendMessage: async (threadId, content, authorName, file) => {
         const userId = get().currentUserId;
         if (!userId) return;
+
+        let attachment_url = null;
+        let attachment_type = null;
+        let attachment_name = null;
+
+        if (file) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const filePath = `${threadId}/${userId}/${fileName}`;
+
+            const { error: uploadError } = await supabase
+                .storage
+                .from('chat-attachments')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase
+                .storage
+                .from('chat-attachments')
+                .getPublicUrl(filePath);
+
+            attachment_url = publicUrl;
+            attachment_type = file.type;
+            attachment_name = file.name;
+        }
 
         const { error } = await supabase
             .from('messages')
@@ -140,11 +169,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 thread_id: threadId,
                 content,
                 author_id: userId,
-                author_name: authorName
+                author_name: authorName,
+                attachment_url,
+                attachment_type,
+                attachment_name
             });
 
         if (error) throw error;
-        // Optimistic update or wait for subscription
     },
 
     markThreadAsRead: async (threadId) => {
