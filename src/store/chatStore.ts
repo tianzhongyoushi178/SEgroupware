@@ -65,32 +65,66 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     fetchThreads: async () => {
         set({ isLoading: true });
-        // Fetch all threads. Policies will filter if needed, but for now fetch all.
-        const { data: threads, error } = await supabase
+
+        const userId = get().currentUserId;
+
+        // 1. Fetch threads
+        const { data: threadsData, error: threadsError } = await supabase
             .from('threads')
             .select('*')
+            .order('last_message_at', { ascending: false, nullsFirst: false }) // Sort by latest message
+            .order('last_message_at', { ascending: false }) // Sort by latest activity
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching threads', error);
-            set({ error: error.message, isLoading: false });
+        if (threadsError) {
+            console.error('Error fetching threads', threadsError);
+            set({ error: threadsError.message, isLoading: false });
             return;
         }
 
-        // Fetch unread status (simplified: fetching participant record)
-        const userId = get().currentUserId;
-        if (userId) {
+        let threads = threadsData as ChatThread[];
+
+        // 2. Fetch user's read status for these threads
+        if (userId && threads.length > 0) {
             const { data: participants } = await supabase
                 .from('thread_participants')
-                .select('*')
+                .select('thread_id, last_read_at')
                 .eq('user_id', userId);
 
-            // To calculate unread accurately we need 'last_message_at' on thread or similar.
-            // For now, we rely on checking messages logic or we just default unreadCount to 0 until we have a better query.
-            // We can implement a separate logic to fetch unread counts if needed.
+            const readMap = new Map<string, string>();
+            participants?.forEach(p => {
+                readMap.set(p.thread_id, p.last_read_at);
+            });
+
+            // 3. Calculate unread
+            threads = threads.map(thread => {
+                const lastRead = readMap.get(thread.id);
+                const lastMessage = thread.last_message_at;
+
+                // If no last_message_at, no unread.
+                // If I haven't read (no record), and there is a message, it's unread? 
+                //   Or if I was added recently?
+                //   Let's assume: if record exists, compare. If no record, strictly "unread" if messages exist?
+                //   Usually "startThread" adds the creator. "updateThreadSettings" adds participants.
+                //   So record should exist for valid participants.
+
+                let isUnread = false;
+                if (lastMessage) {
+                    if (!lastRead) {
+                        isUnread = true; // Never read
+                    } else {
+                        isUnread = new Date(lastMessage) > new Date(lastRead);
+                    }
+                }
+
+                return {
+                    ...thread,
+                    unreadCount: isUnread ? 1 : 0 // Simply binary for now
+                };
+            });
         }
 
-        set({ threads: threads as ChatThread[], isLoading: false });
+        set({ threads, isLoading: false });
     },
 
     startThread: async (title, reason, isPrivate = false, participantIds: string[] = [], initialStatus = 'pending') => {
