@@ -25,7 +25,7 @@ export const useUserStore = create<UserState>((set) => ({
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('id, email, display_name, avatar_url')
+                .select('*')
                 .order('display_name');
 
             if (error) throw error;
