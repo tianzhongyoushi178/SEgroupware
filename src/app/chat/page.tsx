@@ -21,13 +21,14 @@ export default function ChatListPage() {
     const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
     const router = useRouter();
 
-    useEffect(() => {
-        if (user) {
-            initialize(user.id);
-            const unsubscribe = subscribeToAll();
-            return () => unsubscribe();
-        }
-    }, [user]);
+    // Global initialization is handled in Sidebar/Layout
+    // useEffect(() => {
+    //     if (user) {
+    //         initialize(user.id);
+    //         const unsubscribe = subscribeToAll();
+    //         return () => unsubscribe();
+    //     }
+    // }, [user]);
 
     useEffect(() => {
         if (isModalOpen) {

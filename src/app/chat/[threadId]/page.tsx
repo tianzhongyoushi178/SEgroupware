@@ -41,8 +41,9 @@ export default function ChatRoomPage() {
 
     useEffect(() => {
         if (user) {
-            initialize(user.id);
-            const unsubscribe = subscribeToAll();
+            // Global initialization is handled in Sidebar
+            // initialize(user.id);
+            // const unsubscribe = subscribeToAll();
 
             // Initial fetch for this thread
             fetchMessages(threadId);
@@ -50,7 +51,7 @@ export default function ChatRoomPage() {
             // Mark as read on enter
             markThreadAsRead(threadId);
 
-            return () => unsubscribe();
+            // return () => unsubscribe();
         }
     }, [user, threadId]);
 
