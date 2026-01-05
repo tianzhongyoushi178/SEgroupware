@@ -433,11 +433,11 @@ export default function TutorialOverlay() {
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
                         style={{
                             background: 'white',
-                            border: '2px solid #d1d5db', // Thicker border
+                            border: '1px solid #d1d5db',
                             color: '#374151',
-                            padding: '12px 32px', // Explicit large padding
+                            padding: '10px 24px',
                             borderRadius: '9999px',
-                            fontSize: '16px',
+                            fontSize: '14px',
                             fontWeight: 'bold'
                         }}
                         className={`
@@ -455,14 +455,14 @@ export default function TutorialOverlay() {
                             background: canProceed ? '#2563eb' : '#e5e7eb',
                             color: canProceed ? 'white' : '#9ca3af',
                             border: 'none',
-                            padding: '14px 48px', // Very large padding
+                            padding: '12px 40px',
                             borderRadius: '9999px',
-                            fontSize: '18px',
+                            fontSize: '16px',
                             fontWeight: 'bold'
                         }}
                         className={`
                             flex items-center gap-2 transition-all shadow-md
-                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-1'}
+                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
