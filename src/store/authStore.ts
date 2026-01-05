@@ -172,31 +172,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (error) throw error;
 
         // Optimistic update
-        profile: { ...currentProfile, preferences: newPreferences
-}
+        if (currentProfile) {
+            set({
+                profile: { ...currentProfile, preferences: newPreferences }
             });
         }
     },
 
-completeTutorial: async () => {
-    const user = get().user;
-    if (!user) return;
+    completeTutorial: async () => {
+        const user = get().user;
+        if (!user) return;
 
-    const { error } = await supabase
-        .from('profiles')
-        .update({ is_tutorial_completed: true })
-        .eq('id', user.id);
+        const { error } = await supabase
+            .from('profiles')
+            .update({ is_tutorial_completed: true })
+            .eq('id', user.id);
 
-    if (error) {
-        console.error('Failed to complete tutorial:', error);
-        return;
+        if (error) {
+            console.error('Failed to complete tutorial:', error);
+            return;
+        }
+
+        const currentProfile = get().profile;
+        if (currentProfile) {
+            set({
+                profile: { ...currentProfile, isTutorialCompleted: true }
+            });
+        }
     }
-
-    const currentProfile = get().profile;
-    if (currentProfile) {
-        set({
-            profile: { ...currentProfile, isTutorialCompleted: true }
-        });
-    }
-}
 }));
