@@ -428,16 +428,20 @@ export default function TutorialOverlay() {
                     {currentStep.content}
                 </div>
 
-                <div className="flex justify-between items-center pt-6 mt-2 border-t border-gray-100">
+                <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100">
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
                         style={{
                             background: 'white',
-                            border: '1px solid #d1d5db',
-                            color: '#374151'
+                            border: '2px solid #d1d5db', // Thicker border
+                            color: '#374151',
+                            padding: '12px 32px', // Explicit large padding
+                            borderRadius: '9999px',
+                            fontSize: '16px',
+                            fontWeight: 'bold'
                         }}
                         className={`
-                            px-8 py-3 rounded-full text-base font-bold hover:bg-gray-50 transition-all shadow-sm
+                            hover:bg-gray-50 transition-all shadow-sm
                             ${stepIndex === 0 ? 'invisible' : ''}
                         `}
                     >
@@ -450,11 +454,15 @@ export default function TutorialOverlay() {
                         style={{
                             background: canProceed ? '#2563eb' : '#e5e7eb',
                             color: canProceed ? 'white' : '#9ca3af',
-                            border: 'none'
+                            border: 'none',
+                            padding: '14px 48px', // Very large padding
+                            borderRadius: '9999px',
+                            fontSize: '18px',
+                            fontWeight: 'bold'
                         }}
                         className={`
-                            flex items-center gap-2 px-10 py-3 rounded-full text-lg font-bold transition-all shadow-md
-                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}
+                            flex items-center gap-2 transition-all shadow-md
+                            ${!canProceed ? 'cursor-not-allowed' : 'hover:bg-blue-700 hover:shadow-lg hover:-translate-y-1'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
