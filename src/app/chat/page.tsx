@@ -3,18 +3,21 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { useChatStore } from '@/store/chatStore';
-import { Plus, MessageSquare, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useUserStore } from '@/store/userStore';
+import { Plus, MessageSquare, Clock, CheckCircle, XCircle, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function ChatListPage() {
     const { user, isAdmin } = useAuthStore();
     const { threads, fetchThreads, startThread, updateThreadStatus, initialize, subscribeToAll } = useChatStore();
+    const { users: allUsers, fetchUsers } = useUserStore();
     const [activeTab, setActiveTab] = useState<'approved' | 'pending'>('approved');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newThreadTitle, setNewThreadTitle] = useState('');
     const [newThreadReason, setNewThreadReason] = useState('');
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -25,11 +28,21 @@ export default function ChatListPage() {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (isModalOpen) {
+            fetchUsers();
+            setNewThreadTitle('');
+            setNewThreadReason('');
+            setIsPrivate(false);
+            setSelectedParticipants([]);
+        }
+    }, [isModalOpen]);
+
     const handleCreateThread = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const status = isAdmin ? 'approved' : 'pending';
-            await startThread(newThreadTitle, newThreadReason, status);
+            await startThread(newThreadTitle, newThreadReason, isPrivate, selectedParticipants, status);
             setIsModalOpen(false);
             setNewThreadTitle('');
             setNewThreadReason('');
@@ -87,23 +100,23 @@ export default function ChatListPage() {
                 </button>
             </div>
 
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)' }}>
-                <button
-                    onClick={() => setActiveTab('approved')}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: activeTab === 'approved' ? '2px solid var(--primary)' : 'none',
-                        color: activeTab === 'approved' ? 'var(--primary)' : 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontWeight: activeTab === 'approved' ? 'bold' : 'normal'
-                    }}
-                >
-                    承認済み
-                </button>
-                {isAdmin && (
+            {/* Tabs (Only for Admin) */}
+            {isAdmin && (
+                <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)' }}>
+                    <button
+                        onClick={() => setActiveTab('approved')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: activeTab === 'approved' ? '2px solid var(--primary)' : 'none',
+                            color: activeTab === 'approved' ? 'var(--primary)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontWeight: activeTab === 'approved' ? 'bold' : 'normal'
+                        }}
+                    >
+                        承認済み
+                    </button>
                     <button
                         onClick={() => setActiveTab('pending')}
                         style={{
@@ -125,8 +138,8 @@ export default function ChatListPage() {
                             }} />
                         )}
                     </button>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -217,10 +230,56 @@ export default function ChatListPage() {
                                     style={{
                                         width: '100%', padding: '0.75rem', borderRadius: '0.5rem',
                                         border: '1px solid var(--border)', background: 'var(--background)',
-                                        minHeight: '100px'
+                                        minHeight: '80px'
                                     }}
                                     placeholder="このスレッドを作成する目的や理由"
                                 />
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background)', borderRadius: '8px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isPrivate}
+                                        onChange={e => setIsPrivate(e.target.checked)}
+                                        style={{ width: '1.2rem', height: '1.2rem' }}
+                                    />
+                                    プライベートスレッド（参加者限定）
+                                </label>
+                                {isPrivate && (
+                                    <div style={{ marginTop: '1rem' }}>
+                                        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>
+                                            参加者を選択 ({selectedParticipants.length}名)
+                                        </p>
+                                        <div style={{
+                                            border: '1px solid var(--border)', borderRadius: '4px',
+                                            maxHeight: '150px', overflowY: 'auto', background: 'white'
+                                        }}>
+                                            {allUsers.map(u => (
+                                                <label key={u.id} style={{
+                                                    display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                                    padding: '0.5rem', borderBottom: '1px solid #eee', cursor: 'pointer',
+                                                    background: selectedParticipants.includes(u.id) ? '#f0f9ff' : 'white'
+                                                }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedParticipants.includes(u.id)}
+                                                        onChange={e => {
+                                                            if (e.target.checked) {
+                                                                setSelectedParticipants(prev => [...prev, u.id]);
+                                                            } else {
+                                                                setSelectedParticipants(prev => prev.filter(id => id !== u.id));
+                                                            }
+                                                        }}
+                                                        style={{ width: '1rem', height: '1rem' }}
+                                                    />
+                                                    <span style={{ fontSize: '0.9rem' }}>{u.display_name}</span>
+                                                    {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                                 <button

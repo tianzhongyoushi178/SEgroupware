@@ -36,7 +36,7 @@ interface ChatState {
 
     initialize: (userId: string) => void;
     fetchThreads: () => Promise<void>;
-    startThread: (title: string, reason: string, initialStatus?: 'pending' | 'approved') => Promise<void>;
+    startThread: (title: string, reason: string, isPrivate?: boolean, participantIds?: string[], initialStatus?: 'pending' | 'approved') => Promise<void>;
     updateThreadStatus: (threadId: string, status: 'approved' | 'rejected') => Promise<void>;
 
     fetchMessages: (threadId: string) => Promise<void>;
@@ -93,20 +93,56 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ threads: threads as ChatThread[], isLoading: false });
     },
 
-    startThread: async (title, reason, initialStatus = 'pending') => {
+    startThread: async (title, reason, isPrivate = false, participantIds: string[] = [], initialStatus = 'pending') => {
         const userId = get().currentUserId;
         if (!userId) return;
 
-        const { error } = await supabase
+        // 1. Create Thread
+        const { data: threadData, error: threadError } = await supabase
             .from('threads')
             .insert({
                 title,
                 request_reason: reason,
                 status: initialStatus,
-                created_by: userId
-            });
+                created_by: userId,
+                is_private: isPrivate
+            })
+            .select()
+            .single();
 
-        if (error) throw error;
+        if (threadError) throw threadError;
+
+        // 2. Add Participants if private
+        if (isPrivate && participantIds.length > 0 && threadData) {
+            const participantsData = participantIds.map(uid => ({
+                thread_id: threadData.id,
+                user_id: uid,
+                last_read_at: new Date().toISOString()
+            }));
+
+            // Also add creator explicitly to be safe? 
+            // Usually creator can see via 'created_by' logic, but adding to participants table 
+            // is good for consistency if the policy relies on it. 
+            // Let's add creator if not in list.
+            if (!participantIds.includes(userId)) {
+                participantsData.push({
+                    thread_id: threadData.id,
+                    user_id: userId,
+                    last_read_at: new Date().toISOString()
+                });
+            }
+
+            const { error: partError } = await supabase
+                .from('thread_participants')
+                .insert(participantsData);
+
+            if (partError) {
+                console.error('Error adding participants on create:', partError);
+                // Optionally delete thread if participant addition fails? 
+                // For now just log it.
+            }
+        }
+
         get().fetchThreads();
     },
 
