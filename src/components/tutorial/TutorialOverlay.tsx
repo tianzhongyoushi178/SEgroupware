@@ -428,15 +428,15 @@ export default function TutorialOverlay() {
                     {currentStep.content}
                 </div>
 
-                <div className="flex justify-center items-center gap-6 pt-8 mt-6 border-t border-gray-100">
+                <div className="flex justify-between items-center pt-8 mt-10 border-t border-gray-100">
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
                         style={{
                             background: 'white',
                             border: '1px solid #d1d5db',
                             color: '#374151',
-                            padding: '12px 0', // Vertical padding only, width controlled by minWidth
-                            minWidth: '140px', // Standardized width
+                            padding: '12px 0',
+                            minWidth: '140px',
                             borderRadius: '9999px',
                             fontSize: '15px',
                             fontWeight: 'bold',
@@ -459,8 +459,8 @@ export default function TutorialOverlay() {
                             background: canProceed ? '#2563eb' : '#e5e7eb',
                             color: canProceed ? 'white' : '#9ca3af',
                             border: 'none',
-                            padding: '12px 0', // Vertical padding only
-                            minWidth: '140px', // Standardized width
+                            padding: '12px 0',
+                            minWidth: '140px',
                             borderRadius: '9999px',
                             fontSize: '15px',
                             fontWeight: 'bold',
