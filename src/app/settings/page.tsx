@@ -378,7 +378,7 @@ export default function SettingsPage() {
                                         <p className={styles.toggleText}>テーマ設定</p>
                                         <p className={styles.toggleSubtext}>ライトモードとダークモードを切り替えます</p>
                                     </div>
-                                    <div className={styles.themeToggle}>
+                                    <div id="tutorial-settings-theme-buttons" className={styles.themeToggle}>
                                         <button
                                             onClick={() => setTheme('light')}
                                             className={`${styles.themeButton} ${theme === 'light' ? styles.themeButtonActive : styles.themeButtonInactive}`}

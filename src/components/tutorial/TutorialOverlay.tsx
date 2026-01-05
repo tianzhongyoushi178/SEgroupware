@@ -221,7 +221,7 @@ export default function TutorialOverlay() {
         // Settings Content
         {
             path: '/settings',
-            target: '#tutorial-settings-theme',
+            target: '#tutorial-settings-theme-buttons',
             title: 'テーマ設定',
             content: (
                 <div>
@@ -428,10 +428,13 @@ export default function TutorialOverlay() {
                     {currentStep.content}
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                <div className="flex justify-between items-center pt-6 mt-2 border-t border-gray-100">
                     <button
                         onClick={() => setStepIndex(prev => Math.max(0, prev - 1))}
-                        className={`text-base font-medium text-gray-500 hover:text-gray-800 transition-colors ${stepIndex === 0 ? 'invisible' : ''}`}
+                        className={`
+                            px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all
+                            ${stepIndex === 0 ? 'invisible' : ''}
+                        `}
                     >
                         前に戻る
                     </button>
@@ -440,14 +443,14 @@ export default function TutorialOverlay() {
                         onClick={handleNext}
                         disabled={!canProceed}
                         className={`
-                            flex items-center gap-3 px-8 py-3 rounded-xl text-base font-bold transition-all
+                            flex items-center gap-3 px-6 py-3 rounded-xl text-base font-bold transition-all
                             ${canProceed
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg hover:-translate-y-0.5'
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
                         `}
                     >
                         {stepIndex === steps.length - 1 ? '始める' : '次へ'}
-                        {stepIndex === steps.length - 1 ? <Check size={20} /> : <ArrowRight size={20} />}
+                        {stepIndex === steps.length - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
                     </button>
                 </div>
             </div>

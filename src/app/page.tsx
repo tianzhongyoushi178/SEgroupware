@@ -79,7 +79,7 @@ export default function Home() {
         </section>
 
         {/* Notices Widget */}
-        <div id="tutorial-dashboard-notices" style={{ display: 'contents' }}>
+        <div id="tutorial-dashboard-notices" style={{ height: '100%' }}>
           <NoticesWidget />
         </div>
       </div>
