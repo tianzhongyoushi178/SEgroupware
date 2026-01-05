@@ -219,6 +219,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     updateThreadSettings: async (threadId: string, isPrivate: boolean, participantIds: string[]) => {
+        const userId = get().currentUserId;
+
         // 1. Update thread privacy
         const { error: threadError } = await supabase
             .from('threads')
@@ -228,58 +230,41 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (threadError) throw threadError;
 
         // 2. Manage participants
-        // First, get current participants to avoid duplicates or identify removals if needed
-        // For simplicity, we can delete non-selected (except owner) or just upsert all selected.
-        // A safer approach for "set participants":
-        // simple approach: just insert ignore duplicates? 
-        // Better:
-        // If isPrivate is true, ensure these users are in thread_participants.
-
-        if (isPrivate && participantIds.length > 0) {
-            const participantsData = participantIds.map(uid => ({
-                thread_id: threadId,
-                user_id: uid,
-                last_read_at: new Date().toISOString() // Set initial read time or keep existing?
-            }));
-
-            // We use upsert to keep existing last_read_at if exists, but we need to match keys.
-            // However, the standard insert might fail if exists. 
-            // thread_participants has primary key (thread_id, user_id).
-            // Let's use upsert with ignoreDuplicates if we want to preserve read status?
-            // Actually, if we just want to GRANT access, we just need them to be in the table.
-
-            const { error: partError } = await supabase
-                .from('thread_participants')
-                .upsert(participantsData, { onConflict: 'thread_id,user_id', ignoreDuplicates: true });
-
-            if (partError) throw partError;
-        }
-
-        // Note: Removing participants who are NOT in the list is also important if we uncheck them.
-        // But the requirement says "select display target".
-        // If I limit visibility, I should probably remove those who are not selected?
-        // Let's implement full sync: remove those not in list (excluding creator/current user if needed).
-        // For safely, let's just ADD for now as per common "Invite" pattern, 
-        // OR if it's "Settings" it implies "Restriction".
-        // "表示対象者を選択できる" -> "Select viewers". Implies Only these users can view.
-        // So we should remove others.
-
         if (isPrivate) {
-            // Remove users NOT in participantIds (and not the creator ideally, but creator should be in list or handled by RLS)
-            // We can't easily do "delete where user_id not in ..." without a complex query or multiple steps.
-            // Given the complexity, let's assume the UI sends the FULL list of desired participants.
-            // We will delete all and re-insert? No, that loses read status.
-            // We will delete where thread_id = id AND user_id NOT IN (ids).
+            // A. Add/Update provided participants
+            if (participantIds.length > 0) {
+                const participantsData = participantIds.map(uid => ({
+                    thread_id: threadId,
+                    user_id: uid,
+                    last_read_at: new Date().toISOString()
+                }));
+                const { error: upsertError } = await supabase
+                    .from('thread_participants')
+                    .upsert(participantsData, { onConflict: 'thread_id,user_id', ignoreDuplicates: true });
+
+                if (upsertError) throw upsertError;
+            }
+
+            // B. Remove participants NOT in the list
+            // If list is empty, delete all. If list has items, delete those not in list.
+            let query = supabase
+                .from('thread_participants')
+                .delete()
+                .eq('thread_id', threadId);
 
             if (participantIds.length > 0) {
-                const { error: deleteError } = await supabase
-                    .from('thread_participants')
-                    .delete()
-                    .eq('thread_id', threadId)
-                    .not('user_id', 'in', `(${participantIds.join(',')})`);
-
-                if (deleteError) throw deleteError;
+                // Use .filter for explicit not.in
+                // Format for 'in' filter is (val1,val2)
+                const inList = `(${participantIds.join(',')})`;
+                query = query.filter('user_id', 'not.in', inList);
             }
+            // If participantIds is empty, we just delete all for this thread (except maybe we want to keep owner? 
+            // but the inputs should usually include the owner if the UI is correct. 
+            // If UI doesn't allow unchecking owner, we are safe. 
+            // If owner unchecks themselves, they lose access. That's on them, or RLS might block it.)
+
+            const { error: deleteError } = await query;
+            if (deleteError) throw deleteError;
         }
     },
 
