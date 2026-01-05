@@ -38,8 +38,9 @@ export default function ChatListPage() {
             } else {
                 alert('スレッド作成を申請しました。管理者の承認をお待ちください。');
             }
-        } catch (error) {
-            alert('エラーが発生しました');
+        } catch (error: any) {
+            console.error('Thread creation error:', error);
+            alert(`エラーが発生しました: ${error.message || '不明なエラー'}`);
         }
     };
 
