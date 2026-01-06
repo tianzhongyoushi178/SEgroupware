@@ -369,14 +369,14 @@ export default function TutorialOverlay() {
         width: highlightRect.width + 16,
         height: highlightRect.height + 16,
         borderRadius: '8px',
-        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
+        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
         zIndex: 9998,
         pointerEvents: 'none',
         transition: 'all 0.3s ease'
     } : {
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.7)',
+        background: 'rgba(0,0,0,0.5)',
         zIndex: 9998
     };
 

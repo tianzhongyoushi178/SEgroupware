@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText, ChevronDown, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Bell, Settings, MessageSquare, Wrench, FileText, ChevronDown, ExternalLink, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './Sidebar.module.css';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +12,7 @@ import { useNoticeStore } from '@/store/noticeStore';
 import { useEffect, useState } from 'react';
 import { navigation } from '@/constants/navigation';
 import { useChatStore } from '@/store/chatStore';
+import HelpChatbotOverlay from '@/components/help/HelpChatbotOverlay';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export default function Sidebar() {
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const [permissionLoaded, setPermissionLoaded] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Resize handler
   useEffect(() => {
@@ -341,7 +343,17 @@ export default function Sidebar() {
           <Settings className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>設定</span>
         </Link>
+        <button
+          onClick={() => setIsHelpOpen(!isHelpOpen)}
+          className={styles.navItem}
+          style={{ fontSize: `${responsiveFontSize}px`, marginTop: '0.25rem', background: isHelpOpen ? 'rgba(37, 99, 235, 0.1)' : 'transparent', color: isHelpOpen ? 'var(--primary)' : 'var(--text-secondary)' }}
+        >
+          <HelpCircle className={styles.icon} size={Math.max(16, responsiveFontSize + 4)} />
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>ヘルプ</span>
+        </button>
       </div>
+
+      <HelpChatbotOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </aside>
   );
 }
