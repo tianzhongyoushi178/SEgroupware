@@ -51,17 +51,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const user = session?.user ?? null;
             const isAdmin = user?.email === 'tanaka-yuj@seibudenki.co.jp';
 
-            set({
-                user,
-                profile: user ? {
-                    uid: user.id,
-                    email: user.email!,
-                    displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
-                    role: isAdmin ? 'admin' : 'user',
-                    createdAt: user.created_at
-                } : null,
-                isAdmin,
-                isLoading: false
+            set((state) => {
+                const currentProfile = state.profile;
+                // Only preserve if it's the same user
+                const isSameUser = currentProfile?.uid === user?.id;
+
+                return {
+                    user,
+                    profile: user ? {
+                        uid: user.id,
+                        email: user.email!,
+                        displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
+                        role: isAdmin ? 'admin' : 'user',
+                        createdAt: user.created_at,
+                        // Preserve preferences and tutorial status if same user, otherwise reset
+                        preferences: isSameUser ? (currentProfile?.preferences || {}) : {},
+                        isTutorialCompleted: isSameUser ? (currentProfile?.isTutorialCompleted || false) : false
+                    } : null,
+                    isAdmin,
+                    isLoading: false
+                };
             });
         });
 
