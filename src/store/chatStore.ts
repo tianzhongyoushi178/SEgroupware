@@ -41,6 +41,7 @@ interface ChatState {
 
     fetchMessages: (threadId: string) => Promise<void>;
     sendMessage: (threadId: string, content: string, authorName: string, file?: File) => Promise<void>;
+    deleteMessage: (threadId: string, messageId: string) => Promise<void>;
 
     markThreadAsRead: (threadId: string) => Promise<void>;
     updateThreadSettings: (threadId: string, isPrivate: boolean, participantIds: string[]) => Promise<void>;
@@ -220,17 +221,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
             const filePath = `${threadId}/${userId}/${fileName}`;
 
-            const { error: uploadError } = await supabase
-                .storage
-                .from('chat-attachments')
-                .upload(filePath, file);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('path', filePath);
 
-            if (uploadError) throw uploadError;
+            const uploadRes = await fetch('/api/chat/upload', {
+                method: 'POST',
+                body: formData
+            });
 
-            const { data: { publicUrl } } = supabase
-                .storage
-                .from('chat-attachments')
-                .getPublicUrl(filePath);
+            if (!uploadRes.ok) {
+                const errData = await uploadRes.json();
+                throw new Error(errData.error || 'Upload failed');
+            }
+
+            const { publicUrl } = await uploadRes.json();
 
             attachment_url = publicUrl;
             attachment_type = file.type;
@@ -313,6 +318,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (error) throw error;
         get().fetchThreads(); // Refresh list to remove deleted thread if viewing list (optional here)
+    },
+
+    deleteMessage: async (threadId: string, messageId: string) => {
+        const { error } = await supabase
+            .from('messages')
+            .delete()
+            .eq('id', messageId);
+
+        if (error) throw error;
+
+        // Update local state
+        const currentMessages = get().messages[threadId];
+        if (currentMessages) {
+            set(state => ({
+                messages: {
+                    ...state.messages,
+                    [threadId]: currentMessages.filter(m => m.id !== messageId)
+                }
+            }));
+        }
     },
 
     markThreadAsRead: async (threadId) => {

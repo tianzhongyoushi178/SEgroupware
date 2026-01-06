@@ -21,7 +21,8 @@ export default function ChatRoomPage() {
         markThreadAsRead,
         updateThreadSettings,
         fetchThreadParticipants,
-        deleteThread
+        deleteThread,
+        deleteMessage
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
@@ -95,7 +96,24 @@ export default function ChatRoomPage() {
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+            const file = e.target.files[0];
+            // 10MB limit
+            if (file.size > 10 * 1024 * 1024) {
+                alert('ファイルサイズは10MBまでです。');
+                e.target.value = ''; // Reset input
+                return;
+            }
+            setSelectedFile(file);
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!confirm('このメッセージを削除しますか？')) return;
+        try {
+            await deleteMessage(threadId, messageId);
+        } catch (error) {
+            console.error(error);
+            alert('削除に失敗しました');
         }
     };
 
@@ -121,6 +139,20 @@ export default function ChatRoomPage() {
             alert('削除に失敗しました');
         }
     }
+
+    const formatMessage = (content: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return content.split(urlRegex).map((part, index) => {
+            if (part.match(urlRegex)) {
+                return (
+                    <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'underline' }}>
+                        {part}
+                    </a>
+                );
+            }
+            return part;
+        });
+    };
 
     if (!currentThread && threads.length > 0) {
         // If threads loaded but not found
@@ -217,7 +249,7 @@ export default function ChatRoomPage() {
                                     lineHeight: '1.5',
                                     whiteSpace: 'pre-wrap'
                                 }}>
-                                    {msg.content}
+                                    {formatMessage(msg.content)}
                                     {msg.attachment_url && (
                                         <div style={{ marginTop: '0.5rem' }}>
                                             {msg.attachment_type?.startsWith('image/') ? (
@@ -253,9 +285,28 @@ export default function ChatRoomPage() {
                                         </div>
                                     )}
                                 </div>
-                                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
-                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                                    <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
+                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {isMe && (
+                                        <button
+                                            onClick={() => handleDeleteMessage(msg.id)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                padding: '0',
+                                                color: 'rgba(255,255,255,0.6)',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}
+                                            title="削除"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );
