@@ -1,12 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import fs from 'fs';
+import path from 'path';
 
 export async function POST(req: Request) {
+    let userMessage = '';
     try {
         const { message } = await req.json();
+        userMessage = message;
 
         // Use standard environment variable or specific one if needed
         const apiKey = process.env.GEMINI_API_KEY;
+        console.log("Chat API Request received. Key loaded:", !!apiKey); // DEBUG LOG
 
         if (!apiKey) {
             console.error("API Key missing");
@@ -17,8 +22,8 @@ export async function POST(req: Request) {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Using 'gemini-1.5-flash' as it is stable and fast. 'gemini-2.0-flash-exp' is also an option if available.
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Using specific version as requested by user
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const systemPrompt = `
 あなたは社内グループウェア「Sales Hub」のヘルプデスクAIです。
@@ -55,7 +60,7 @@ export async function POST(req: Request) {
             },
         });
 
-        const result = await chat.sendMessage(message);
+        const result = await chat.sendMessage(userMessage);
         const response = result.response;
         const text = response.text();
 
@@ -63,9 +68,23 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Chat API Error:", error);
-        return NextResponse.json({
-            error: "AI service error",
-            details: error.message
-        }, { status: 500 });
+
+        // Fallback: Return a rule-based response instead of crashing
+        let reply = '申し訳ありません。現在AIサービスに接続できませんが、一般的な使い方についてお答えします。\n\n';
+        const input = userMessage || '';
+
+        if (input.includes('スケジュール') || input.includes('予定')) {
+            reply = 'スケジュールの確認・登録は、ダッシュボードの「クイックアクセス」から行うことができます。カレンダーアイコンをクリックしてください。';
+        } else if (input.includes('お知らせ') || input.includes('投稿')) {
+            reply = 'お知らせの投稿は、ダッシュボードの「お知らせ」ウィジェットにある「投稿」ボタンから行えます。重要なお知らせはメール通知も可能です。';
+        } else if (input.includes('設定') || input.includes('通知')) {
+            reply = '設定画面では、テーマの変更やデスクトップ通知のON/OFFが切り替えられます。「一般設定」タブをご確認ください。';
+        } else if (input.includes('申請') || input.includes('ワークフロー')) {
+            reply = '各種申請は、サイドバーの「リンク集」にある「WEB申請」または「経費・旅費精算」から外部システムへアクセスしてください。';
+        } else {
+            reply = '申し訳ありません。AI接続に一時的な問題が発生しています。しばらく待ってから再度お試しいただくか、システム管理者（田中）にご連絡ください。';
+        }
+
+        return NextResponse.json({ reply });
     }
 }
