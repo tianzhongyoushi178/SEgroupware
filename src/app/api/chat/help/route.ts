@@ -14,11 +14,8 @@ export async function POST(req: Request) {
         console.log("Chat API Request received. Key loaded:", !!apiKey); // DEBUG LOG
 
         if (!apiKey) {
-            console.error("API Key missing");
-            // Return a helpful mock response if key is missing, to avoid breaking the demo
-            return NextResponse.json({
-                reply: "申し訳ありません。現在AIサービスに接続できません（APIキーが未設定です）。管理者にご連絡ください。"
-            });
+            console.warn("API Key missing, triggering fallback");
+            throw new Error("API Key missing");
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -68,23 +65,10 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Chat API Error:", error);
-
-        // Fallback: Return a rule-based response instead of crashing
-        let reply = '申し訳ありません。現在AIサービスに接続できませんが、一般的な使い方についてお答えします。\n\n';
-        const input = userMessage || '';
-
-        if (input.includes('スケジュール') || input.includes('予定')) {
-            reply = 'スケジュールの確認・登録は、ダッシュボードの「クイックアクセス」から行うことができます。カレンダーアイコンをクリックしてください。';
-        } else if (input.includes('お知らせ') || input.includes('投稿')) {
-            reply = 'お知らせの投稿は、ダッシュボードの「お知らせ」ウィジェットにある「投稿」ボタンから行えます。重要なお知らせはメール通知も可能です。';
-        } else if (input.includes('設定') || input.includes('通知')) {
-            reply = '設定画面では、テーマの変更やデスクトップ通知のON/OFFが切り替えられます。「一般設定」タブをご確認ください。';
-        } else if (input.includes('申請') || input.includes('ワークフロー')) {
-            reply = '各種申請は、サイドバーの「リンク集」にある「WEB申請」または「経費・旅費精算」から外部システムへアクセスしてください。';
-        } else {
-            reply = '申し訳ありません。AI接続に一時的な問題が発生しています。しばらく待ってから再度お試しいただくか、システム管理者（田中）にご連絡ください。';
-        }
-
-        return NextResponse.json({ reply });
+        // Return actual error as requested ("stop automatic response")
+        return NextResponse.json({
+            error: "AI Service Error",
+            details: error.message
+        }, { status: 500 });
     }
 }
