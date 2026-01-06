@@ -16,7 +16,7 @@ interface Step {
 }
 
 export default function TutorialOverlay() {
-    const { user, profile, completeTutorial, updateProfileName } = useAuthStore();
+    const { user, profile, completeTutorial, updateProfileName, isLoading } = useAuthStore();
     const router = useRouter();
     const pathname = usePathname();
     const [stepIndex, setStepIndex] = useState(0);
@@ -26,11 +26,15 @@ export default function TutorialOverlay() {
     const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
 
     useEffect(() => {
+        if (isLoading) return;
+
         if (profile && profile.isTutorialCompleted === false) {
             setIsVisible(true);
-            setTempName(profile.displayName || '');
+            setTempName(prev => prev || profile.displayName || '');
+        } else {
+            setIsVisible(false);
         }
-    }, [profile]);
+    }, [profile, isLoading]);
 
     const steps: Step[] = [
         {
