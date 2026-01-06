@@ -164,6 +164,33 @@
     cursor: not-allowed;
 }
 
+.resizerHandle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+    z-index: 10;
+    background: transparent;
+}
+
+.resizerHandle::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid #94a3b8;
+    border-bottom: 2px solid #94a3b8;
+    border-bottom-right-radius: 2px;
+}
+
+.resizerHandle:hover::after {
+    border-color: var(--primary);
+}
+
 /* Mobile responsive */
 @media (max-width: 480px) {
     .overlay {

@@ -362,23 +362,39 @@ export default function TutorialOverlay() {
         setIsVisible(false);
     };
 
-    const highlightStyle: React.CSSProperties = highlightRect ? {
+    const PADDING = 8;
+    const overlayCommon: React.CSSProperties = {
         position: 'fixed',
-        top: highlightRect.top - 8,
-        left: highlightRect.left - 8,
-        width: highlightRect.width + 16,
-        height: highlightRect.height + 16,
-        borderRadius: '8px',
-        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-        zIndex: 9998,
-        pointerEvents: 'none',
-        transition: 'all 0.3s ease'
-    } : {
-        position: 'fixed',
-        inset: 0,
         background: 'rgba(0,0,0,0.5)',
-        zIndex: 9998
+        zIndex: 9998,
+        transition: 'all 0.3s ease',
+        cursor: 'default' // Blocks cursor interaction
     };
+
+    const overlays = highlightRect ? (
+        <>
+            {/* Top */}
+            <div style={{ ...overlayCommon, top: 0, left: 0, right: 0, height: Math.max(0, highlightRect.top - PADDING) }} />
+            {/* Bottom */}
+            <div style={{ ...overlayCommon, top: highlightRect.bottom + PADDING, left: 0, right: 0, bottom: 0 }} />
+            {/* Left */}
+            <div style={{ ...overlayCommon, top: highlightRect.top - PADDING, left: 0, width: Math.max(0, highlightRect.left - PADDING), height: (highlightRect.height + PADDING * 2) }} />
+            {/* Right */}
+            <div style={{ ...overlayCommon, top: highlightRect.top - PADDING, left: highlightRect.right + PADDING, right: 0, height: (highlightRect.height + PADDING * 2) }} />
+            {/* Blocker for the highlight hole - keeps visual highlight (transparent) but blocks clicks */}
+            <div style={{
+                position: 'fixed',
+                top: highlightRect.top - PADDING,
+                left: highlightRect.left - PADDING,
+                width: highlightRect.width + PADDING * 2,
+                height: highlightRect.height + PADDING * 2,
+                zIndex: 9998,
+                cursor: 'default' // Or 'not-allowed' if we want to indicate it's locked
+            }} />
+        </>
+    ) : (
+        <div style={{ ...overlayCommon, inset: 0 }} />
+    );
 
     let modalStyle: React.CSSProperties = {
         position: 'fixed',
@@ -425,7 +441,7 @@ export default function TutorialOverlay() {
 
     return (
         <>
-            <div style={highlightStyle} />
+            {overlays}
             <div style={modalStyle} className="animate-in fade-in zoom-in duration-300">
                 <div className="flex justify-between items-start mb-6">
                     <h3 className="text-xl font-bold text-gray-900">{currentStep.title}</h3>

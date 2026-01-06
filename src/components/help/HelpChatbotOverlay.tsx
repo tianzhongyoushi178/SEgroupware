@@ -32,6 +32,10 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+    // Resizing state
+    const [size, setSize] = useState({ width: 420, height: 600 });
+    const [isResizing, setIsResizing] = useState(false);
+
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -41,30 +45,35 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
     // Center on mount
     useEffect(() => {
         if (isOpen && position === null) {
-            const width = 350;
-            const height = 500;
             setPosition({
-                x: window.innerWidth / 2 - width / 2,
-                y: window.innerHeight / 2 - height / 2
+                x: window.innerWidth / 2 - size.width / 2,
+                y: window.innerHeight / 2 - size.height / 2
             });
         }
     }, [isOpen]);
 
-    // Handle global mouse events for dragging
+    // Handle global mouse events for dragging and resizing
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!isDragging) return;
-            setPosition({
-                x: e.clientX - dragOffset.x,
-                y: e.clientY - dragOffset.y
-            });
+            if (isDragging) {
+                setPosition({
+                    x: e.clientX - dragOffset.x,
+                    y: e.clientY - dragOffset.y
+                });
+            } else if (isResizing && position) {
+                setSize({
+                    width: Math.max(300, e.clientX - position.x),
+                    height: Math.max(400, e.clientY - position.y)
+                });
+            }
         };
 
         const handleMouseUp = () => {
             setIsDragging(false);
+            setIsResizing(false);
         };
 
-        if (isDragging) {
+        if (isDragging || isResizing) {
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
         }
@@ -73,7 +82,7 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, dragOffset]);
+    }, [isDragging, isResizing, dragOffset, position]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
         if (!position) return;
@@ -82,6 +91,11 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
             x: e.clientX - position.x,
             y: e.clientY - position.y
         });
+    };
+
+    const handleResizeStart = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsResizing(true);
     };
 
     const handleSendMessage = async (e?: React.FormEvent) => {
@@ -99,34 +113,35 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
         setInputValue('');
         setIsTyping(true);
 
-        // Mock response logic
-        setTimeout(() => {
-            const botResponse = getMockResponse(newUserMessage.text);
+        try {
+            const response = await fetch('/api/chat/help', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: newUserMessage.text }),
+            });
+
+            const data = await response.json();
+            const replyText = data.reply || (data.error ? `エラー: ${data.error}` : 'エラーが発生しました');
+
             const newBotMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                text: botResponse,
+                text: replyText,
                 sender: 'bot',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, newBotMessage]);
+        } catch (error) {
+            console.error('Chat error:', error);
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                text: '通信エラーが発生しました。しばらく待ってから再度お試しください。',
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
             setIsTyping(false);
-        }, 1000);
-    };
-
-    const getMockResponse = (input: string): string => {
-        if (input.includes('スケジュール') || input.includes('予定')) {
-            return 'スケジュールの確認・登録は、ダッシュボードの「クイックアクセス」から行うことができます。カレンダーアイコンをクリックしてください。';
         }
-        if (input.includes('お知らせ') || input.includes('投稿')) {
-            return 'お知らせの投稿は、ダッシュボードの「お知らせ」ウィジェットにある「投稿」ボタンから行えます。重要なお知らせはメール通知も可能です。';
-        }
-        if (input.includes('設定') || input.includes('通知')) {
-            return '設定画面では、テーマの変更やデスクトップ通知のON/OFFが切り替えられます。「一般設定」タブをご確認ください。';
-        }
-        if (input.includes('申請') || input.includes('ワークフロー')) {
-            return '各種申請は、サイドバーの「リンク集」にある「WEB申請」または「経費・旅費精算」から外部システムへアクセスしてください。';
-        }
-        return '申し訳ありません、その質問にはまだ答えられません。具体的な機能名を含めて聞いてみてください（例：スケジュールの使い方は？）。';
     };
 
     if (!isOpen) return null;
@@ -137,9 +152,10 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
             style={{
                 left: position ? `${position.x}px` : '50%',
                 top: position ? `${position.y}px` : '50%',
+                width: `${size.width}px`,
+                height: `${size.height}px`,
                 transform: position ? 'none' : 'translate(-50%, -50%)',
-                // Reset bottom/right from CSS if they interfere, though inline style usually overrides?
-                // CSS uses fixed positioning. We need to override bottom/right to auto if we use top/left.
+                // Reset bottom/right from CSS if they interfere
                 bottom: 'auto',
                 right: 'auto'
             }}
@@ -190,6 +206,11 @@ export default function HelpChatbotOverlay({ isOpen, onClose }: HelpChatbotOverl
                     <Send size={18} />
                 </button>
             </form>
+
+            <div
+                className={styles.resizerHandle}
+                onMouseDown={handleResizeStart}
+            />
         </div>
     );
 }
