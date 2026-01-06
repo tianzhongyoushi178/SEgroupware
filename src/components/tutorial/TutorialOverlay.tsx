@@ -383,7 +383,7 @@ export default function TutorialOverlay() {
     let modalStyle: React.CSSProperties = {
         position: 'fixed',
         zIndex: 9999,
-        background: 'white',
+        background: '#eef2ff',
         padding: '2rem',
         borderRadius: '16px',
         width: '480px',
