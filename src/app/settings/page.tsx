@@ -39,6 +39,7 @@ export default function SettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const QUICK_ACCESS_ITEMS = [
+        { id: 'attendance', label: '勤怠管理を行う' },
         { id: 'meeting', label: '会議室を予約' },
         { id: 'notice', label: 'お知らせを投稿' }
     ];

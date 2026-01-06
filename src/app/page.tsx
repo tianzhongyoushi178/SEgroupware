@@ -18,6 +18,7 @@ export default function Home() {
 
   if (!mounted) return null;
 
+  const showAttendance = profile?.preferences?.quickAccess?.attendance !== false;
   const showMeeting = profile?.preferences?.quickAccess?.meeting !== false;
   const showNotice = profile?.preferences?.quickAccess?.notice !== false;
 
@@ -40,6 +41,17 @@ export default function Home() {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>クイックアクセス</h2>
           </div>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
+            {showAttendance && (
+              <a
+                href="http://10.1.1.161/Lysithea/login"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+              >
+                ⏰ 勤怠管理を行う
+              </a>
+            )}
             {showMeeting && (
               <a
                 href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
