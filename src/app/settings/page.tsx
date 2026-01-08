@@ -229,9 +229,9 @@ export default function SettingsPage() {
                                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
                                     {profile?.preferences?.customQuickAccess?.map((item: any) => (
                                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
-                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
+                                            <div style={{ flex: 1, minWidth: 0, marginRight: '0.5rem' }}>
+                                                <div style={{ fontWeight: '500', wordBreak: 'break-word', lineHeight: '1.4' }}>{item.title}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.url}</div>
                                             </div>
                                             <button
                                                 onClick={() => {
@@ -304,9 +304,9 @@ export default function SettingsPage() {
                                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
                                     {profile?.preferences?.customLinks?.map((item: any) => (
                                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
-                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
+                                            <div style={{ flex: 1, minWidth: 0, marginRight: '0.5rem' }}>
+                                                <div style={{ fontWeight: '500', wordBreak: 'break-word', lineHeight: '1.4' }}>{item.title}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.url}</div>
                                             </div>
                                             <button
                                                 onClick={() => {
