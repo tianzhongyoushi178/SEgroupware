@@ -38,6 +38,9 @@ export default function SettingsPage() {
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Editing State
+    const [editingLink, setEditingLink] = useState<{ id: string, title: string, url: string, type: 'quickAccess' | 'sidebar' } | null>(null);
+
     const QUICK_ACCESS_ITEMS = [
         { id: 'attendance', label: '勤怠管理を行う' },
         { id: 'meeting', label: '会議室を予約' },
@@ -114,6 +117,33 @@ export default function SettingsPage() {
             alert('保存に失敗しました');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleUpdateLink = async () => {
+        if (!editingLink) return;
+
+        const { id, title, url, type } = editingLink;
+        if (!title.trim() || !url.trim()) return;
+
+        try {
+            if (type === 'quickAccess') {
+                const current = profile?.preferences?.customQuickAccess || [];
+                const updated = current.map((item: any) =>
+                    item.id === id ? { ...item, title, url } : item
+                );
+                await updatePreferences({ customQuickAccess: updated });
+            } else {
+                const current = profile?.preferences?.customLinks || [];
+                const updated = current.map((item: any) =>
+                    item.id === id ? { ...item, title, url } : item
+                );
+                await updatePreferences({ customLinks: updated });
+            }
+            setEditingLink(null);
+        } catch (error) {
+            console.error('Failed to update link:', error);
+            alert('更新に失敗しました');
         }
     };
 
@@ -233,16 +263,24 @@ export default function SettingsPage() {
                                                 <div style={{ fontWeight: '500', wordBreak: 'break-word', lineHeight: '1.4' }}>{item.title}</div>
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.url}</div>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    const current = profile?.preferences?.customQuickAccess || [];
-                                                    const updated = current.filter((i: any) => i.id !== item.id);
-                                                    updatePreferences({ customQuickAccess: updated });
-                                                }}
-                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}
-                                            >
-                                                削除
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                                                <button
+                                                    onClick={() => setEditingLink({ ...item, type: 'quickAccess' })}
+                                                    style={{ padding: '0.25rem 0.5rem', background: '#e0f2fe', color: '#0284c7', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                >
+                                                    編集
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const current = profile?.preferences?.customQuickAccess || [];
+                                                        const updated = current.filter((i: any) => i.id !== item.id);
+                                                        updatePreferences({ customQuickAccess: updated });
+                                                    }}
+                                                    style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                >
+                                                    削除
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                     {(!profile?.preferences?.customQuickAccess || profile.preferences.customQuickAccess.length === 0) && (
@@ -308,16 +346,24 @@ export default function SettingsPage() {
                                                 <div style={{ fontWeight: '500', wordBreak: 'break-word', lineHeight: '1.4' }}>{item.title}</div>
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.url}</div>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    const current = profile?.preferences?.customLinks || [];
-                                                    const updated = current.filter((i: any) => i.id !== item.id);
-                                                    updatePreferences({ customLinks: updated });
-                                                }}
-                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}
-                                            >
-                                                削除
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                                                <button
+                                                    onClick={() => setEditingLink({ ...item, type: 'sidebar' })}
+                                                    style={{ padding: '0.25rem 0.5rem', background: '#e0f2fe', color: '#0284c7', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                >
+                                                    編集
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const current = profile?.preferences?.customLinks || [];
+                                                        const updated = current.filter((i: any) => i.id !== item.id);
+                                                        updatePreferences({ customLinks: updated });
+                                                    }}
+                                                    style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                >
+                                                    削除
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                     {(!profile?.preferences?.customLinks || profile.preferences.customLinks.length === 0) && (
@@ -576,6 +622,61 @@ export default function SettingsPage() {
                     </section>
                 )}
             </div>
+
+            {/* Edit Link Modal */}
+            {editingLink && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: 'var(--surface)', padding: '2rem', borderRadius: '1rem',
+                        width: '90%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}>
+                        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>リンクを編集</h2>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>タイトル</label>
+                                <input
+                                    type="text"
+                                    value={editingLink.title}
+                                    onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
+                                    className={styles.input}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>URL</label>
+                                <input
+                                    type="text"
+                                    value={editingLink.url}
+                                    onChange={e => setEditingLink({ ...editingLink, url: e.target.value })}
+                                    className={styles.input}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                                <button
+                                    onClick={() => setEditingLink(null)}
+                                    style={{
+                                        padding: '0.5rem 1rem', background: '#f3f4f6', color: '#4b5563',
+                                        border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
+                                    }}
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    onClick={handleUpdateLink}
+                                    style={{
+                                        padding: '0.5rem 1rem', background: 'var(--primary)', color: 'white',
+                                        border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
+                                    }}
+                                >
+                                    更新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
