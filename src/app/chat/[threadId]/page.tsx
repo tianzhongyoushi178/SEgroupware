@@ -467,16 +467,17 @@ export default function ChatRoomPage() {
                     display: 'flex', justifyContent: 'center', alignItems: 'center'
                 }}>
                     <div style={{
-                        background: 'white', borderRadius: '8px', padding: '1.5rem',
+                        background: 'var(--surface)', borderRadius: '8px', padding: '1.5rem',
                         width: '90%', maxWidth: '500px', maxHeight: '90%', overflowY: 'auto',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        color: 'var(--text-main)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
                             <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>スレッド設定</h2>
-                            <button onClick={() => setIsSettingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem' }}><X size={24} /></button>
+                            <button onClick={() => setIsSettingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-main)' }}><X size={24} /></button>
                         </div>
 
-                        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background-secondary)', borderRadius: '8px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
                                 <input
                                     type="checkbox"
@@ -486,31 +487,31 @@ export default function ChatRoomPage() {
                                 />
                                 プライベートスレッド（参加者限定）
                             </label>
-                            <p style={{ fontSize: '0.85rem', color: '#666', marginLeft: '2rem', marginTop: '0.5rem' }}>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '2rem', marginTop: '0.5rem' }}>
                                 チェックを入れると、選択したユーザーのみがこのスレッドを閲覧・投稿できるようになります。
                             </p>
                         </div>
 
                         {isPrivate && (
                             <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#555' }}>
+                                <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                                     参加者を選択 ({selectedParticipants.length}名)
                                 </h3>
                                 <div style={{
-                                    border: '1px solid #ddd', borderRadius: '4px',
+                                    border: '1px solid var(--border)', borderRadius: '4px',
                                     maxHeight: '250px', overflowY: 'auto'
                                 }}>
                                     {isUsersLoading && allUsers.length === 0 && (
-                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーを読み込み中...</div>
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーを読み込み中...</div>
                                     )}
                                     {!isUsersLoading && allUsers.length === 0 && (
-                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>ユーザーが見つかりません</div>
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーが見つかりません</div>
                                     )}
                                     {allUsers.map(u => (
                                         <label key={u.id} style={{
                                             display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                            padding: '0.75rem', borderBottom: '1px solid #eee', cursor: 'pointer',
-                                            background: selectedParticipants.includes(u.id) ? '#f0f9ff' : 'white',
+                                            padding: '0.75rem', borderBottom: '1px solid var(--border)', cursor: 'pointer',
+                                            background: selectedParticipants.includes(u.id) ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
                                             transition: 'background 0.2s'
                                         }}>
                                             <input
@@ -526,8 +527,8 @@ export default function ChatRoomPage() {
                                                 style={{ width: '1.1rem', height: '1.1rem' }}
                                             />
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontWeight: '500' }}>{u.display_name || '名称未設定'}</span>
-                                                <span style={{ fontSize: '0.75rem', color: '#888' }}>{u.email}</span>
+                                                <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{u.display_name || '名称未設定'}</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
                                             </div>
                                             {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
                                         </label>
@@ -536,13 +537,13 @@ export default function ChatRoomPage() {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                             {/* Delete Button */}
                             <button
                                 onClick={handleDeleteThread}
                                 style={{
-                                    padding: '0.6rem 1.2rem', background: 'transparent', color: '#d32f2f',
-                                    border: '1px solid #d32f2f', borderRadius: '4px', cursor: 'pointer',
+                                    padding: '0.6rem 1.2rem', background: 'transparent', color: '#dc2626',
+                                    border: '1px solid #dc2626', borderRadius: '4px', cursor: 'pointer',
                                     fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem'
                                 }}
                             >
@@ -554,7 +555,7 @@ export default function ChatRoomPage() {
                                 <button
                                     onClick={() => setIsSettingsOpen(false)}
                                     style={{
-                                        padding: '0.6rem 1.2rem', background: '#f0f0f0', color: '#333',
+                                        padding: '0.6rem 1.2rem', background: 'var(--background-secondary)', color: 'var(--text-main)',
                                         border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
                                     }}
                                 >
@@ -563,7 +564,7 @@ export default function ChatRoomPage() {
                                 <button
                                     onClick={handleSaveSettings}
                                     style={{
-                                        padding: '0.6rem 1.2rem', background: '#007bff', color: 'white',
+                                        padding: '0.6rem 1.2rem', background: 'var(--primary)', color: 'white',
                                         border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
                                     }}
                                 >
