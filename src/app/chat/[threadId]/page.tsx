@@ -36,6 +36,7 @@ export default function ChatRoomPage() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
 
     const currentMessages = messages[threadId] || [];
@@ -162,9 +163,8 @@ export default function ChatRoomPage() {
         const quoteText = text.split('\n').map(line => `> ${line}`).join('\n') + '\n';
         setNewMessage(prev => prev + quoteText);
         // Focus input
-        const textarea = document.querySelector('textarea');
-        if (textarea) {
-            textarea.focus();
+        if (textareaRef.current) {
+            textareaRef.current.focus();
         }
     };
 
@@ -329,7 +329,7 @@ export default function ChatRoomPage() {
                                 </div>
                                 {!msg.is_deleted && (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap' }}>
                                             {new Date(msg.created_at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         {isMe && (
@@ -415,6 +415,7 @@ export default function ChatRoomPage() {
                         <Paperclip size={24} />
                     </button>
                     <textarea
+                        ref={textareaRef}
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         onPaste={handlePaste}
