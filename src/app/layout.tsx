@@ -19,6 +19,9 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: 'Sales Hub',
   description: 'Sales Hub Application',
+  icons: {
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
