@@ -288,7 +288,7 @@ export default function SettingsPage() {
                                     )}
                                 </div>
 
-                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: '#f8fafc' }}>
+                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: 'var(--background-secondary)' }}>
                                     <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>新しいリンクを追加</h4>
                                     <div style={{ display: 'grid', gap: '0.5rem' }}>
                                         <input
@@ -371,7 +371,7 @@ export default function SettingsPage() {
                                     )}
                                 </div>
 
-                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: '#f8fafc' }}>
+                                <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', background: 'var(--background-secondary)' }}>
                                     <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>新しいリンクを追加</h4>
                                     <div style={{ display: 'grid', gap: '0.5rem' }}>
                                         <input
