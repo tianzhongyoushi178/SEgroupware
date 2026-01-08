@@ -16,7 +16,7 @@ interface Step {
 }
 
 export default function TutorialOverlay() {
-    const { user, profile, completeTutorial, updateProfileName, isLoading } = useAuthStore();
+    const { user, profile, completeTutorial, updateProfileName, isLoading, isInitialized } = useAuthStore();
     const router = useRouter();
     const pathname = usePathname();
     const [stepIndex, setStepIndex] = useState(0);
@@ -26,7 +26,8 @@ export default function TutorialOverlay() {
     const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
 
     useEffect(() => {
-        if (isLoading) return;
+        // Wait for full initialization (profile fetch from DB)
+        if (isLoading || !isInitialized) return;
 
         if (profile && profile.isTutorialCompleted === false) {
             setIsVisible(true);
@@ -34,7 +35,7 @@ export default function TutorialOverlay() {
         } else {
             setIsVisible(false);
         }
-    }, [profile, isLoading]);
+    }, [profile, isLoading, isInitialized]);
 
     const steps: Step[] = [
         {

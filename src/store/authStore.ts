@@ -9,6 +9,7 @@ interface AuthState {
     isLoading: boolean;
     error: string | null;
     isAdmin: boolean;
+    isInitialized: boolean;
     login: (email: string, password: string, isSignUp?: boolean) => Promise<void>;
     logout: () => Promise<void>;
     initialize: () => () => void;
@@ -23,6 +24,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     isLoading: true,
     error: null,
     isAdmin: false,
+
+    isInitialized: false,
 
     initialize: () => {
         // Initial session check
@@ -52,7 +55,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     isTutorialCompleted: profileData?.is_tutorial_completed === true // Strict check
                 } : null,
                 isAdmin,
-                isLoading: false
+                isLoading: false,
+                isInitialized: true // Mark initialization as complete
             });
         });
 
@@ -82,11 +86,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     } : null,
                     isAdmin,
                     isLoading: false
+                    // Do NOT set isInitialized here, rely on getSession for the first load authority
                 };
             });
         });
-
-
 
         return () => subscription.unsubscribe();
     },
@@ -203,3 +206,4 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     }
 }));
+
