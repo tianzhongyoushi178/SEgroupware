@@ -350,6 +350,12 @@ export default function ChatRoomPage() {
                         padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
                         background: 'rgba(255,255,255,0.5)', borderBottom: '1px solid #eee'
                     }}>
+                        <button
+                            onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', marginRight: '0.5rem' }}
+                        >
+                            <X size={18} />
+                        </button>
                         <div style={{
                             width: '40px', height: '40px', borderRadius: '4px', background: '#ddd',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
@@ -364,12 +370,6 @@ export default function ChatRoomPage() {
                         <span style={{ fontSize: '0.85rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {selectedFile.name}
                         </span>
-                        <button
-                            onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
-                        >
-                            <X size={18} />
-                        </button>
                     </div>
                 )}
                 <form
