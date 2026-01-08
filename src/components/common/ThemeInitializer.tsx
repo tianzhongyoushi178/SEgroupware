@@ -16,6 +16,7 @@ export default function ThemeInitializer() {
             root.style.setProperty('--text-main', '#f9fafb'); // Gray 50
             root.style.setProperty('--text-secondary', '#d1d5db'); // Gray 300 (Lighter for better readability)
             root.style.setProperty('--border', '#374151'); // Gray 700
+            root.style.setProperty('color-scheme', 'dark');
         } else {
             root.classList.remove('dark');
             root.style.removeProperty('--background');
@@ -24,6 +25,7 @@ export default function ThemeInitializer() {
             root.style.removeProperty('--text-main');
             root.style.removeProperty('--text-secondary');
             root.style.removeProperty('--border');
+            root.style.removeProperty('color-scheme');
         }
     }, [theme]);
 

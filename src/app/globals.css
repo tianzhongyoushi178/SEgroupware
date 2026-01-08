@@ -46,6 +46,13 @@ body {
   min-height: 100vh;
 }
 
+input,
+textarea,
+select {
+  color: var(--text-main);
+  background-color: transparent;
+}
+
 a {
   color: inherit;
   text-decoration: none;
