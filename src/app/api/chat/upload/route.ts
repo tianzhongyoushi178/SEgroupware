@@ -18,20 +18,41 @@ export async function POST(req: Request) {
             .storage
             .getBucket(bucketName);
 
-        if (bucketError && bucketError.message.includes('not found')) {
-            // Try to create if not exists
-            const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
-                public: true
-            });
-            if (createError) {
-                console.error('Failed to create bucket', createError);
+        if (bucketError) {
+            if (bucketError.message.includes('not found')) {
+                // Try to create if not exists
+                const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
+                    public: true,
+                    fileSizeLimit: 10485760 // 10MB
+                });
+                if (createError) {
+                    console.error('Failed to create bucket', createError);
+                    return NextResponse.json({ error: `Failed to create bucket: ${createError.message}` }, { status: 500 });
+                }
+            } else {
+                console.error('Error checking bucket:', bucketError);
+                // Proceeding might be risky if we can't check it, but let's try upload anyway?
+                // Or maybe return error?
+                // For now, let's just log it.
             }
         } else {
-            // Ensure public if exists (idempotent-ish)
-            await supabaseAdmin.storage.updateBucket(bucketName, { public: true });
+            // Ensure public if exists
+            const { error: updateError } = await supabaseAdmin.storage.updateBucket(bucketName, {
+                public: true,
+                fileSizeLimit: 10485760 // 10MB
+            });
+            if (updateError) {
+                console.error('Failed to update bucket', updateError);
+            }
         }
 
-        const buffer = Buffer.from(await file.arrayBuffer());
+        let buffer: Buffer;
+        try {
+            buffer = Buffer.from(await file.arrayBuffer());
+        } catch (e: any) {
+            console.error('File buffer error:', e);
+            return NextResponse.json({ error: `File processing failed: ${e.message}` }, { status: 500 });
+        }
 
         const { data, error } = await supabaseAdmin
             .storage
@@ -42,8 +63,12 @@ export async function POST(req: Request) {
             });
 
         if (error) {
-            console.error('Upload error', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error('Upload error details:', error);
+            // Check for explicit size limit error or other common issues
+            return NextResponse.json({
+                error: `Upload failed: ${error.message}`,
+                details: error
+            }, { status: 500 });
         }
 
         const { data: { publicUrl } } = supabaseAdmin
@@ -53,7 +78,10 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ publicUrl });
     } catch (error: any) {
-        console.error('Upload API Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Upload API Critical Error:', error);
+        return NextResponse.json({
+            error: `Server Error: ${error.message}`,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }
