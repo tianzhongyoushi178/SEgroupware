@@ -30,6 +30,11 @@ export default function TutorialOverlay() {
         if (isLoading || !isInitialized) return;
 
         if (profile && profile.isTutorialCompleted === false) {
+            // Mobile exemption
+            if (window.innerWidth < 768) {
+                setIsVisible(false);
+                return;
+            }
             setIsVisible(true);
             setTempName(prev => prev || profile.displayName || '');
         } else {
