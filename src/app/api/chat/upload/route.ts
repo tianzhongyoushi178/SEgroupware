@@ -11,6 +11,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'File or path missing' }, { status: 400 });
         }
 
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('SUPABASE_SERVICE_ROLE_KEY is missing');
+            return NextResponse.json({ error: 'Server Configuration Error: SUPABASE_SERVICE_ROLE_KEY is missing' }, { status: 500 });
+        }
+
         const bucketName = 'chat-attachments';
 
         // Ensure bucket exists (best effort)
