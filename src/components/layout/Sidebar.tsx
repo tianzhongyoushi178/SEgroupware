@@ -303,6 +303,20 @@ export default function Sidebar() {
                 // Filter notices where current user has NOT read
                 const unreadCount = notices.filter(n => {
                   if (!user?.id) return false;
+
+                  // Date filtering (General users only)
+                  if (!isAdmin) {
+                    const now = new Date();
+                    if (n.startDate) {
+                      const start = new Date(n.startDate);
+                      if (!isNaN(start.getTime()) && start > now) return false;
+                    }
+                    if (n.endDate) {
+                      const end = new Date(n.endDate);
+                      if (!isNaN(end.getTime()) && end < now) return false;
+                    }
+                  }
+
                   return !n.readStatus?.[user.id];
                 }).length;
 
