@@ -89,9 +89,9 @@ export default function ChatRoomPage() {
             setNewMessage('');
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('送信に失敗しました');
+            alert(`送信に失敗しました: ${error.message || '不明なエラー'}`);
         }
     };
 
