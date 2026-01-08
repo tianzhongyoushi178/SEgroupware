@@ -577,7 +577,7 @@ export default function SettingsPage() {
                                                 return (
                                                     <div key={item.href} style={{
                                                         padding: '0.5rem',
-                                                        background: '#f8fafc',
+                                                        background: 'var(--background-secondary)',
                                                         borderRadius: '0.25rem',
                                                         border: '1px solid var(--border)'
                                                     }}>
