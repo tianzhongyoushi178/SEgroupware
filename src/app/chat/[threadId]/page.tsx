@@ -426,12 +426,12 @@ export default function ChatRoomPage() {
                             }
                         }}
                         placeholder="メッセージを入力"
+                        className="chat-input-textarea"
                         style={{
                             flex: 1,
                             padding: '0.75rem 1rem',
                             borderRadius: '20px',
                             border: '1px solid #ccc',
-                            background: 'white',
                             outline: 'none',
                             fontSize: '0.95rem',
                             resize: 'none',

@@ -99,3 +99,13 @@ a {
   background: rgba(0, 0, 0, 0.05);
   color: var(--text-main);
 }
+
+.chat-input-textarea {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+.chat-input-textarea::placeholder {
+  color: #6b7280;
+  /* Gray 500 */
+}
