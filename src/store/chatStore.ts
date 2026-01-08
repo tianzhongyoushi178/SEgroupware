@@ -307,12 +307,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     deleteMessage: async (threadId, messageId) => {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('messages')
             .update({ is_deleted: true })
-            .eq('id', messageId);
+            .eq('id', messageId)
+            .select();
 
         if (error) throw error;
+        if (!data || data.length === 0) {
+            throw new Error('メッセージが見つからないか、削除権限がありません。');
+        }
     },
 
     markThreadAsRead: async (threadId) => {
