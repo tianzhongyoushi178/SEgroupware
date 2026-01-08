@@ -229,8 +229,8 @@ export default function SettingsPage() {
                                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
                                     {profile?.preferences?.customQuickAccess?.map((item: any) => (
                                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
-                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                                                <div style={{ fontWeight: '500' }}>{item.title}</div>
+                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
                                             </div>
                                             <button
@@ -239,7 +239,7 @@ export default function SettingsPage() {
                                                     const updated = current.filter((i: any) => i.id !== item.id);
                                                     updatePreferences({ customQuickAccess: updated });
                                                 }}
-                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}
                                             >
                                                 削除
                                             </button>
@@ -304,8 +304,8 @@ export default function SettingsPage() {
                                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
                                     {profile?.preferences?.customLinks?.map((item: any) => (
                                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--background-secondary)', justifyContent: 'space-between' }}>
-                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                                                <div style={{ fontWeight: '500' }}>{item.title}</div>
+                                            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
                                             </div>
                                             <button
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                                                     const updated = current.filter((i: any) => i.id !== item.id);
                                                     updatePreferences({ customLinks: updated });
                                                 }}
-                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                                                style={{ padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}
                                             >
                                                 削除
                                             </button>
