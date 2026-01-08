@@ -88,6 +88,26 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         }
     },
 
+    updateNotice: async (id, updates) => {
+        const dbUpdates: any = {};
+        if (updates.title !== undefined) dbUpdates.title = updates.title;
+        if (updates.content !== undefined) dbUpdates.content = updates.content;
+        if (updates.category !== undefined) dbUpdates.category = updates.category;
+        if (updates.readStatusVisibleTo !== undefined) dbUpdates.read_status_visible_to = updates.readStatusVisibleTo;
+        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+        if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+
+        const { error } = await supabase
+            .from('notices')
+            .update(dbUpdates)
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating notice:', error);
+            throw error;
+        }
+    },
+
     markAsRead: async (id, userId) => {
         // optimistically update local
         set((state) => {
