@@ -307,14 +307,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     deleteMessage: async (threadId, messageId) => {
+        // Optimistic update
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [threadId]: (state.messages[threadId] || []).map(m =>
+                    m.id === messageId ? { ...m, is_deleted: true } : m
+                )
+            }
+        }));
+
         const { data, error } = await supabase
             .from('messages')
             .update({ is_deleted: true })
             .eq('id', messageId)
             .select();
 
-        if (error) throw error;
+        if (error) {
+            // Revert on error (fetch fresh to be safe)
+            console.error('Delete failed, reverting', error);
+            get().fetchMessages(threadId);
+            throw error;
+        }
         if (!data || data.length === 0) {
+            // Also revert if no data (permission denied etc)
+            get().fetchMessages(threadId);
             throw new Error('メッセージが見つからないか、削除権限がありません。');
         }
     },

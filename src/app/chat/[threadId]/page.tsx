@@ -334,19 +334,24 @@ export default function ChatRoomPage() {
                                         </span>
                                         {isMe && (
                                             <button
-                                                onClick={() => handleDeleteMessage(msg.id)}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteMessage(msg.id);
+                                                }}
                                                 style={{
                                                     background: 'none',
                                                     border: 'none',
                                                     cursor: 'pointer',
                                                     padding: '0',
-                                                    color: 'rgba(255,255,255,0.6)',
+                                                    color: 'rgba(255,255,255,0.9)', // Increased visibility
                                                     display: 'flex',
-                                                    alignItems: 'center'
+                                                    alignItems: 'center',
+                                                    zIndex: 5 // Ensure it's on top
                                                 }}
                                                 title="削除"
                                             >
-                                                <Trash2 size={12} />
+                                                <Trash2 size={14} />
                                             </button>
                                         )}
                                     </div>
