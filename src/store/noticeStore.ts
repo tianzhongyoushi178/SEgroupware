@@ -37,6 +37,8 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             createdAt: n.created_at,
             readStatus: n.read_status || {},
             readStatusVisibleTo: n.read_status_visible_to || 'all',
+            startDate: n.start_date,
+            endDate: n.end_date,
             // isRead is calculated in component based on user context
             authorId: n.author_id // Ensure authorId is mapped
         }));
