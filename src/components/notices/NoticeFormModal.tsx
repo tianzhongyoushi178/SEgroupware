@@ -5,6 +5,7 @@ import { useNoticeStore } from '@/store/noticeStore';
 import { useAuthStore } from '@/store/authStore';
 import { NoticeCategory, Notice } from '@/types/notice';
 import { X } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface NoticeFormModalProps {
     isOpen: boolean;
@@ -49,28 +50,35 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (initialData) {
-            await updateNotice(initialData.id, {
-                title,
-                content,
-                category,
-                readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
-                startDate: startDate || undefined,
-                endDate: endDate || undefined,
-            });
-        } else {
-            await addNotice({
-                title,
-                content,
-                category,
-                author: authorName,
-                authorId: user?.id,
-                readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
-                startDate: startDate || undefined,
-                endDate: endDate || undefined,
-            });
+        try {
+            if (initialData) {
+                await updateNotice(initialData.id, {
+                    title,
+                    content,
+                    category,
+                    readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
+                    startDate: startDate || undefined,
+                    endDate: endDate || undefined,
+                });
+                toast.success('お知らせを更新しました');
+            } else {
+                await addNotice({
+                    title,
+                    content,
+                    category,
+                    author: authorName,
+                    authorId: user?.id,
+                    readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
+                    startDate: startDate || undefined,
+                    endDate: endDate || undefined,
+                });
+                toast.success('お知らせを投稿しました');
+            }
+            onClose();
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            toast.error('投稿に失敗しました: ' + (error.message || '不明なエラー'));
         }
-        onClose();
     };
 
     return (
@@ -240,7 +248,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                         <button type="button" onClick={onClose} className="btn btn-ghost">
                             キャンセル
                         </button>
-                        <button type="submit" className="btn btn-primary">
+                        <button type="submit" className="btn btn-primary" disabled={!user}>
                             {initialData ? '更新する' : '投稿する'}
                         </button>
                     </div>
