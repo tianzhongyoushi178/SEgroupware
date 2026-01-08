@@ -229,9 +229,9 @@ export default function NoticesPage() {
                             className={isMobile ? '' : 'glass-panel'}
                             onClick={() => setSelectedNoticeId(notice.id)}
                             style={{
-                                padding: '1.5rem',
+                                padding: isMobile ? '1rem' : '1.5rem',
                                 display: 'flex',
-                                gap: '1.5rem',
+                                gap: isMobile ? '1rem' : '1.5rem',
                                 opacity: isRead ? 0.9 : 1,
                                 borderLeft: `4px solid ${config.color}`,
                                 transition: 'all 0.2s',
@@ -239,6 +239,8 @@ export default function NoticesPage() {
                                 background: isRead ? 'var(--background-secondary)' : 'var(--surface)',
                                 boxShadow: isMobile ? '0 1px 3px rgba(0,0,0,0.1)' : undefined,
                                 borderRadius: isMobile ? '0.5rem' : undefined,
+                                maxWidth: '100%',
+                                overflow: 'hidden'
                             }}
                         >
                             <div
