@@ -149,18 +149,10 @@ export default function Sidebar() {
   const responsiveFontSize = Math.max(12, Math.min(18, sidebarWidth / 18.6));
 
   if (isMobile) {
-    // Flatten navigation for mobile to show leaf nodes directly, specifically for AI Tools
-    // Filter out 'リンク集' and '設定' (Settings is manually added below normally, but we skip it here)
-    const mobileNavigation = filteredNavigation.flatMap(item => {
-      if (item.name === 'リンク集') return []; // Hide Link Collection on mobile
-
-      // @ts-ignore
-      if (item.children && item.children.length > 0) {
-        // @ts-ignore
-        return item.children;
-      }
-      return item;
-    });
+    // Filter for specific mobile items
+    const mobileNavigation = filteredNavigation.filter(item =>
+      ['ダッシュボード', 'お知らせ', 'チャット'].includes(item.name)
+    );
 
     return (
       <aside
