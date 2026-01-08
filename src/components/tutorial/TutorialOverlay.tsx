@@ -61,9 +61,10 @@ export default function TutorialOverlay() {
                             value={tempName}
                             onChange={(e) => setTempName(e.target.value)}
                             placeholder="例: 佐藤 太郎"
+                            style={{ background: 'white', color: '#111827', borderColor: '#d1d5db' }}
                         />
                     </div>
-                    {!tempName.trim() && <p className="text-sm text-red-500 font-bold">※名前を入力してください</p>}
+                    {!tempName.trim() && <p className="text-sm font-bold" style={{ color: '#ef4444' }}>※名前を入力してください</p>}
                 </div>
             ),
             position: 'center',
@@ -159,7 +160,7 @@ export default function TutorialOverlay() {
                     </p>
                 </div>
             ),
-            position: 'right',
+            position: 'left',
             onEnter: () => {
                 document.getElementById('tutorial-notice-create-btn')?.click();
             }
@@ -449,13 +450,13 @@ export default function TutorialOverlay() {
             {overlays}
             <div style={modalStyle} className="animate-in fade-in zoom-in duration-300">
                 <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">{currentStep.title}</h3>
+                    <h3 className="text-xl font-bold" style={{ color: '#111827' }}>{currentStep.title}</h3>
                     <div className="text-sm font-medium text-gray-400 font-mono mt-1 bg-gray-100 px-2 py-1 rounded">
                         STEP {stepIndex + 1} / {steps.length}
                     </div>
                 </div>
 
-                <div className="mb-8 text-gray-700 leading-relaxed text-lg">
+                <div className="mb-8 leading-relaxed text-lg" style={{ color: '#374151' }}>
                     {currentStep.content}
                 </div>
 
