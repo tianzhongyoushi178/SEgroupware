@@ -1,45 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
 import { useAuthStore } from '@/store/authStore';
-import { NoticeCategory } from '@/types/notice';
+import { NoticeCategory, Notice } from '@/types/notice';
 import { X } from 'lucide-react';
 
 interface NoticeFormModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialData?: Notice;
 }
 
-export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProps) {
-    const addNotice = useNoticeStore((state) => state.addNotice);
+export default function NoticeFormModal({ isOpen, onClose, initialData }: NoticeFormModalProps) {
+    const { addNotice, updateNotice } = useNoticeStore();
     const { user, profile } = useAuthStore();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState<NoticeCategory>('general');
     const [isReadVisibleToAll, setIsReadVisibleToAll] = useState(true);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Auto-derive author name
     const authorName = profile?.displayName || profile?.email || '匿名';
 
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setTitle(initialData.title);
+            setContent(initialData.content);
+            setCategory(initialData.category);
+            setIsReadVisibleToAll(initialData.readStatusVisibleTo === 'all');
+            setStartDate(initialData.startDate || '');
+            setEndDate(initialData.endDate || '');
+        } else if (isOpen) {
+            // Reset for new entry
+            setTitle('');
+            setContent('');
+            setCategory('general');
+            setIsReadVisibleToAll(true);
+            setStartDate('');
+            setEndDate('');
+        }
+    }, [isOpen, initialData]);
+
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        addNotice({
-            title,
-            content,
-            category,
-            author: authorName,
-            authorId: user?.id,
-            readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
-        });
+
+        if (initialData) {
+            await updateNotice(initialData.id, {
+                title,
+                content,
+                category,
+                readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+            });
+        } else {
+            await addNotice({
+                title,
+                content,
+                category,
+                author: authorName,
+                authorId: user?.id,
+                readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+            });
+        }
         onClose();
-        // Reset form
-        setTitle('');
-        setContent('');
-        setCategory('general');
-        setIsReadVisibleToAll(true);
     };
 
     return (
@@ -60,7 +91,6 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
             onClick={onClose}
         >
             <div
-                id='tutorial-notice-modal'
                 className="glass-panel"
                 style={{
                     width: '100%',
@@ -71,7 +101,7 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
                 onClick={(e) => e.stopPropagation()}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>お知らせ作成</h2>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{initialData ? 'お知らせを編集' : 'お知らせ作成'}</h2>
                     <button onClick={onClose} className="btn btn-ghost" style={{ padding: '0.5rem' }}>
                         <X size={24} />
                     </button>
@@ -156,6 +186,39 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
                         />
                     </div>
 
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>掲載開始日 (任意)</label>
+                            <input
+                                type="datetime-local"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--border)',
+                                    outline: 'none',
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>掲載終了日 (任意)</label>
+                            <input
+                                type="datetime-local"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--border)',
+                                    outline: 'none',
+                                }}
+                            />
+                        </div>
+                    </div>
+
                     <div style={{ padding: '0.5rem', background: 'var(--background-secondary)', borderRadius: 'var(--radius-md)' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                             <input
@@ -178,7 +241,7 @@ export default function NoticeFormModal({ isOpen, onClose }: NoticeFormModalProp
                             キャンセル
                         </button>
                         <button type="submit" className="btn btn-primary">
-                            投稿する
+                            {initialData ? '更新する' : '投稿する'}
                         </button>
                     </div>
                 </form>

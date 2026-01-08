@@ -11,4 +11,6 @@ export interface Notice {
     isRead: boolean; // Local computed property
     readStatus?: Record<string, string>; // JSONB from DB: { userId: timestamp }
     readStatusVisibleTo?: 'all' | 'author_admin';
+    startDate?: string;
+    endDate?: string;
 }

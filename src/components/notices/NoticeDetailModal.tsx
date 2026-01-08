@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useNoticeStore } from '@/store/noticeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Info, Bell, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { Info, Bell, AlertTriangle, CheckCircle, Trash2, Edit2 } from 'lucide-react';
 import { Notice, NoticeCategory } from '@/types/notice';
 import { X } from 'lucide-react';
+import NoticeFormModal from './NoticeFormModal';
 
 interface NoticeDetailModalProps {
     notice: Notice | null;
@@ -25,6 +27,8 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
     const { getAllProfiles } = useAppSettingsStore();
     const [userMap, setUserMap] = useState<Record<string, string>>({});
     const [loadingMap, setLoadingMap] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const router = useRouter(); // Added useRouter
 
     useEffect(() => {
         if (notice && (notice.readStatusVisibleTo === 'all' || isAdmin)) {
@@ -71,7 +75,7 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
             <div
                 style={{
                     background: 'var(--surface)',
-                    padding: '1.5rem',
+                    padding: '1rem',
                     borderRadius: 'var(--radius-lg)',
                     width: '95%',
                     maxWidth: '800px', // Unify size: wider like the page
@@ -102,19 +106,44 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                                 {format(new Date(notice.createdAt), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
                             </span>
                         </div>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                            {notice.title}
-                        </h3>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{notice.title}</h2>
+                        {isAdmin && (notice.startDate || notice.endDate) && (
+                            <div style={{ fontSize: '0.8rem', color: '#eab308', marginTop: '0.25rem' }}>
+                                掲載期間: {notice.startDate ? format(new Date(notice.startDate), 'M/d HH:mm') : ''} ~ {notice.endDate ? format(new Date(notice.endDate), 'M/d HH:mm') : ''}
+                                {(new Date(notice.startDate || 0) > new Date() || new Date(notice.endDate || 9999999999999) < new Date()) && ' (期間外)'}
+                            </div>
+                        )}
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
                             by {notice.author}
                         </p>
                     </div>
-                    <button onClick={onClose} className="btn btn-ghost">
-                        <X size={24} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {(isAdmin || (user?.id && notice.authorId === user.id)) && (
+                            <>
+                                <button
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="btn btn-ghost"
+                                    title="編集"
+                                >
+                                    <Edit2 size={24} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete()}
+                                    className="btn btn-ghost"
+                                    title="削除"
+                                    style={{ color: 'var(--error)' }}
+                                >
+                                    <Trash2 size={24} />
+                                </button>
+                            </>
+                        )}
+                        <button onClick={onClose} className="btn btn-ghost">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </header>
 
-                <div style={{ lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap', flex: 1 }}>
+                <div style={{ lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap', flex: 1, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                     {notice.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
                         if (part.match(/(https?:\/\/[^\s]+)/g)) {
                             return (
@@ -135,7 +164,7 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                 </div>
 
                 {/* Footer / Actions */}
-                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                <footer style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                         {/* Mark as Read Button */}
                         {user?.id && !notice.readStatus?.[user.id] && (
@@ -164,16 +193,6 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                         )}
 
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            {(isAdmin || (user?.id && notice.authorId === user.id)) && (
-                                <button
-                                    onClick={handleDelete}
-                                    className="btn btn-ghost"
-                                    title="削除"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            )}
                             <button
                                 onClick={onClose}
                                 className="btn btn-primary"
@@ -214,8 +233,18 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                             </div>
                         </div>
                     )}
-                </div>
+                </footer>
             </div>
+
+            <NoticeFormModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    // Optionally, refresh the notice data if needed after edit
+                    // router.refresh(); // Or call a prop function to refresh parent state
+                }}
+                initialData={notice}
+            />
         </div>
     );
 }

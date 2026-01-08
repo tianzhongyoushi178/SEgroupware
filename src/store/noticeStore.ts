@@ -9,6 +9,7 @@ interface NoticeState {
     fetchNotices: () => Promise<void>;
     subscribeNotices: () => () => void;
     addNotice: (notice: Omit<Notice, 'id' | 'createdAt' | 'isRead' | 'readStatus'>) => Promise<void>;
+    updateNotice: (id: string, updates: Partial<Notice>) => Promise<void>;
     markAsRead: (id: string, userId: string) => Promise<void>;
     deleteNotice: (id: string) => Promise<void>;
 }
@@ -76,7 +77,9 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 author: notice.author,
                 author_id: notice.authorId,
                 read_status: {}, // Initialize empty
-                read_status_visible_to: notice.readStatusVisibleTo || 'all'
+                read_status_visible_to: notice.readStatusVisibleTo || 'all',
+                start_date: notice.startDate,
+                end_date: notice.endDate
             });
 
         if (error) {

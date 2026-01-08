@@ -54,6 +54,19 @@ export default function NoticesPage() {
 
             if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
 
+            // Date Filtering
+            const now = new Date();
+            if (!isAdmin) {
+                if (notice.startDate) {
+                    const start = new Date(notice.startDate);
+                    if (!isNaN(start.getTime()) && start > now) return false;
+                }
+                if (notice.endDate) {
+                    const end = new Date(notice.endDate);
+                    if (!isNaN(end.getTime()) && end < now) return false;
+                }
+            }
+
             // Correctly determine if read for the current user based on readStatus map
             const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;
 

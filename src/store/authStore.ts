@@ -26,9 +26,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: () => {
         // Initial session check
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             const user = session?.user ?? null;
             const isAdmin = user?.email === 'tanaka-yuj@seibudenki.co.jp';
+
+            let profileData = null;
+            if (user) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('preferences, is_tutorial_completed')
+                    .eq('id', user.id)
+                    .single();
+                profileData = data;
+            }
 
             set({
                 user,
@@ -37,7 +47,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     email: user.email!,
                     displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
                     role: isAdmin ? 'admin' : 'user',
-                    createdAt: user.created_at
+                    createdAt: user.created_at,
+                    preferences: profileData?.preferences,
+                    isTutorialCompleted: profileData?.is_tutorial_completed === true // Strict check
                 } : null,
                 isAdmin,
                 isLoading: false
@@ -74,26 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
         });
 
-        // Fetch extra profile data (preferences) if user is logged in
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (session?.user) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('preferences, is_tutorial_completed')
-                    .eq('id', session.user.id)
-                    .single();
 
-                if (data) {
-                    set(state => ({
-                        profile: state.profile ? {
-                            ...state.profile,
-                            preferences: data.preferences,
-                            isTutorialCompleted: data.is_tutorial_completed
-                        } : null
-                    }));
-                }
-            }
-        });
 
         return () => subscription.unsubscribe();
     },

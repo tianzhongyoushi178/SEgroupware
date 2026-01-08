@@ -25,6 +25,7 @@ export interface ChatMessage {
     attachment_url?: string;
     attachment_type?: string;
     attachment_name?: string;
+    is_deleted?: boolean;
 }
 
 interface ChatState {
@@ -216,7 +217,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         let attachment_type = null;
         let attachment_name = null;
 
+        // 1. Upload File if exists
         if (file) {
+            // ... (upload logic remains same) ...
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
             const filePath = `${threadId}/${userId}/${fileName}`;
@@ -242,7 +245,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
             attachment_name = file.name;
         }
 
-        const { error } = await supabase
+        // 2. Optimistic Update
+        const tempId = `temp-${Date.now()}`;
+        const tempMessage: ChatMessage = {
+            id: tempId,
+            content,
+            thread_id: threadId,
+            author_id: userId,
+            author_name: authorName,
+            created_at: new Date().toISOString(),
+            attachment_url: attachment_url || undefined,
+            attachment_type: attachment_type || undefined,
+            attachment_name: attachment_name || undefined
+        };
+
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [threadId]: [...(state.messages[threadId] || []), tempMessage]
+            }
+        }));
+
+        // 3. DB Insert
+        const { data, error } = await supabase
             .from('messages')
             .insert({
                 thread_id: threadId,
@@ -252,17 +277,68 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 attachment_url,
                 attachment_type,
                 attachment_name
-            });
+            })
+            .select()
+            .single();
 
-        if (error) throw error;
+        if (error) {
+            // Revert optimistic update on error
+            set(state => ({
+                messages: {
+                    ...state.messages,
+                    [threadId]: state.messages[threadId].filter(m => m.id !== tempId)
+                }
+            }));
+            throw error;
+        }
+
+        // 4. Update Id with real DB ID
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [threadId]: state.messages[threadId].map(m =>
+                    m.id === tempId ? data : m
+                )
+            }
+        }));
 
         // Auto-mark as read for the sender
         await get().markThreadAsRead(threadId);
     },
 
-    updateThreadSettings: async (threadId: string, isPrivate: boolean, participantIds: string[]) => {
-        const userId = get().currentUserId;
+    deleteMessage: async (threadId, messageId) => {
+        const { error } = await supabase
+            .from('messages')
+            .update({ is_deleted: true })
+            .eq('id', messageId);
 
+        if (error) throw error;
+    },
+
+    markThreadAsRead: async (threadId) => {
+        const userId = get().currentUserId;
+        if (!userId) return;
+
+        const { error } = await supabase
+            .from('thread_participants')
+            .upsert({
+                thread_id: threadId,
+                user_id: userId,
+                last_read_at: new Date().toISOString()
+            }, { onConflict: 'thread_id,user_id' });
+
+        if (error) console.error('Error marking as read', error);
+
+        // Update local state
+        set(state => ({
+            threads: state.threads.map(t =>
+                t.id === threadId ? { ...t, unreadCount: 0 } : t
+            )
+        }));
+    },
+
+    updateThreadSettings: async (threadId, isPrivate, participantIds) => {
+        const userId = get().currentUserId;
         // 1. Update thread privacy
         const { error: threadError } = await supabase
             .from('threads')
@@ -271,43 +347,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (threadError) throw threadError;
 
-        // 2. Manage participants
+        // 2. Update participants
         if (isPrivate) {
-            // A. Add/Update provided participants
-            if (participantIds.length > 0) {
-                const participantsData = participantIds.map(uid => ({
-                    thread_id: threadId,
-                    user_id: uid,
-                    last_read_at: new Date().toISOString()
-                }));
-                const { error: upsertError } = await supabase
-                    .from('thread_participants')
-                    .upsert(participantsData, { onConflict: 'thread_id,user_id', ignoreDuplicates: true });
-
-                if (upsertError) throw upsertError;
-            }
-
-            // B. Remove participants NOT in the list
-            // If list is empty, delete all. If list has items, delete those not in list.
-            let query = supabase
+            // Fetch existing to know what to add/remove
+            const { data: existing } = await supabase
                 .from('thread_participants')
-                .delete()
+                .select('user_id')
                 .eq('thread_id', threadId);
 
-            if (participantIds.length > 0) {
-                // Use .filter for explicit not.in
-                // Format for 'in' filter is (val1,val2)
-                const inList = `(${participantIds.join(',')})`;
-                query = query.filter('user_id', 'not.in', inList);
-            }
-            // If participantIds is empty, we just delete all for this thread (except maybe we want to keep owner? 
-            // but the inputs should usually include the owner if the UI is correct. 
-            // If UI doesn't allow unchecking owner, we are safe. 
-            // If owner unchecks themselves, they lose access. That's on them, or RLS might block it.)
+            const existingIds = existing?.map(e => e.user_id) || [];
 
-            const { error: deleteError } = await query;
-            if (deleteError) throw deleteError;
+            // IDs to add
+            const toAdd = participantIds.filter(id => !existingIds.includes(id));
+            if (toAdd.length > 0) {
+                await supabase.from('thread_participants').insert(
+                    toAdd.map(uid => ({
+                        thread_id: threadId,
+                        user_id: uid,
+                        last_read_at: new Date().toISOString()
+                    }))
+                );
+            }
+
+            // IDs to remove (exclude current user to prevent locking oneself out)
+            const toRemove = existingIds.filter(id => !participantIds.includes(id) && id !== userId);
+            if (toRemove.length > 0) {
+                await supabase
+                    .from('thread_participants')
+                    .delete()
+                    .eq('thread_id', threadId)
+                    .in('user_id', toRemove);
+            }
         }
+
+        get().fetchThreads();
     },
 
     deleteThread: async (threadId) => {
@@ -317,63 +390,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .eq('id', threadId);
 
         if (error) throw error;
-        get().fetchThreads(); // Refresh list to remove deleted thread if viewing list (optional here)
-    },
 
-    deleteMessage: async (threadId: string, messageId: string) => {
-        const { error } = await supabase
-            .from('messages')
-            .delete()
-            .eq('id', messageId);
-
-        if (error) throw error;
-
-        // Update local state
-        const currentMessages = get().messages[threadId];
-        if (currentMessages) {
-            set(state => ({
-                messages: {
-                    ...state.messages,
-                    [threadId]: currentMessages.filter(m => m.id !== messageId)
-                }
-            }));
-        }
-    },
-
-    markThreadAsRead: async (threadId) => {
-        const userId = get().currentUserId;
-        if (!userId) return;
-
-        // Optimistically update local state to remove unread badge immediately
         set(state => ({
-            threads: state.threads.map(t =>
-                t.id === threadId ? { ...t, unreadCount: 0 } : t
-            )
+            threads: state.threads.filter(t => t.id !== threadId),
+            messages: { ...state.messages, [threadId]: [] }
         }));
-
-        const now = new Date().toISOString();
-        const { error } = await supabase
-            .from('thread_participants')
-            .upsert({
-                thread_id: threadId,
-                user_id: userId,
-                last_read_at: now
-            }, { onConflict: 'thread_id,user_id' }); // Use the constraint name if known, or just columns
-
-        if (error) console.error(error);
     },
 
-    fetchThreadParticipants: async (threadId: string) => {
+    fetchThreadParticipants: async (threadId) => {
         const { data, error } = await supabase
             .from('thread_participants')
             .select('user_id')
             .eq('thread_id', threadId);
 
         if (error) {
-            console.error('Error fetching participants', error);
+            console.error(error);
             return [];
         }
-        return data.map(p => p.user_id);
+        return data.map(d => d.user_id);
     },
 
     subscribeToAll: () => {
@@ -385,31 +419,48 @@ export const useChatStore = create<ChatState>((set, get) => ({
             })
             .subscribe();
 
-        // Subscribe to Messages (Global or Per Thread? Global might be noisy but simple for notifications)
+        // Subscribe to Messages
         const messageSub = supabase
             .channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
-                const newMsg = payload.new as ChatMessage;
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
                 const userId = get().currentUserId;
 
-                // Update messages store if we have this thread loaded
-                const currentMessages = get().messages[newMsg.thread_id];
-                if (currentMessages) {
-                    set(state => ({
-                        messages: {
-                            ...state.messages,
-                            [newMsg.thread_id]: [...currentMessages, newMsg]
-                        }
-                    }));
-                }
+                if (payload.eventType === 'INSERT') {
+                    const newMsg = payload.new as ChatMessage;
 
-                // Notification Logic
-                // If I am NOT the author, notify me
-                if (userId && newMsg.author_id !== userId) {
-                    // Ideally check if thread is approved and I am interested? 
-                    // For now, notify all messages in threads I can see?
-                    // Let's simplified: Notify all new messages for now.
-                    sendNotification(`New message from ${newMsg.author_name}`, newMsg.content, `/chat/${newMsg.thread_id}`);
+                    // Avoid duplicate if it's my own message (already optimistically added)
+                    // We check if we have a temp message or the real message already
+                    const currentMessages = get().messages[newMsg.thread_id];
+                    if (currentMessages) {
+                        const exists = currentMessages.some(m => m.id === newMsg.id);
+                        if (!exists) {
+                            set(state => ({
+                                messages: {
+                                    ...state.messages,
+                                    [newMsg.thread_id]: [...(state.messages[newMsg.thread_id] || []), newMsg]
+                                }
+                            }));
+                        }
+                    }
+
+                    // Notification Logic
+                    if (userId && newMsg.author_id !== userId) {
+                        sendNotification(`New message from ${newMsg.author_name}`, newMsg.content, `/chat/${newMsg.thread_id}`);
+                    }
+                } else if (payload.eventType === 'UPDATE') {
+                    const updatedMsg = payload.new as ChatMessage;
+                    set(state => {
+                        const threadMessages = state.messages[updatedMsg.thread_id];
+                        if (!threadMessages) return state;
+                        return {
+                            messages: {
+                                ...state.messages,
+                                [updatedMsg.thread_id]: threadMessages.map(m =>
+                                    m.id === updatedMsg.id ? updatedMsg : m
+                                )
+                            }
+                        };
+                    });
                 }
             })
             .subscribe();

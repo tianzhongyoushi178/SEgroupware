@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check, Trash2 } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check, Trash2, AlertTriangle } from 'lucide-react';
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
@@ -32,6 +32,7 @@ export default function ChatRoomPage() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isPrivate, setIsPrivate] = useState(false);
     const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+    const [errorModal, setErrorModal] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,11 +100,28 @@ export default function ChatRoomPage() {
             const file = e.target.files[0];
             // 10MB limit
             if (file.size > 10 * 1024 * 1024) {
-                alert('ファイルサイズは10MBまでです。');
+                setErrorModal('ファイルサイズは10MBまでです。');
                 e.target.value = ''; // Reset input
                 return;
             }
             setSelectedFile(file);
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    if (blob.size > 10 * 1024 * 1024) {
+                        setErrorModal('ファイルサイズは10MBまでです。');
+                        return;
+                    }
+                    setSelectedFile(blob);
+                    e.preventDefault(); // Prevent pasting the image binary string
+                }
+            }
         }
     };
 
@@ -225,7 +243,7 @@ export default function ChatRoomPage() {
                                 alignSelf: isMe ? 'flex-end' : 'flex-start'
                             }}
                         >
-                            {!isMe && (
+                            {!isMe && !msg.is_deleted && (
                                 <span style={{ fontSize: '0.75rem', color: 'white', marginBottom: '0.25rem', paddingLeft: '0.5rem' }}>
                                     {msg.author_name}
                                 </span>
@@ -239,74 +257,85 @@ export default function ChatRoomPage() {
                                 <div style={{
                                     padding: '0.75rem 1rem',
                                     borderRadius: '1.2rem',
-                                    background: isMe ? '#8de055' : (isAI ? '#eee' : 'white'), // AI messages slightly different?
-                                    color: 'black',
+                                    background: msg.is_deleted ? '#ccc' : (isMe ? '#8de055' : (isAI ? '#eee' : 'white')),
+                                    color: msg.is_deleted ? '#666' : 'black',
                                     borderTopRightRadius: isMe ? '0' : '1.2rem',
                                     borderTopLeftRadius: !isMe ? '0' : '1.2rem',
                                     position: 'relative',
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                                     wordBreak: 'break-word',
                                     lineHeight: '1.5',
-                                    whiteSpace: 'pre-wrap'
+                                    whiteSpace: 'pre-wrap',
+                                    fontStyle: msg.is_deleted ? 'italic' : 'normal'
                                 }}>
-                                    {formatMessage(msg.content)}
-                                    {msg.attachment_url && (
-                                        <div style={{ marginTop: '0.5rem' }}>
-                                            {msg.attachment_type?.startsWith('image/') ? (
-                                                <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src={msg.attachment_url}
-                                                        alt="attachment"
-                                                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '0.5rem', display: 'block' }}
-                                                    />
-                                                </a>
-                                            ) : (
-                                                <a
-                                                    href={msg.attachment_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{
-                                                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                                        color: isMe ? 'white' : 'var(--primary)',
-                                                        textDecoration: 'none',
-                                                        fontSize: '0.85rem',
-                                                        background: 'rgba(0,0,0,0.1)',
-                                                        padding: '0.5rem',
-                                                        borderRadius: '0.5rem'
-                                                    }}
-                                                >
-                                                    <FileText size={16} />
-                                                    <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                        {msg.attachment_name || '添付ファイル'}
-                                                    </span>
-                                                </a>
+                                    {msg.is_deleted ? (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Trash2 size={14} /> このメッセージは削除されました
+                                        </span>
+                                    ) : (
+                                        <>
+                                            {formatMessage(msg.content)}
+                                            {msg.attachment_url && (
+                                                <div style={{ marginTop: '0.5rem' }}>
+                                                    {msg.attachment_type?.startsWith('image/') ? (
+                                                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img
+                                                                src={msg.attachment_url}
+                                                                alt="attachment"
+                                                                style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '0.5rem', display: 'block' }}
+                                                            />
+                                                        </a>
+                                                    ) : (
+                                                        <a
+                                                            href={msg.attachment_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{
+                                                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                                                color: isMe ? 'white' : 'var(--primary)',
+                                                                textDecoration: 'none',
+                                                                fontSize: '0.85rem',
+                                                                background: 'rgba(0,0,0,0.1)',
+                                                                padding: '0.5rem',
+                                                                borderRadius: '0.5rem'
+                                                            }}
+                                                        >
+                                                            <FileText size={16} />
+                                                            <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                {msg.attachment_name || '添付ファイル'}
+                                                            </span>
+                                                        </a>
+                                                    )}
+                                                </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                    <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
-                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                    {isMe && (
-                                        <button
-                                            onClick={() => handleDeleteMessage(msg.id)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                padding: '0',
-                                                color: 'rgba(255,255,255,0.6)',
-                                                display: 'flex',
-                                                alignItems: 'center'
-                                            }}
-                                            title="削除"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                    )}
-                                </div>
+                                {!msg.is_deleted && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        {isMe && (
+                                            <button
+                                                onClick={() => handleDeleteMessage(msg.id)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    padding: '0',
+                                                    color: 'rgba(255,255,255,0.6)',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}
+                                                title="削除"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -373,6 +402,7 @@ export default function ChatRoomPage() {
                     <textarea
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
+                        onPaste={handlePaste}
                         onKeyDown={e => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -526,6 +556,40 @@ export default function ChatRoomPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+            {errorModal && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: 'white', padding: '2rem', borderRadius: '1rem',
+                        maxWidth: '400px', width: '90%', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                            <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '50%', color: '#dc2626' }}>
+                                <AlertTriangle size={32} />
+                            </div>
+                        </div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1f2937' }}>
+                            エラー
+                        </h3>
+                        <p style={{ color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                            {errorModal}
+                        </p>
+                        <button
+                            onClick={() => setErrorModal(null)}
+                            style={{
+                                background: '#dc2626', color: 'white', padding: '0.75rem 1.5rem',
+                                borderRadius: '0.5rem', border: 'none', fontWeight: 'bold', cursor: 'pointer',
+                                width: '100%'
+                            }}
+                        >
+                            閉じる
+                        </button>
                     </div>
                 </div>
             )}
