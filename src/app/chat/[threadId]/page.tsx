@@ -158,6 +158,16 @@ export default function ChatRoomPage() {
         }
     }
 
+    const handleQuote = (text: string) => {
+        const quoteText = text.split('\n').map(line => `> ${line}`).join('\n') + '\n';
+        setNewMessage(prev => prev + quoteText);
+        // Focus input
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+    };
+
     const formatMessage = (content: string) => {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         return content.split(urlRegex).map((part, index) => {
@@ -266,8 +276,12 @@ export default function ChatRoomPage() {
                                     wordBreak: 'break-word',
                                     lineHeight: '1.5',
                                     whiteSpace: 'pre-wrap',
-                                    fontStyle: msg.is_deleted ? 'italic' : 'normal'
-                                }}>
+                                    fontStyle: msg.is_deleted ? 'italic' : 'normal',
+                                    cursor: !msg.is_deleted ? 'pointer' : 'default'
+                                }}
+                                    onClick={() => !msg.is_deleted && handleQuote(msg.content)}
+                                    title="クリックで引用"
+                                >
                                     {msg.is_deleted ? (
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Trash2 size={14} /> このメッセージは削除されました
@@ -278,7 +292,7 @@ export default function ChatRoomPage() {
                                             {msg.attachment_url && (
                                                 <div style={{ marginTop: '0.5rem' }}>
                                                     {msg.attachment_type?.startsWith('image/') ? (
-                                                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+                                                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                                             <img
                                                                 src={msg.attachment_url}
@@ -291,6 +305,7 @@ export default function ChatRoomPage() {
                                                             href={msg.attachment_url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            onClick={(e) => e.stopPropagation()}
                                                             style={{
                                                                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                                                                 color: isMe ? 'white' : 'var(--primary)',
