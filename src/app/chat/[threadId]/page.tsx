@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle } from 'lucide-react';
 import NoteOverlay from '@/components/chat/NoteOverlay';
 
 export default function ChatRoomPage() {
