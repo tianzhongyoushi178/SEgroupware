@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(apiKey);
         // Using specific version as requested by user
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         const systemPrompt = `
 あなたは社内グループウェア「Sales Hub」のヘルプデスクAIです。
@@ -213,7 +213,7 @@ export async function POST(req: Request) {
                 },
             ],
             generationConfig: {
-                maxOutputTokens: 500,
+                maxOutputTokens: 3000,
             },
         });
 
