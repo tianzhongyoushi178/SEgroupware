@@ -44,6 +44,17 @@ export default function SettingsPage() {
     // Editing State
     const [editingLink, setEditingLink] = useState<{ id: string, title: string, url: string, type: 'quickAccess' | 'sidebar' } | null>(null);
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     const QUICK_ACCESS_ITEMS = [
         { id: 'attendance', label: '勤怠管理を行う' },
         { id: 'meeting', label: '会議室を予約' },
@@ -150,16 +161,7 @@ export default function SettingsPage() {
         }
     };
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
+
 
     const handleDragEndQuickAccess = async (event: DragEndEvent) => {
         const { active, over } = event;
