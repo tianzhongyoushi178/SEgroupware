@@ -43,9 +43,9 @@ export default function Home() {
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             {(() => {
               const standardItems = [
-                { id: 'attendance', label: '⏰ 勤怠管理を行う', url: 'http://10.1.1.161/Lysithea/login', type: 'link' },
-                { id: 'meeting', label: '📅 会議室を予約', url: 'http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp', type: 'link' },
-                { id: 'notice', label: '📢 お知らせを投稿', type: 'button', onClick: () => setIsNoticeModalOpen(true) }
+                { id: 'attendance', label: '⏰ 勤怠管理を行う', url: 'http://10.1.1.161/Lysithea/login', type: 'link', isCustom: false },
+                { id: 'meeting', label: '📅 会議室を予約', url: 'http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp', type: 'link', isCustom: false },
+                { id: 'notice', label: '📢 お知らせを投稿', type: 'button', onClick: () => setIsNoticeModalOpen(true), isCustom: false }
               ];
 
               const customItems = (profile?.preferences?.customQuickAccess || []).map((item: any) => ({
