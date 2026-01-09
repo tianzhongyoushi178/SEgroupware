@@ -43,6 +43,14 @@ export default function ChatRoomPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const currentMessages = messages[threadId] || [];
     const currentThread = threads.find(t => t.id === threadId);
@@ -520,7 +528,9 @@ export default function ChatRoomPage() {
                         onChange={e => setNewMessage(e.target.value)}
                         onPaste={handlePaste}
                         onKeyDown={e => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
+                            // Desktop: Enter sends, Shift+Enter newlines
+                            // Mobile: Enter newlines (default), only Send button sends
+                            if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend(e);
                             }
