@@ -4,6 +4,7 @@ create table if not exists public.thread_notes (
   thread_id uuid references public.threads(id) on delete cascade not null,
   author_id uuid references auth.users(id) on delete cascade not null,
   content text not null,
+  attachments jsonb default '[]'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

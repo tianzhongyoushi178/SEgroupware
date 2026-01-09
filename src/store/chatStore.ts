@@ -37,6 +37,7 @@ export interface Note {
     created_at: string;
     updated_at: string;
     images?: string[];
+    attachments?: { name: string, type: string, url: string }[];
     author?: { display_name: string | null; email: string | null };
 }
 
@@ -67,7 +68,7 @@ interface ChatState {
     // Notes
     notes: Record<string, Note[]>;
     fetchNotes: (threadId: string) => Promise<void>;
-    addNote: (threadId: string, content: string) => Promise<void>;
+    addNote: (threadId: string, content: string, attachments?: File[]) => Promise<void>;
     deleteNote: (threadId: string, noteId: string) => Promise<void>;
 }
 
@@ -563,16 +564,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
     },
 
-    addNote: async (threadId, content) => {
+    addNote: async (threadId, content, files = []) => {
         const userId = get().currentUserId;
         if (!userId) return;
+
+        const attachments: { name: string, type: string, url: string }[] = [];
+
+        // Upload files if any
+        for (const file of files) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const filePath = `${threadId}/${userId}/notes/${fileName}`;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('path', filePath);
+
+            try {
+                const uploadRes = await fetch('/api/chat/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (uploadRes.ok) {
+                    const { publicUrl } = await uploadRes.json();
+                    attachments.push({
+                        name: file.name,
+                        type: file.type,
+                        url: publicUrl
+                    });
+                } else {
+                    console.error('Failed to upload attachment', await uploadRes.text());
+                }
+            } catch (e) {
+                console.error('Upload error', e);
+            }
+        }
 
         const { error } = await supabase
             .from('thread_notes')
             .insert({
                 thread_id: threadId,
                 author_id: userId,
-                content
+                content,
+                attachments
             });
 
         if (error) throw error;
