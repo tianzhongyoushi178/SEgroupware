@@ -548,275 +548,276 @@ export default function ChatRoomPage() {
                                     </div>
                                 </div>
                             </div>
-                            );
-                })}
-                            <div ref={messagesEndRef} />
                         </div>
+                    );
+                })}
+                <div ref={messagesEndRef} />
+            </div>
 
-            {/* Input Area */ }
-                    <div style={{ background: '#f0f0f0', borderTop: '1px solid #ddd' }}>
-                        {selectedFile && (
-                            <div style={{
-                                padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                background: 'rgba(255,255,255,0.5)', borderBottom: '1px solid #eee'
-                            }}>
-                                <button
-                                    onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', marginRight: '0.5rem' }}
-                                >
-                                    <X size={18} />
-                                </button>
-                                <div style={{
-                                    width: '40px', height: '40px', borderRadius: '4px', background: '#ddd',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                                }}>
-                                    {selectedFile.type.startsWith('image/') ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={URL.createObjectURL(selectedFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <FileText size={20} color="#666" />
-                                    )}
-                                </div>
-                                <span style={{ fontSize: '0.85rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {selectedFile.name}
-                                </span>
-                            </div>
-                        )}
-                        <form
-                            onSubmit={handleSend}
-                            style={{
-                                padding: '0.75rem 1rem',
-                                display: 'flex',
-                                gap: '0.75rem',
-                                alignItems: 'center'
-                            }}
+            {/* Input Area */}
+            <div style={{ background: '#f0f0f0', borderTop: '1px solid #ddd' }}>
+                {selectedFile && (
+                    <div style={{
+                        padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        background: 'rgba(255,255,255,0.5)', borderBottom: '1px solid #eee'
+                    }}>
+                        <button
+                            onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', marginRight: '0.5rem' }}
                         >
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileSelect}
-                                style={{ display: 'none' }}
-                                // Accept standard types
-                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                style={{
-                                    background: 'transparent', border: 'none', cursor: 'pointer', color: '#666',
-                                    padding: '0.5rem'
-                                }}
-                            >
-                                <Paperclip size={24} />
-                            </button>
-                            <textarea
-                                ref={textareaRef}
-                                value={newMessage}
-                                onChange={e => setNewMessage(e.target.value)}
-                                onPaste={handlePaste}
-                                onKeyDown={e => {
-                                    // Desktop: Enter sends, Shift+Enter newlines
-                                    // Mobile: Enter newlines (default), only Send button sends
-                                    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend(e);
-                                    }
-                                }}
-                                placeholder="メッセージを入力"
-                                className="chat-input-textarea"
-                                style={{
-                                    flex: 1,
-                                    padding: '0.75rem 1rem',
-                                    borderRadius: '20px',
-                                    border: '1px solid #ccc',
-                                    outline: 'none',
-                                    fontSize: '0.95rem',
-                                    resize: 'none',
-                                    minHeight: '44px',
-                                    maxHeight: '120px',
-                                    fontFamily: 'inherit'
-                                }}
-                            />
-                            <button
-                                type="submit"
-                                disabled={!newMessage.trim() && !selectedFile}
-                                style={{
-                                    background: 'transparent',
-                                    color: (newMessage.trim() || selectedFile) ? '#007bff' : '#ccc',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '0.5rem',
-                                    transition: 'color 0.2s'
-                                }}
-                            >
-                                <Send size={24} />
-                            </button>
-                        </form>
+                            <X size={18} />
+                        </button>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '4px', background: '#ddd',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                        }}>
+                            {selectedFile.type.startsWith('image/') ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={URL.createObjectURL(selectedFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <FileText size={20} color="#666" />
+                            )}
+                        </div>
+                        <span style={{ fontSize: '0.85rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {selectedFile.name}
+                        </span>
                     </div>
+                )}
+                <form
+                    onSubmit={handleSend}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        display: 'flex',
+                        gap: '0.75rem',
+                        alignItems: 'center'
+                    }}
+                >
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                        // Accept standard types
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            background: 'transparent', border: 'none', cursor: 'pointer', color: '#666',
+                            padding: '0.5rem'
+                        }}
+                    >
+                        <Paperclip size={24} />
+                    </button>
+                    <textarea
+                        ref={textareaRef}
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
+                        onPaste={handlePaste}
+                        onKeyDown={e => {
+                            // Desktop: Enter sends, Shift+Enter newlines
+                            // Mobile: Enter newlines (default), only Send button sends
+                            if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend(e);
+                            }
+                        }}
+                        placeholder="メッセージを入力"
+                        className="chat-input-textarea"
+                        style={{
+                            flex: 1,
+                            padding: '0.75rem 1rem',
+                            borderRadius: '20px',
+                            border: '1px solid #ccc',
+                            outline: 'none',
+                            fontSize: '0.95rem',
+                            resize: 'none',
+                            minHeight: '44px',
+                            maxHeight: '120px',
+                            fontFamily: 'inherit'
+                        }}
+                    />
+                    <button
+                        type="submit"
+                        disabled={!newMessage.trim() && !selectedFile}
+                        style={{
+                            background: 'transparent',
+                            color: (newMessage.trim() || selectedFile) ? '#007bff' : '#ccc',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.5rem',
+                            transition: 'color 0.2s'
+                        }}
+                    >
+                        <Send size={24} />
+                    </button>
+                </form>
+            </div>
 
-                    {/* Settings Modal */ }
-                    {
-                        isSettingsOpen && (
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'rgba(0,0,0,0.5)', zIndex: 100,
-                                display: 'flex', justifyContent: 'center', alignItems: 'center'
-                            }}>
-                                <div style={{
-                                    background: 'var(--surface)', borderRadius: '8px', padding: '1.5rem',
-                                    width: '90%', maxWidth: '500px', maxHeight: '90%', overflowY: 'auto',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                    color: 'var(--text-main)'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                                        <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>スレッド設定</h2>
-                                        <button onClick={() => setIsSettingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-main)' }}><X size={24} /></button>
-                                    </div>
+            {/* Settings Modal */}
+            {
+                isSettingsOpen && (
+                    <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.5)', zIndex: 100,
+                        display: 'flex', justifyContent: 'center', alignItems: 'center'
+                    }}>
+                        <div style={{
+                            background: 'var(--surface)', borderRadius: '8px', padding: '1.5rem',
+                            width: '90%', maxWidth: '500px', maxHeight: '90%', overflowY: 'auto',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            color: 'var(--text-main)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>スレッド設定</h2>
+                                <button onClick={() => setIsSettingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-main)' }}><X size={24} /></button>
+                            </div>
 
-                                    <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background-secondary)', borderRadius: '8px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={isPrivate}
-                                                onChange={e => setIsPrivate(e.target.checked)}
-                                                style={{ width: '1.2rem', height: '1.2rem' }}
-                                            />
-                                            プライベートスレッド（参加者限定）
-                                        </label>
-                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '2rem', marginTop: '0.5rem' }}>
-                                            チェックを入れると、選択したユーザーのみがこのスレッドを閲覧・投稿できるようになります。
-                                        </p>
-                                    </div>
+                            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background-secondary)', borderRadius: '8px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isPrivate}
+                                        onChange={e => setIsPrivate(e.target.checked)}
+                                        style={{ width: '1.2rem', height: '1.2rem' }}
+                                    />
+                                    プライベートスレッド（参加者限定）
+                                </label>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '2rem', marginTop: '0.5rem' }}>
+                                    チェックを入れると、選択したユーザーのみがこのスレッドを閲覧・投稿できるようになります。
+                                </p>
+                            </div>
 
-                                    {isPrivate && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                                                参加者を選択 ({selectedParticipants.length}名)
-                                            </h3>
-                                            <div style={{
-                                                border: '1px solid var(--border)', borderRadius: '4px',
-                                                maxHeight: '250px', overflowY: 'auto'
+                            {isPrivate && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                        参加者を選択 ({selectedParticipants.length}名)
+                                    </h3>
+                                    <div style={{
+                                        border: '1px solid var(--border)', borderRadius: '4px',
+                                        maxHeight: '250px', overflowY: 'auto'
+                                    }}>
+                                        {isUsersLoading && allUsers.length === 0 && (
+                                            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーを読み込み中...</div>
+                                        )}
+                                        {!isUsersLoading && allUsers.length === 0 && (
+                                            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーが見つかりません</div>
+                                        )}
+                                        {allUsers.map(u => (
+                                            <label key={u.id} style={{
+                                                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                                padding: '0.75rem', borderBottom: '1px solid var(--border)', cursor: 'pointer',
+                                                background: selectedParticipants.includes(u.id) ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                                                transition: 'background 0.2s'
                                             }}>
-                                                {isUsersLoading && allUsers.length === 0 && (
-                                                    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーを読み込み中...</div>
-                                                )}
-                                                {!isUsersLoading && allUsers.length === 0 && (
-                                                    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>ユーザーが見つかりません</div>
-                                                )}
-                                                {allUsers.map(u => (
-                                                    <label key={u.id} style={{
-                                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                                        padding: '0.75rem', borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                                                        background: selectedParticipants.includes(u.id) ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
-                                                        transition: 'background 0.2s'
-                                                    }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedParticipants.includes(u.id)}
-                                                            onChange={e => {
-                                                                if (e.target.checked) {
-                                                                    setSelectedParticipants(prev => [...prev, u.id]);
-                                                                } else {
-                                                                    setSelectedParticipants(prev => prev.filter(id => id !== u.id));
-                                                                }
-                                                            }}
-                                                            style={{ width: '1.1rem', height: '1.1rem' }}
-                                                        />
-                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{u.display_name || '名称未設定'}</span>
-                                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
-                                                        </div>
-                                                        {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                                        {/* Delete Button */}
-                                        <button
-                                            onClick={handleDeleteThread}
-                                            style={{
-                                                padding: '0.6rem 1.2rem', background: 'transparent', color: '#dc2626',
-                                                border: '1px solid #dc2626', borderRadius: '4px', cursor: 'pointer',
-                                                fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                                            }}
-                                        >
-                                            <Trash2 size={16} />
-                                            スレッドを削除
-                                        </button>
-
-                                        <div style={{ display: 'flex', gap: '1rem' }}>
-                                            <button
-                                                onClick={() => setIsSettingsOpen(false)}
-                                                style={{
-                                                    padding: '0.6rem 1.2rem', background: 'var(--background-secondary)', color: 'var(--text-main)',
-                                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
-                                                }}
-                                            >
-                                                キャンセル
-                                            </button>
-                                            <button
-                                                onClick={handleSaveSettings}
-                                                style={{
-                                                    padding: '0.6rem 1.2rem', background: 'var(--primary)', color: 'white',
-                                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
-                                                }}
-                                            >
-                                                保存する
-                                            </button>
-                                        </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedParticipants.includes(u.id)}
+                                                    onChange={e => {
+                                                        if (e.target.checked) {
+                                                            setSelectedParticipants(prev => [...prev, u.id]);
+                                                        } else {
+                                                            setSelectedParticipants(prev => prev.filter(id => id !== u.id));
+                                                        }
+                                                    }}
+                                                    style={{ width: '1.1rem', height: '1.1rem' }}
+                                                />
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{u.display_name || '名称未設定'}</span>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
+                                                </div>
+                                                {selectedParticipants.includes(u.id) && <Check size={16} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
+                                            </label>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    }
-                    {
-                        errorModal && (
-                            <div style={{
-                                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <div style={{
-                                    background: 'white', padding: '2rem', borderRadius: '1rem',
-                                    maxWidth: '400px', width: '90%', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                    textAlign: 'center'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-                                        <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '50%', color: '#dc2626' }}>
-                                            <AlertTriangle size={32} />
-                                        </div>
-                                    </div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1f2937' }}>
-                                        エラー
-                                    </h3>
-                                    <p style={{ color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                                        {errorModal}
-                                    </p>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                                {/* Delete Button */}
+                                <button
+                                    onClick={handleDeleteThread}
+                                    style={{
+                                        padding: '0.6rem 1.2rem', background: 'transparent', color: '#dc2626',
+                                        border: '1px solid #dc2626', borderRadius: '4px', cursor: 'pointer',
+                                        fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                                    }}
+                                >
+                                    <Trash2 size={16} />
+                                    スレッドを削除
+                                </button>
+
+                                <div style={{ display: 'flex', gap: '1rem' }}>
                                     <button
-                                        onClick={() => setErrorModal(null)}
+                                        onClick={() => setIsSettingsOpen(false)}
                                         style={{
-                                            background: '#dc2626', color: 'white', padding: '0.75rem 1.5rem',
-                                            borderRadius: '0.5rem', border: 'none', fontWeight: 'bold', cursor: 'pointer',
-                                            width: '100%'
+                                            padding: '0.6rem 1.2rem', background: 'var(--background-secondary)', color: 'var(--text-main)',
+                                            border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
                                         }}
                                     >
-                                        閉じる
+                                        キャンセル
+                                    </button>
+                                    <button
+                                        onClick={handleSaveSettings}
+                                        style={{
+                                            padding: '0.6rem 1.2rem', background: 'var(--primary)', color: 'white',
+                                            border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'
+                                        }}
+                                    >
+                                        保存する
                                     </button>
                                 </div>
                             </div>
-                        )
-                    }
+                        </div>
+                    </div>
+                )
+            }
+            {
+                errorModal && (
+                    <div style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <div style={{
+                            background: 'white', padding: '2rem', borderRadius: '1rem',
+                            maxWidth: '400px', width: '90%', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                                <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '50%', color: '#dc2626' }}>
+                                    <AlertTriangle size={32} />
+                                </div>
+                            </div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1f2937' }}>
+                                エラー
+                            </h3>
+                            <p style={{ color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                                {errorModal}
+                            </p>
+                            <button
+                                onClick={() => setErrorModal(null)}
+                                style={{
+                                    background: '#dc2626', color: 'white', padding: '0.75rem 1.5rem',
+                                    borderRadius: '0.5rem', border: 'none', fontWeight: 'bold', cursor: 'pointer',
+                                    width: '100%'
+                                }}
+                            >
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
 
-                    <NoteOverlay
-                        isOpen={isNoteOpen}
-                        onClose={() => setIsNoteOpen(false)}
-                        threadId={threadId}
-                    />
+            <NoteOverlay
+                isOpen={isNoteOpen}
+                onClose={() => setIsNoteOpen(false)}
+                threadId={threadId}
+            />
         </div >
-            );
+    );
 }
