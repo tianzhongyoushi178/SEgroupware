@@ -13,7 +13,7 @@ interface NoteOverlayProps {
 export default function NoteOverlay({ isOpen, onClose, threadId }: NoteOverlayProps) {
     const { user } = useAuthStore();
     const { notes, fetchNotes, addNote, deleteNote } = useChatStore();
-    const { users } = useUserStore();
+    const { users, fetchUsers } = useUserStore();
     const [isCreating, setIsCreating] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [newNoteContent, setNewNoteContent] = useState('');
@@ -24,8 +24,11 @@ export default function NoteOverlay({ isOpen, onClose, threadId }: NoteOverlayPr
     useEffect(() => {
         if (isOpen) {
             fetchNotes(threadId);
+            if (users.length === 0) {
+                fetchUsers();
+            }
         }
-    }, [isOpen, threadId, fetchNotes]);
+    }, [isOpen, threadId, fetchNotes, fetchUsers, users.length]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
