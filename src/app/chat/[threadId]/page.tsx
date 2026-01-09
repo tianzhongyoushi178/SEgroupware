@@ -6,7 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, FileText, X, Image as ImageIcon, Settings, Check, Trash2, AlertTriangle, StickyNote } from 'lucide-react';
+import NoteOverlay from '@/components/chat/NoteOverlay';
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
@@ -30,6 +31,7 @@ export default function ChatRoomPage() {
     const [newMessage, setNewMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isNoteOpen, setIsNoteOpen] = useState(false);
     const [isPrivate, setIsPrivate] = useState(false);
     const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
     const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -261,15 +263,31 @@ export default function ChatRoomPage() {
                         {currentThread?.is_private && <span style={{ fontSize: '0.8rem', marginLeft: '0.5rem', color: '#666' }}>🔒</span>}
                     </h1>
                 </div>
-                {/* Settings Button (Only for creator or admin) */}
-                {(isAdmin || currentThread?.created_by === user?.id) && (
+                {/* Header Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}
+                        onClick={() => setIsNoteOpen(!isNoteOpen)}
+                        style={{
+                            background: isNoteOpen ? 'rgba(0,0,0,0.1)' : 'none',
+                            border: 'none', cursor: 'pointer', color: '#555',
+                            padding: '0.5rem', borderRadius: '4px',
+                            display: 'flex', alignItems: 'center', gap: '0.25rem'
+                        }}
+                        title="ノート"
                     >
-                        <Settings size={20} />
+                        <StickyNote size={20} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>ノート</span>
                     </button>
-                )}
+                    {/* Settings Button (Only for creator or admin) */}
+                    {(isAdmin || currentThread?.created_by === user?.id) && (
+                        <button
+                            onClick={() => setIsSettingsOpen(true)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}
+                        >
+                            <Settings size={20} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Messages Area */}
@@ -724,6 +742,12 @@ export default function ChatRoomPage() {
                     </div>
                 )
             }
+
+            <NoteOverlay
+                isOpen={isNoteOpen}
+                onClose={() => setIsNoteOpen(false)}
+                threadId={threadId}
+            />
         </div >
     );
 }

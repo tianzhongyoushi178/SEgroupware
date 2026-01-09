@@ -29,6 +29,17 @@ export interface ChatMessage {
     is_deleted?: boolean;
 }
 
+export interface Note {
+    id: string;
+    thread_id: string;
+    author_id: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+    images?: string[];
+    author?: { display_name: string | null; email: string | null };
+}
+
 interface ChatState {
     threads: ChatThread[];
     messages: Record<string, ChatMessage[]>; // Keyed by threadId
@@ -52,11 +63,18 @@ interface ChatState {
     // For notifications
     subscribeToAll: () => () => void;
     fetchThreadParticipants: (threadId: string) => Promise<string[]>;
+
+    // Notes
+    notes: Record<string, Note[]>;
+    fetchNotes: (threadId: string) => Promise<void>;
+    addNote: (threadId: string, content: string) => Promise<void>;
+    deleteNote: (threadId: string, noteId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
     threads: [],
     messages: {},
+    notes: {},
     isLoading: false,
     error: null,
     currentUserId: null,
@@ -503,5 +521,71 @@ export const useChatStore = create<ChatState>((set, get) => ({
             supabase.removeChannel(threadSub);
             supabase.removeChannel(messageSub);
         };
+    },
+
+    fetchNotes: async (threadId) => {
+        // Assuming public.users is linked to auth.users via triggers or similar, 
+        // OR we just select author_id and map later. 
+        // For now, let's try to select author details if possible, otherwise just IDs.
+        // Given existing code uses 'author_name' on messages, let's try to join if relations exist.
+        // If simply selecting *, we get author_id.
+        // We'll try to fetch author details via FK if we configured it, but standard Supabase auth doesn't expose users table easily unless public.
+        // Let's assume we can fetch profiles or users. 
+        // Actually, let's just fetch notes and we'll use useUserStore to map names in UI if needed, 
+        // OR simpler: just fetch and see.
+
+        const { data, error } = await supabase
+            .from('thread_notes')
+            .select('*')
+            .eq('thread_id', threadId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching notes:', error);
+            return;
+        }
+
+        // We might need to fetch author info manually if not joined
+        const notes = data as Note[];
+
+        // Fetch authors manually for now to be safe
+        const authorIds = Array.from(new Set(notes.map(n => n.author_id)));
+        if (authorIds.length > 0) {
+            // We can't access auth.users directly. 
+            // But usually there is a public_users or similar view. 
+            // Let's assume we rely on 'users' table if it exists? 
+            // Previous code used useUserStore.users. 
+            // Let's leave author undefined and handle in UI by mapping ID to name using UserStore.
+        }
+
+        set(state => ({
+            notes: { ...state.notes, [threadId]: notes }
+        }));
+    },
+
+    addNote: async (threadId, content) => {
+        const userId = get().currentUserId;
+        if (!userId) return;
+
+        const { error } = await supabase
+            .from('thread_notes')
+            .insert({
+                thread_id: threadId,
+                author_id: userId,
+                content
+            });
+
+        if (error) throw error;
+        get().fetchNotes(threadId);
+    },
+
+    deleteNote: async (threadId, noteId) => {
+        const { error } = await supabase
+            .from('thread_notes')
+            .delete()
+            .eq('id', noteId);
+
+        if (error) throw error;
+        get().fetchNotes(threadId);
     }
 }));
