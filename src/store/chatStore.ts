@@ -14,6 +14,7 @@ export interface ChatThread {
     last_message_at?: string;
     is_private?: boolean;
     last_read_at?: string; // Added for "Unread Starts Here" feature
+    pinned_message_id?: string | null;
 }
 
 export interface ChatMessage {
@@ -70,6 +71,10 @@ interface ChatState {
     fetchNotes: (threadId: string) => Promise<void>;
     addNote: (threadId: string, content: string, attachments?: File[]) => Promise<void>;
     deleteNote: (threadId: string, noteId: string) => Promise<void>;
+
+    // Pinned Messages (Announcements)
+    pinMessage: (threadId: string, messageId: string) => Promise<void>;
+    unpinMessage: (threadId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -95,57 +100,72 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .from('threads')
             .select('*')
             .order('last_message_at', { ascending: false, nullsFirst: false }) // Sort by latest message
-            .order('last_message_at', { ascending: false }) // Sort by latest activity
             .order('created_at', { ascending: false });
 
         if (threadsError) {
-            console.error('Error fetching threads', threadsError);
-            set({ error: threadsError.message, isLoading: false });
+            console.error('Error fetching threads:', threadsError);
+            set({ isLoading: false });
             return;
         }
 
-        let threads = threadsData as ChatThread[];
+        // 2. Fetch unread counts
+        // To do this efficiently, we can fetch last_read for all threads for current user
+        // Or we can rely on real-time updates and fetch individually?
+        // Let's fetch all threads first, then we can fetch unread counts in a separate effect or query?
+        // For now, let's keep it simple and just set threads. 
+        // We will improve unread count logic later or if needed.
+        // Actually, we need unread counts for the UI.
 
-        // 2. Fetch user's read status for these threads
-        if (userId && threads.length > 0) {
-            const { data: participants } = await supabase
-                .from('thread_participants')
-                .select('thread_id, last_read_at')
-                .eq('user_id', userId);
+        // Let's fetch `thread_participants` for current user to get `last_read_at`
+        const { data: participantData, error: participantError } = await supabase
+            .from('thread_participants')
+            .select('thread_id, last_read_at')
+            .eq('user_id', userId);
 
-            const readMap = new Map<string, string>();
-            participants?.forEach(p => {
-                readMap.set(p.thread_id, p.last_read_at);
-            });
-
-            // 3. Calculate unread
-            threads = threads.map(thread => {
-                const lastRead = readMap.get(thread.id);
-                const lastMessage = thread.last_message_at;
-
-                // If no last_message_at, no unread.
-                // If I haven't read (no record), and there is a message, it's unread? 
-                //   Or if I was added recently?
-                //   Let's assume: if record exists, compare. If no record, strictly "unread" if messages exist?
-                //   Usually "startThread" adds the creator. "updateThreadSettings" adds participants.
-                //   So record should exist for valid participants.
-
-                let isUnread = false;
-                if (lastMessage) {
-                    if (!lastRead) {
-                        isUnread = true; // Never read
-                    } else {
-                        isUnread = new Date(lastMessage) > new Date(lastRead);
-                    }
-                }
-
-                return {
-                    ...thread,
-                    unreadCount: isUnread ? 1 : 0, // Simply binary for now
-                    last_read_at: lastRead // Expose for UI usage
-                };
-            });
+        if (participantError) {
+            console.error('Error fetching participant info', participantError);
         }
+
+        const participantMap = new Map();
+        participantData?.forEach(p => {
+            participantMap.set(p.thread_id, p.last_read_at);
+        });
+
+        // 3. For each thread, we ideally want to count messages > last_read_at
+        // This is expensive to do for ALL threads at once if we have many.
+        // A better approach often used is:
+        // - Fetch threads
+        // - Fetch unread counts via a specific RPC or view.
+        // - Or client-side count if we have messages loaded (we don't for all threads).
+        // For now, let's just initialize unreadCount to 0 or something simple, 
+        // OR fetch counts for top N threads?
+        // Let's implement a simple "unread" indicator based on `last_message_at > last_read_at`.
+        // Accurate count requires query.
+
+        // Let's execute a count query for each thread... that's N queries. Bad.
+        // Alternative: creating a view or function in Supabase.
+        // For V1, let's just stick to "Unread if last_message_at > last_read_at" boolean logic in UI?
+        // But UI expects a number.
+        // Let's try to get a count for all threads where user is participant.
+
+        // For now, let's just Map last_read_at to the thread object.
+        const threads = (threadsData as ChatThread[]).map(t => {
+            const lastRead = participantMap.get(t.id);
+            // approximate unread: if last_message_at > lastRead, set to 1 (indicator). 0 otherwise.
+            // Check dates
+            let unread = 0;
+            if (t.last_message_at && lastRead && new Date(t.last_message_at) > new Date(lastRead)) {
+                unread = 1;
+            } else if (t.last_message_at && !lastRead) {
+                unread = 1; // Never read
+            }
+
+            return {
+                ...t,
+                last_read_at: lastRead,
+                unreadCount: unread // boolean-ish
+            };
+        });
 
         set({ threads, isLoading: false });
     },
