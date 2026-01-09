@@ -642,5 +642,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (error) throw error;
         get().fetchNotes(threadId);
+    },
+
+    pinMessage: async (threadId, messageId) => {
+        const { error } = await supabase
+            .from('threads')
+            .update({ pinned_message_id: messageId })
+            .eq('id', threadId);
+
+        if (error) {
+            console.error('Failed to pin message', error);
+            throw error;
+        }
+
+        // Optimistic update
+        set(state => ({
+            threads: state.threads.map(t =>
+                t.id === threadId ? { ...t, pinned_message_id: messageId } : t
+            )
+        }));
+    },
+
+    unpinMessage: async (threadId) => {
+        const { error } = await supabase
+            .from('threads')
+            .update({ pinned_message_id: null })
+            .eq('id', threadId);
+
+        if (error) {
+            console.error('Failed to unpin message', error);
+            throw error;
+        }
+
+        // Optimistic update
+        set(state => ({
+            threads: state.threads.map(t =>
+                t.id === threadId ? { ...t, pinned_message_id: undefined } : t
+            )
+        }));
     }
 }));
