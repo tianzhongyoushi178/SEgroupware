@@ -13,6 +13,7 @@ export interface ChatThread {
     unreadCount?: number;
     last_message_at?: string;
     is_private?: boolean;
+    last_read_at?: string; // Added for "Unread Starts Here" feature
 }
 
 export interface ChatMessage {
@@ -121,7 +122,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
                 return {
                     ...thread,
-                    unreadCount: isUnread ? 1 : 0 // Simply binary for now
+                    unreadCount: isUnread ? 1 : 0, // Simply binary for now
+                    last_read_at: lastRead // Expose for UI usage
                 };
             });
         }
@@ -353,7 +355,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Update local state
         set(state => ({
             threads: state.threads.map(t =>
-                t.id === threadId ? { ...t, unreadCount: 0 } : t
+                t.id === threadId ? { ...t, unreadCount: 0, last_read_at: new Date().toISOString() } : t
             )
         }));
     },
