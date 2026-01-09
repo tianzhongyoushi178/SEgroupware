@@ -203,6 +203,15 @@ export default function ChatRoomPage() {
         }
     }
 
+    // Auto-resize textarea
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+        }
+    }, [newMessage]);
+
     const handleQuote = (text: string) => {
         const quoteText = text.split('\n').map(line => `> ${line}`).join('\n') + '\n';
         setNewMessage(prev => prev + quoteText);
