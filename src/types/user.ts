@@ -22,5 +22,6 @@ export interface UserProfile {
             title: string;
             url: string;
         }[];
+        quickAccessOrder?: string[];
     };
 }

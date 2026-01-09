@@ -41,52 +41,70 @@ export default function Home() {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>クイックアクセス</h2>
           </div>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
-            {showAttendance && (
-              <a
-                href="http://10.1.1.161/Lysithea/login"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost"
-                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
-              >
-                ⏰ 勤怠管理を行う
-              </a>
-            )}
-            {showMeeting && (
-              <a
-                href="http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost"
-                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
-              >
-                📅 会議室を予約
-              </a>
-            )}
-            {showNotice && (
-              <button
-                onClick={() => setIsNoticeModalOpen(true)}
-                className="btn btn-ghost"
-                style={{ justifyContent: 'flex-start' }}
-              >
-                📢 お知らせを投稿
-              </button>
-            )}
-            {profile?.preferences?.customQuickAccess?.map((item: any) => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost"
-                style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
-              >
-                🔗 {item.title}
-              </a>
-            ))}
-            {!showMeeting && !showNotice && (!profile?.preferences?.customQuickAccess || profile.preferences.customQuickAccess.length === 0) && (
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>表示する項目がありません</p>
-            )}
+            {(() => {
+              const standardItems = [
+                { id: 'attendance', label: '⏰ 勤怠管理を行う', url: 'http://10.1.1.161/Lysithea/login', type: 'link' },
+                { id: 'meeting', label: '📅 会議室を予約', url: 'http://10.1.1.39/Scripts/dneo/dneo.exe?cmd=plantweekgrp', type: 'link' },
+                { id: 'notice', label: '📢 お知らせを投稿', type: 'button', onClick: () => setIsNoticeModalOpen(true) }
+              ];
+
+              const customItems = (profile?.preferences?.customQuickAccess || []).map((item: any) => ({
+                id: item.id,
+                label: `🔗 ${item.title}`,
+                url: item.url,
+                type: 'link',
+                isCustom: true
+              }));
+
+              const allItems = [...standardItems, ...customItems];
+              const order = profile?.preferences?.quickAccessOrder || [];
+
+              const sortedItems = order.length > 0
+                ? allItems.sort((a, b) => {
+                  const indexA = order.indexOf(a.id);
+                  const indexB = order.indexOf(b.id);
+                  if (indexA === -1) return 1;
+                  if (indexB === -1) return -1;
+                  return indexA - indexB;
+                })
+                : allItems;
+
+              const visibleItems = sortedItems.filter(item => {
+                if (item.isCustom) return true; // Custom items are visible if they exist (deletion handles removal)
+                return profile?.preferences?.quickAccess?.[item.id] !== false;
+              });
+
+              if (visibleItems.length === 0) {
+                return <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>表示する項目がありません</p>;
+              }
+
+              return visibleItems.map((item: any) => {
+                if (item.type === 'button') {
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={item.onClick}
+                      className="btn btn-ghost"
+                      style={{ justifyContent: 'flex-start' }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                }
+                return (
+                  <a
+                    key={item.id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost"
+                    style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'inherit' }}
+                  >
+                    {item.label}
+                  </a>
+                );
+              });
+            })()}
           </div>
         </section>
 
