@@ -203,7 +203,7 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                     </div>
 
                     {/* Reader List */}
-                    {(notice.readStatusVisibleTo === 'all' || isAdmin) && (
+                    {(notice.readStatusVisibleTo === 'all' || isAdmin || (user?.id && notice.authorId === user.id)) && (
                         <div style={{ marginTop: '1.5rem' }}>
                             <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                                 既読状況 ({Object.keys(notice.readStatus || {}).length}人)

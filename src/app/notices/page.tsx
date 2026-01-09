@@ -56,7 +56,8 @@ export default function NoticesPage() {
 
             // Date Filtering
             const now = new Date();
-            if (!isAdmin) {
+            // Allow admin AND author to see their own posts regardless of date
+            if (!isAdmin && (!user?.id || notice.authorId !== user.id)) {
                 if (notice.startDate) {
                     const start = new Date(notice.startDate);
                     if (!isNaN(start.getTime()) && start > now) return false;
