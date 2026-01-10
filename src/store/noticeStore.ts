@@ -66,6 +66,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             const audience = n.targetAudience || ['all'];
             if (audience.includes('all')) return true;
             if (audience.includes('admin') && isAdmin) return true;
+            if (user && audience.includes(`user:${user.id}`)) return true;
             // Creator can always see
             if (user && n.authorId === user.id) return true;
             return false;
