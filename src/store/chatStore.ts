@@ -27,7 +27,7 @@ export interface ChatMessage {
     attachment_url?: string;
     attachment_type?: string;
     attachment_name?: string;
-    attachment_name?: string;
+
     is_deleted?: boolean;
     reactions?: Record<string, string[]>; // { stamp_id: [user_id, ...] }
 }
