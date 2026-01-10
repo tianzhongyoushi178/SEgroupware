@@ -13,4 +13,5 @@ export interface Notice {
     readStatusVisibleTo?: 'all' | 'author_admin';
     startDate?: string;
     endDate?: string;
+    targetAudience?: string[]; // ['all'] or ['admin', 'user:id', etc]
 }

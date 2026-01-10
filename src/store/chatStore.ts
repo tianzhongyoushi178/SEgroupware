@@ -27,7 +27,9 @@ export interface ChatMessage {
     attachment_url?: string;
     attachment_type?: string;
     attachment_name?: string;
+    attachment_name?: string;
     is_deleted?: boolean;
+    reactions?: Record<string, string[]>; // { stamp_id: [user_id, ...] }
 }
 
 export interface Note {
@@ -75,6 +77,10 @@ interface ChatState {
     // Pinned Messages (Announcements)
     pinMessage: (threadId: string, messageId: string) => Promise<void>;
     unpinMessage: (threadId: string) => Promise<void>;
+
+    // Reactions
+    addReaction: (threadId: string, messageId: string, stampId: string) => Promise<void>;
+    removeReaction: (threadId: string, messageId: string, stampId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -680,5 +686,87 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 t.id === threadId ? { ...t, pinned_message_id: undefined } : t
             )
         }));
+    },
+
+    addReaction: async (threadId, messageId, stampId) => {
+        const userId = get().currentUserId;
+        if (!userId) return;
+
+        const message = get().messages[threadId]?.find(m => m.id === messageId);
+        if (!message) return;
+
+        const currentReactions = message.reactions || {};
+        const currentUsers = currentReactions[stampId] || [];
+
+        if (currentUsers.includes(userId)) return; // Already reacted
+
+        const newReactions = {
+            ...currentReactions,
+            [stampId]: [...currentUsers, userId]
+        };
+
+        // Optimistic Update
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [threadId]: state.messages[threadId].map(m =>
+                    m.id === messageId ? { ...m, reactions: newReactions } : m
+                )
+            }
+        }));
+
+        const { error } = await supabase
+            .from('messages')
+            .update({ reactions: newReactions })
+            .eq('id', messageId);
+
+        if (error) {
+            console.error('Failed to add reaction', error);
+            // Revert
+            get().fetchMessages(threadId);
+        }
+    },
+
+    removeReaction: async (threadId, messageId, stampId) => {
+        const userId = get().currentUserId;
+        if (!userId) return;
+
+        const message = get().messages[threadId]?.find(m => m.id === messageId);
+        if (!message) return;
+
+        const currentReactions = message.reactions || {};
+        const currentUsers = currentReactions[stampId] || [];
+
+        if (!currentUsers.includes(userId)) return; // Not reacted
+
+        const newReactions = {
+            ...currentReactions,
+            [stampId]: currentUsers.filter(uid => uid !== userId)
+        };
+
+        // If empty, maybe remove key? Optional.
+        if (newReactions[stampId].length === 0) {
+            delete newReactions[stampId];
+        }
+
+        // Optimistic Update
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [threadId]: state.messages[threadId].map(m =>
+                    m.id === messageId ? { ...m, reactions: newReactions } : m
+                )
+            }
+        }));
+
+        const { error } = await supabase
+            .from('messages')
+            .update({ reactions: newReactions })
+            .eq('id', messageId);
+
+        if (error) {
+            console.error('Failed to remove reaction', error);
+            get().fetchMessages(threadId);
+        }
     }
 }));

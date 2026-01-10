@@ -6,8 +6,20 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle, Smile, Plus } from 'lucide-react';
 import NoteOverlay from '@/components/chat/NoteOverlay';
+
+const STAMPS = [
+    { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
+    { id: 'good', src: '/stamps/stamp_good.png', label: 'Good' },
+    { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
+];
+
+const STAMPS = [
+    { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
+    { id: 'good', src: '/stamps/stamp_good.png', label: 'Good' },
+    { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
+];
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
@@ -23,7 +35,9 @@ export default function ChatRoomPage() {
         updateThreadSettings,
         fetchThreadParticipants,
         deleteThread,
-        deleteMessage
+        deleteMessage,
+        addReaction,
+        removeReaction
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
@@ -46,6 +60,8 @@ export default function ChatRoomPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
     const [isMobile, setIsMobile] = useState(false);
+    const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
+    const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -543,6 +559,215 @@ export default function ChatRoomPage() {
                                                         <Trash2 size={14} />
                                                     </button>
                                                 )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Reactions Display */}
+                                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                                            {Object.entries(msg.reactions).map(([stampId, userIds]) => {
+                                                if (!userIds || userIds.length === 0) return null;
+                                                const stamp = STAMPS.find(s => s.id === stampId);
+                                                if (!stamp) return null;
+                                                const isReactedByMe = userIds.includes(user?.id || '');
+                                                return (
+                                                    <button
+                                                        key={stampId}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (isReactedByMe) {
+                                                                removeReaction(threadId, msg.id, stampId);
+                                                            } else {
+                                                                addReaction(threadId, msg.id, stampId);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            background: isReactedByMe ? 'rgba(0,123,255,0.2)' : 'rgba(255,255,255,0.8)',
+                                                            border: isReactedByMe ? '1px solid #007bff' : '1px solid #ddd',
+                                                            borderRadius: '12px',
+                                                            padding: '2px 6px',
+                                                            cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', gap: '4px',
+                                                            fontSize: '0.75rem'
+                                                        }}
+                                                        title={userIds.length + '人がリアクションしました'}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={stamp.src} alt={stamp.label} style={{ width: '20px', height: '20px' }} />
+                                                        <span style={{ color: '#555' }}>{userIds.length}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Reaction Picker Button (Visible on hover or if picker is open) */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                        marginTop: '2px'
+                                    }}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setReactionPickerMessageId(reactionPickerMessageId === msg.id ? null : msg.id);
+                                            }}
+                                            style={{
+                                                background: 'none', border: 'none', cursor: 'pointer', color: '#999',
+                                                padding: '2px', display: 'flex', alignItems: 'center'
+                                            }}
+                                            title="リアクションを追加"
+                                        >
+                                            <Smile size={16} />
+                                        </button>
+
+                                        {reactionPickerMessageId === msg.id && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                zIndex: 100,
+                                                background: 'white',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '8px',
+                                                padding: '8px',
+                                                display: 'flex',
+                                                gap: '8px',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                                marginTop: '24px', // Push down slightly
+                                            }}
+                                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside
+                                            >
+                                                {STAMPS.map(stamp => (
+                                                    <button
+                                                        key={stamp.id}
+                                                        onClick={() => {
+                                                            addReaction(threadId, msg.id, stamp.id);
+                                                            setReactionPickerMessageId(null);
+                                                        }}
+                                                        style={{
+                                                            background: 'none', border: 'none', cursor: 'pointer',
+                                                            padding: '4px', borderRadius: '4px',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={stamp.src} alt={stamp.label} style={{ width: '32px', height: '32px' }} />
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    onClick={() => setReactionPickerMessageId(null)}
+                                                    style={{ marginLeft: '4px', border: 'none', background: 'none', cursor: 'pointer', color: '#999' }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Reactions Display */}
+                                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                                            {Object.entries(msg.reactions).map(([stampId, userIds]) => {
+                                                if (!userIds || userIds.length === 0) return null;
+                                                const stamp = STAMPS.find(s => s.id === stampId);
+                                                if (!stamp) return null;
+                                                const isReactedByMe = userIds.includes(user?.id || '');
+                                                return (
+                                                    <button
+                                                        key={stampId}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (isReactedByMe) {
+                                                                removeReaction(threadId, msg.id, stampId);
+                                                            } else {
+                                                                addReaction(threadId, msg.id, stampId);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            background: isReactedByMe ? 'rgba(0,123,255,0.2)' : 'rgba(255,255,255,0.8)',
+                                                            border: isReactedByMe ? '1px solid #007bff' : '1px solid #ddd',
+                                                            borderRadius: '12px',
+                                                            padding: '2px 6px',
+                                                            cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', gap: '4px',
+                                                            fontSize: '0.75rem'
+                                                        }}
+                                                        title={userIds.length + '人がリアクションしました'}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={stamp.src} alt={stamp.label} style={{ width: '20px', height: '20px' }} />
+                                                        <span style={{ color: '#555' }}>{userIds.length}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Reaction Picker Button */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                        marginTop: '2px',
+                                        position: 'relative'
+                                    }}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setReactionPickerMessageId(reactionPickerMessageId === msg.id ? null : msg.id);
+                                            }}
+                                            style={{
+                                                background: 'none', border: 'none', cursor: 'pointer', color: '#999',
+                                                padding: '2px', display: 'flex', alignItems: 'center', opacity: 0.6
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                                            onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+                                            title="リアクションを追加"
+                                        >
+                                            <Smile size={16} />
+                                        </button>
+
+                                        {reactionPickerMessageId === msg.id && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                [isMe ? 'right' : 'left']: 0,
+                                                zIndex: 100,
+                                                background: 'white',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '8px',
+                                                padding: '8px',
+                                                display: 'flex',
+                                                gap: '8px',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                                marginTop: '4px'
+                                            }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {STAMPS.map(stamp => (
+                                                    <button
+                                                        key={stamp.id}
+                                                        onClick={() => {
+                                                            addReaction(threadId, msg.id, stamp.id);
+                                                            setReactionPickerMessageId(null);
+                                                        }}
+                                                        style={{
+                                                            background: 'none', border: 'none', cursor: 'pointer',
+                                                            padding: '4px', borderRadius: '4px',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={stamp.src} alt={stamp.label} style={{ width: '32px', height: '32px' }} />
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    onClick={() => setReactionPickerMessageId(null)}
+                                                    style={{ marginLeft: '4px', border: 'none', background: 'none', cursor: 'pointer', color: '#999' }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
                                             </div>
                                         )}
                                     </div>

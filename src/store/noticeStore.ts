@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Notice } from '@/types/notice';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from './authStore';
 
 interface NoticeState {
     notices: Notice[];
@@ -26,7 +27,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching notices:', error);
+            console.error('Error fetching notices:', JSON.stringify(error, null, 2));
             set({ error: error.message, isLoading: false });
             return;
         }
@@ -39,11 +40,38 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             readStatusVisibleTo: n.read_status_visible_to || 'all',
             startDate: n.start_date,
             endDate: n.end_date,
+            targetAudience: n.target_audience || ['all'],
             // isRead is calculated in component based on user context
             authorId: n.author_id // Ensure authorId is mapped
         }));
 
-        set({ notices: mappedNotices, isLoading: false });
+        // Filter based on user role (Client-side filtering for simplicity)
+        // Ideally RLS or query filter
+        /*
+        const { user, profile } = useAuthStore.getState();
+        const filteredNotices = mappedNotices.filter(n => {
+            if (n.targetAudience?.includes('all')) return true;
+            if (profile?.role === 'admin' && n.targetAudience?.includes('admin')) return true;
+            // Add more specific user checks if needed
+            return false;
+        });
+        */
+        // For now, let's keep all in store and filter in UI selector if needed OR strictly filter here.
+        // It's safer to filter here so components don't need to know.
+        // Accessing other store inside store action:
+        const { user, profile } = useAuthStore.getState();
+        const isAdmin = profile?.role === 'admin';
+
+        const filteredNotices = mappedNotices.filter(n => {
+            const audience = n.targetAudience || ['all'];
+            if (audience.includes('all')) return true;
+            if (audience.includes('admin') && isAdmin) return true;
+            // Creator can always see
+            if (user && n.authorId === user.id) return true;
+            return false;
+        });
+
+        set({ notices: filteredNotices, isLoading: false });
     },
 
     subscribeNotices: () => {
@@ -80,8 +108,10 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 author_id: notice.authorId,
                 read_status: {}, // Initialize empty
                 read_status_visible_to: notice.readStatusVisibleTo || 'all',
+                read_status_visible_to: notice.readStatusVisibleTo || 'all',
                 start_date: notice.startDate,
-                end_date: notice.endDate
+                end_date: notice.endDate,
+                target_audience: notice.targetAudience || ['all']
             });
 
         if (error) {
@@ -98,6 +128,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         if (updates.readStatusVisibleTo !== undefined) dbUpdates.read_status_visible_to = updates.readStatusVisibleTo;
         if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
         if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+        if (updates.targetAudience !== undefined) dbUpdates.target_audience = updates.targetAudience;
 
         const { error } = await supabase
             .from('notices')

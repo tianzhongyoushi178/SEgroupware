@@ -22,6 +22,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
     const [isReadVisibleToAll, setIsReadVisibleToAll] = useState(true);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [targetAudience, setTargetAudience] = useState<string[]>(['all']);
 
     // Auto-derive author name
     const authorName = profile?.displayName || profile?.email || '匿名';
@@ -34,6 +35,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
             setIsReadVisibleToAll(initialData.readStatusVisibleTo === 'all');
             setStartDate(initialData.startDate || '');
             setEndDate(initialData.endDate || '');
+            setTargetAudience(initialData.targetAudience || ['all']);
         } else if (isOpen) {
             // Reset for new entry
             setTitle('');
@@ -42,6 +44,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
             setIsReadVisibleToAll(true);
             setStartDate('');
             setEndDate('');
+            setTargetAudience(['all']);
         }
     }, [isOpen, initialData]);
 
@@ -59,6 +62,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                     readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
                     startDate: startDate || undefined,
                     endDate: endDate || undefined,
+                    targetAudience
                 });
                 toast.success('お知らせを更新しました');
             } else {
@@ -71,6 +75,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                     readStatusVisibleTo: isReadVisibleToAll ? 'all' : 'author_admin',
                     startDate: startDate || undefined,
                     endDate: endDate || undefined,
+                    targetAudience
                 });
                 toast.success('お知らせを投稿しました');
             }
@@ -149,7 +154,32 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                             <option value="general">一般</option>
                             <option value="system">システム</option>
                             <option value="urgent">重要</option>
+                            <option value="urgent">重要</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>公開範囲</label>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    checked={targetAudience.includes('all')}
+                                    onChange={() => setTargetAudience(['all'])}
+                                    name="audience"
+                                />
+                                全員
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    checked={targetAudience.includes('admin') && !targetAudience.includes('all')}
+                                    onChange={() => setTargetAudience(['admin'])}
+                                    name="audience"
+                                />
+                                管理者のみ
+                            </label>
+                        </div>
                     </div>
 
                     <div>
