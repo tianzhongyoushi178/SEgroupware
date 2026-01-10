@@ -15,12 +15,6 @@ const STAMPS = [
     { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
 ];
 
-const STAMPS = [
-    { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
-    { id: 'good', src: '/stamps/stamp_good.png', label: 'Good' },
-    { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
-];
-
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
     const { user, profile, isAdmin } = useAuthStore();
@@ -60,7 +54,6 @@ export default function ChatRoomPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
     const [isMobile, setIsMobile] = useState(false);
-    const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
     const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
 
     useEffect(() => {
