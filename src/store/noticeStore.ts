@@ -108,7 +108,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 author_id: notice.authorId,
                 read_status: {}, // Initialize empty
                 read_status_visible_to: notice.readStatusVisibleTo || 'all',
-                read_status_visible_to: notice.readStatusVisibleTo || 'all',
+
                 start_date: notice.startDate,
                 end_date: notice.endDate,
                 target_audience: notice.targetAudience || ['all']
