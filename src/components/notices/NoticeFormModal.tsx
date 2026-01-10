@@ -266,7 +266,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                                                 checked={selectedUserIds.includes(u.id)}
                                                 onChange={() => toggleUserSelection(u.id)}
                                             />
-                                            <span style={{ fontSize: '0.875rem', truncate: 'true' }}>{u.display_name || u.email}</span>
+                                            <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>{u.display_name || u.email}</span>
                                         </label>
                                     ))}
                                 </div>
