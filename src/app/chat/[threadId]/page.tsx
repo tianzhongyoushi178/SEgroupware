@@ -547,10 +547,13 @@ export default function ChatRoomPage() {
                                                 <div
                                                     style={{
                                                         position: 'absolute',
-                                                        top: '100%',
+                                                        // If message is near bottom (last 2), open upwards
+                                                        top: index >= currentMessages.length - 2 ? 'auto' : '100%',
+                                                        bottom: index >= currentMessages.length - 2 ? '100%' : 'auto',
                                                         left: isMe ? 'auto' : '0',
                                                         right: isMe ? '0' : 'auto',
-                                                        marginTop: '0.5rem',
+                                                        marginTop: index >= currentMessages.length - 2 ? '0' : '0.5rem',
+                                                        marginBottom: index >= currentMessages.length - 2 ? '0.5rem' : '0',
                                                         background: 'var(--surface)',
                                                         borderRadius: '0.75rem',
                                                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
@@ -686,9 +689,12 @@ export default function ChatRoomPage() {
                                             {reactionPickerMessageId === msg.id && (
                                                 <div style={{
                                                     position: 'absolute',
-                                                    top: '100%',
+                                                    // If message is near bottom (last 2), open upwards
+                                                    top: index >= currentMessages.length - 2 ? 'auto' : '100%',
+                                                    bottom: index >= currentMessages.length - 2 ? '100%' : 'auto',
+                                                    marginTop: index >= currentMessages.length - 2 ? '0' : '4px',
+                                                    marginBottom: index >= currentMessages.length - 2 ? '4px' : '0',
                                                     [isMe ? 'right' : 'left']: 0,
-                                                    marginTop: '4px',
                                                     zIndex: 110,
                                                     background: 'white',
                                                     border: '1px solid #ddd',
@@ -1010,6 +1016,70 @@ export default function ChatRoomPage() {
                     </div>
                 )
             }
+
+            {/* Reaction Preview Modal */}
+            {previewReaction && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 200,
+                    background: 'rgba(0,0,0,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '1rem'
+                }}
+                    onClick={() => setPreviewReaction(null)}
+                >
+                    <div style={{
+                        background: 'white', borderRadius: '1rem', width: '100%', maxWidth: '300px',
+                        overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div style={{
+                            padding: '1rem', borderBottom: '1px solid #eee',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                        }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={STAMPS.find(s => s.id === previewReaction.stampId)?.src}
+                                    alt="stamp"
+                                    style={{ width: '24px', height: '24px' }}
+                                />
+                                <span>リアクションした人</span>
+                            </h3>
+                            <button
+                                onClick={() => setPreviewReaction(null)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999' }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        {/* List */}
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {previewReaction.userIds.map(uid => {
+                                const u = allUsers.find(user => user.uid === uid);
+                                return (
+                                    <div key={uid} style={{
+                                        padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        borderBottom: '1px solid #f5f5f5'
+                                    }}>
+                                        <div style={{
+                                            width: '32px', height: '32px', borderRadius: '50%', background: '#ccc',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                                            overflow: 'hidden', fontSize: '0.8rem'
+                                        }}>
+                                            <User size={18} />
+                                        </div>
+                                        <div style={{ fontSize: '0.9rem', color: '#333' }}>
+                                            {u ? u.displayName : '不明なユーザー'}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NoteOverlay
                 isOpen={isNoteOpen}
