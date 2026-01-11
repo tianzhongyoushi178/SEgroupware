@@ -733,7 +733,7 @@ export default function ChatRoomPage() {
                                             )}
                                         </div>
                                     </div>
-                                    )}
+
                                 </div>
                             </div>
                         </div>
