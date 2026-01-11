@@ -15,3 +15,15 @@ export interface Notice {
     endDate?: string;
     targetAudience?: string[]; // ['all'] or ['admin', 'user:id', etc]
 }
+
+export interface NoticeComment {
+    id: string;
+    noticeId: string;
+    userId: string;
+    content: string;
+    createdAt: string;
+    user?: {
+        displayName: string;
+        avatarUrl?: string;
+    };
+}

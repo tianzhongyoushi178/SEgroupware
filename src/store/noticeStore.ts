@@ -13,12 +13,22 @@ interface NoticeState {
     updateNotice: (id: string, updates: Partial<Notice>) => Promise<void>;
     markAsRead: (id: string, userId: string) => Promise<void>;
     deleteNotice: (id: string) => Promise<void>;
+
+    // Comments
+    comments: NoticeComment[];
+    isLoadingComments: boolean;
+    fetchComments: (noticeId: string) => Promise<void>;
+    addComment: (noticeId: string, content: string) => Promise<void>;
 }
 
 export const useNoticeStore = create<NoticeState>((set, get) => ({
     notices: [],
     isLoading: false,
     error: null,
+
+    // Comments State
+    comments: [],
+    isLoadingComments: false,
 
     fetchNotices: async () => {
         const { data, error } = await supabase
@@ -182,4 +192,60 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             throw error;
         }
     },
+
+    fetchComments: async (noticeId) => {
+        set({ isLoadingComments: true });
+        const { data, error } = await supabase
+            .from('notice_comments')
+            .select(`
+                *,
+                user:profiles!user_id (
+                    display_name,
+                    avatar_url
+                )
+            `)
+            .eq('notice_id', noticeId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching comments:', error);
+            set({ isLoadingComments: false });
+            return;
+        }
+
+        const mappedComments: NoticeComment[] = data.map((c: any) => ({
+            id: c.id,
+            noticeId: c.notice_id,
+            userId: c.user_id,
+            content: c.content,
+            createdAt: c.created_at,
+            user: {
+                displayName: c.user?.display_name || 'Unknown',
+                avatarUrl: c.user?.avatar_url
+            }
+        }));
+
+        set({ comments: mappedComments, isLoadingComments: false });
+    },
+
+    addComment: async (noticeId, content) => {
+        const { user } = useAuthStore.getState();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+            .from('notice_comments')
+            .insert({
+                notice_id: noticeId,
+                user_id: user.id,
+                content
+            });
+
+        if (error) {
+            console.error('Error adding comment:', error);
+            throw error;
+        }
+
+        // Refresh comments
+        get().fetchComments(noticeId);
+    }
 }));

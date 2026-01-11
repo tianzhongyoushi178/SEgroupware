@@ -12,9 +12,10 @@ interface NoticeFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialData?: Notice;
+    prefillData?: Partial<Notice>;
 }
 
-export default function NoticeFormModal({ isOpen, onClose, initialData }: NoticeFormModalProps) {
+export default function NoticeFormModal({ isOpen, onClose, initialData, prefillData }: NoticeFormModalProps) {
     const { addNotice, updateNotice } = useNoticeStore();
     const { user, profile } = useAuthStore();
     const { users, fetchUsers } = useUserStore();
@@ -39,38 +40,41 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
     }, [isOpen]);
 
     useEffect(() => {
-        if (isOpen && initialData) {
-            setTitle(initialData.title);
-            setContent(initialData.content);
-            setCategory(initialData.category);
-            setIsReadVisibleToAll(initialData.readStatusVisibleTo === 'all');
-            setStartDate(initialData.startDate || '');
-            setEndDate(initialData.endDate || '');
+        if (isOpen) {
+            if (initialData) {
+                // Edit Mode
+                setTitle(initialData.title);
+                setContent(initialData.content);
+                setCategory(initialData.category);
+                setIsReadVisibleToAll(initialData.readStatusVisibleTo === 'all');
+                setStartDate(initialData.startDate || '');
+                setEndDate(initialData.endDate || '');
 
-            const audience = initialData.targetAudience || ['all'];
-            if (audience.includes('all')) {
+                const audience = initialData.targetAudience || ['all'];
+                if (audience.includes('all')) {
+                    setTargetType('all');
+                    setSelectedUserIds([]);
+                } else if (audience.includes('admin') && audience.length === 1) {
+                    setTargetType('admin');
+                    setSelectedUserIds([]);
+                } else {
+                    setTargetType('specific');
+                    const userIds = audience.filter(a => a.startsWith('user:')).map(a => a.replace('user:', ''));
+                    setSelectedUserIds(userIds);
+                }
+            } else {
+                // New Mode (possibly with prefill)
+                setTitle(prefillData?.title || '');
+                setContent(prefillData?.content || '');
+                setCategory(prefillData?.category || 'general');
+                setIsReadVisibleToAll(true);
+                setStartDate('');
+                setEndDate('');
                 setTargetType('all');
                 setSelectedUserIds([]);
-            } else if (audience.includes('admin') && audience.length === 1) {
-                setTargetType('admin');
-                setSelectedUserIds([]);
-            } else {
-                setTargetType('specific');
-                const userIds = audience.filter(a => a.startsWith('user:')).map(a => a.replace('user:', ''));
-                setSelectedUserIds(userIds);
             }
-        } else if (isOpen) {
-            // Reset for new entry
-            setTitle('');
-            setContent('');
-            setCategory('general');
-            setIsReadVisibleToAll(true);
-            setStartDate('');
-            setEndDate('');
-            setTargetType('all');
-            setSelectedUserIds([]);
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, prefillData]);
 
     if (!isOpen) return null;
 
