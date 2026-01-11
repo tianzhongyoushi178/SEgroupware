@@ -11,7 +11,7 @@ import NoteOverlay from '@/components/chat/NoteOverlay';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
 import { Notice } from '@/types/notice';
 
