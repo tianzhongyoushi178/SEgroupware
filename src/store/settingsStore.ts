@@ -38,13 +38,22 @@ export const useSettingsStore = create<SettingsState>()(
 
             toggleDesktopNotification: async (enabled) => {
                 if (enabled) {
-                    const granted = await get().requestNotificationPermission();
-                    if (granted) {
-                        set((state) => ({
-                            notifications: { ...state.notifications, desktop: true },
-                        }));
-                    } else {
-                        // 許可されなかった場合はOFFのまま
+                    try {
+                        const granted = await get().requestNotificationPermission();
+                        if (granted) {
+                            set((state) => ({
+                                notifications: { ...state.notifications, desktop: true },
+                            }));
+                        } else {
+                            // 許可されなかった場合はOFFのまま
+                            alert('通知の許可が得られませんでした。\niOSの場合は：\n1. 「ホーム画面に追加」しているか確認\n2. iOS設定 > 通知 > (アプリ名) で許可されているか確認');
+                            set((state) => ({
+                                notifications: { ...state.notifications, desktop: false },
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('Notification permission error:', error);
+                        alert('通知設定のエラーが発生しました: ' + (error as any).message);
                         set((state) => ({
                             notifications: { ...state.notifications, desktop: false },
                         }));
@@ -64,6 +73,7 @@ export const useSettingsStore = create<SettingsState>()(
             requestNotificationPermission: async () => {
                 if (!('Notification' in window)) {
                     console.warn('This browser does not support desktop notification');
+                    alert('このブラウザは通知をサポートしていません。\niOSをご利用の場合は、Safariの「共有」ボタンから「ホーム画面に追加」を行い、そのアイコンからアプリを起動してください。');
                     return false;
                 }
 
@@ -71,8 +81,19 @@ export const useSettingsStore = create<SettingsState>()(
                     return true;
                 }
 
-                const permission = await Notification.requestPermission();
-                return permission === 'granted';
+                if (Notification.permission === 'denied') {
+                    // すでに拒否されている場合
+                    alert('通知がブロックされています。ブラウザまたは本体の設定から通知を許可してください。');
+                    return false;
+                }
+
+                try {
+                    const permission = await Notification.requestPermission();
+                    return permission === 'granted';
+                } catch (e) {
+                    console.error('requestPermission error:', e);
+                    return false;
+                }
             },
 
             sendTestNotification: () => {
