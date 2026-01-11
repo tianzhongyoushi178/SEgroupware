@@ -6,27 +6,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle, Smile, Plus } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle, Smile, Plus, MoreVertical, MessageSquare, Quote } from 'lucide-react';
 import NoteOverlay from '@/components/chat/NoteOverlay';
-
-const STAMPS = [
-    { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
-    { id: 'good', src: '/stamps/stamp_good.png', label: 'Good' },
-    { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
-];
-
-import { useRef, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { useChatStore } from '@/store/chatStore';
-import { useUserStore } from '@/store/userStore';
-import { Send, Paperclip, MoreVertical, X, Settings, ArrowLeft, Trash2, Smile, MessageSquare, Megaphone, Quote } from 'lucide-react'; // Added icons
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import NoticeFormModal from '@/components/notices/NoticeFormModal'; // Import NoticeFormModal
-import { Notice } from '@/types/notice'; // Import Notice type
+import NoticeFormModal from '@/components/notices/NoticeFormModal';
+import { Notice } from '@/types/notice';
 
 const STAMPS = [
     { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
