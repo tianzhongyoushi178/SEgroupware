@@ -1057,7 +1057,7 @@ export default function ChatRoomPage() {
                         {/* List */}
                         <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                             {previewReaction.userIds.map(uid => {
-                                const u = allUsers.find(user => user.uid === uid);
+                                const u = allUsers.find(user => user.id === uid);
                                 return (
                                     <div key={uid} style={{
                                         padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -1071,7 +1071,7 @@ export default function ChatRoomPage() {
                                             <User size={18} />
                                         </div>
                                         <div style={{ fontSize: '0.9rem', color: '#333' }}>
-                                            {u ? u.displayName : '不明なユーザー'}
+                                            {u ? u.display_name : '不明なユーザー'}
                                         </div>
                                     </div>
                                 );
