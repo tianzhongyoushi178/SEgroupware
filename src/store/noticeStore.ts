@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Notice } from '@/types/notice';
+import { Notice, NoticeComment } from '@/types/notice';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from './authStore';
 
