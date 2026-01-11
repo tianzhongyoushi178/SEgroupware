@@ -67,11 +67,19 @@ export default function ChatRoomPage() {
     const [announcePrefill, setAnnouncePrefill] = useState<Partial<Notice> | undefined>(undefined);
     const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
 
+    // Reaction Preview State
+    const [previewReaction, setPreviewReaction] = useState<{ messageId: string, stampId: string, userIds: string[] } | null>(null);
+
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Ensure users are loaded for reaction preview
+    useEffect(() => {
+        fetchUsers();
     }, []);
 
     const currentMessages = messages[threadId] || [];
@@ -631,11 +639,8 @@ export default function ChatRoomPage() {
                                                             key={stampId}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (isReactedByMe) {
-                                                                    removeReaction(threadId, msg.id, stampId);
-                                                                } else {
-                                                                    addReaction(threadId, msg.id, stampId);
-                                                                }
+                                                                // Show user list instead of toggle
+                                                                setPreviewReaction({ messageId: msg.id, stampId, userIds });
                                                             }}
                                                             style={{
                                                                 background: isReactedByMe ? 'rgba(0,123,255,0.2)' : 'rgba(255,255,255,0.8)',
@@ -696,25 +701,38 @@ export default function ChatRoomPage() {
                                                 }}
                                                     onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside
                                                 >
-                                                    {STAMPS.map(stamp => (
-                                                        <button
-                                                            key={stamp.id}
-                                                            onClick={() => {
-                                                                addReaction(threadId, msg.id, stamp.id);
-                                                                setReactionPickerMessageId(null);
-                                                            }}
-                                                            style={{
-                                                                background: 'none', border: 'none', cursor: 'pointer',
-                                                                padding: '4px', borderRadius: '4px',
-                                                                transition: 'background 0.2s'
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                                                        >
-                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img src={stamp.src} alt={stamp.label} style={{ width: '32px', height: '32px' }} />
-                                                        </button>
-                                                    ))}
+                                                    {STAMPS.map(stamp => {
+                                                        const currentReactions = msg.reactions || {};
+                                                        const userIds = currentReactions[stamp.id] || [];
+                                                        const isReactedByMe = userIds.includes(user?.id || '');
+
+                                                        return (
+                                                            <button
+                                                                key={stamp.id}
+                                                                onClick={() => {
+                                                                    if (isReactedByMe) {
+                                                                        removeReaction(threadId, msg.id, stamp.id);
+                                                                    } else {
+                                                                        addReaction(threadId, msg.id, stamp.id);
+                                                                    }
+                                                                    setReactionPickerMessageId(null);
+                                                                }}
+                                                                style={{
+                                                                    background: isReactedByMe ? 'rgba(0,123,255,0.1)' : 'none',
+                                                                    border: isReactedByMe ? '1px solid #007bff' : 'none',
+                                                                    cursor: 'pointer',
+                                                                    padding: '4px', borderRadius: '4px',
+                                                                    transition: 'background 0.2s'
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.background = isReactedByMe ? 'rgba(0,123,255,0.2)' : '#f0f0f0'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.background = isReactedByMe ? 'rgba(0,123,255,0.1)' : 'none'}
+                                                                title={isReactedByMe ? 'リアクションを削除' : 'リアクションを追加'}
+                                                            >
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img src={stamp.src} alt={stamp.label} style={{ width: '32px', height: '32px' }} />
+                                                            </button>
+                                                        );
+                                                    })}
                                                     <button
                                                         onClick={() => setReactionPickerMessageId(null)}
                                                         style={{ marginLeft: '4px', border: 'none', background: 'none', cursor: 'pointer', color: '#999' }}
