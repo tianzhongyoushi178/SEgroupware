@@ -474,6 +474,10 @@ export default function ChatRoomPage() {
                                             cursor: 'pointer', // Suggest interaction
                                             border: activeMessageId === msg.id ? '2px solid var(--accent)' : 'none' // Highlight active
                                         }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
+                                            }}
                                         >
                                             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.95rem' }}>
                                                 {msg.is_deleted ? (
