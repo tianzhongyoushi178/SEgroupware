@@ -471,9 +471,6 @@ export default function ChatRoomPage() {
                                             borderTopLeftRadius: !isMe ? '0' : '1.2rem',
                                             position: 'relative',
                                             boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                                            borderTopRightRadius: isMe ? '0' : '1rem',
-                                            borderTopLeftRadius: isMe ? '1rem' : '0',
-                                            position: 'relative',
                                             cursor: 'pointer', // Suggest interaction
                                             border: activeMessageId === msg.id ? '2px solid var(--accent)' : 'none' // Highlight active
                                         }}
