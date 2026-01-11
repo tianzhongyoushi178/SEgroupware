@@ -596,7 +596,13 @@ export default function SettingsPage() {
                                 <div className={styles.toggleRow}>
                                     <div>
                                         <p className={styles.toggleText}>デスクトップ通知</p>
-                                        <p className={styles.toggleSubtext}>ブラウザでのプッシュ通知を許可します</p>
+                                        <p className={styles.toggleSubtext}>
+                                            ブラウザでのプッシュ通知を許可します
+                                            <br />
+                                            <span style={{ fontSize: '0.8rem', color: '#f59e0b' }}>
+                                                ※iPhoneの場合は、ホーム画面に追加してから有効にしてください
+                                            </span>
+                                        </p>
                                     </div>
                                     <label className={styles.switch}>
                                         <input
