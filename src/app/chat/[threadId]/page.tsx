@@ -591,11 +591,11 @@ export default function ChatRoomPage() {
                                                     </button>
                                                     {(isMe || isAdmin) && (
                                                         <button
-                                                            onClick={() => {
-                                                                if (confirm('このメッセージを削除しますか？')) {
-                                                                    handleDeleteMessage(msg.id);
-                                                                }
+                                                            onClick={async () => {
+                                                                // Close menu first
                                                                 setActiveMessageId(null);
+                                                                // Use timeout to allow UI update before confirm (optional, but good for mobile)
+                                                                setTimeout(() => handleDeleteMessage(msg.id), 10);
                                                             }}
                                                             className="btn btn-ghost"
                                                             style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--error)' }}
@@ -661,7 +661,8 @@ export default function ChatRoomPage() {
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: isMe ? 'flex-end' : 'flex-start',
-                                            marginTop: '2px'
+                                            marginTop: '2px',
+                                            position: 'relative' // Add relative positioning context here
                                         }}>
                                             <button
                                                 onClick={(e) => {
@@ -680,7 +681,10 @@ export default function ChatRoomPage() {
                                             {reactionPickerMessageId === msg.id && (
                                                 <div style={{
                                                     position: 'absolute',
-                                                    zIndex: 100,
+                                                    top: '100%',
+                                                    [isMe ? 'right' : 'left']: 0,
+                                                    marginTop: '4px',
+                                                    zIndex: 110,
                                                     background: 'white',
                                                     border: '1px solid #ddd',
                                                     borderRadius: '8px',
@@ -688,7 +692,7 @@ export default function ChatRoomPage() {
                                                     display: 'flex',
                                                     gap: '8px',
                                                     boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                                    marginTop: '24px', // Push down slightly
+                                                    whiteSpace: 'nowrap'
                                                 }}
                                                     onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside
                                                 >
