@@ -230,7 +230,7 @@ export default function Sidebar() {
               color: 'var(--text-secondary)' // Distinct color or inherit
             }}
           >
-            <Bell size={20} />
+            <Settings size={20} />
           </Link>
         </div>
       </aside>
