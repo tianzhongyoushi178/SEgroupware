@@ -153,10 +153,13 @@ export default function ChatRoomPage() {
         }
     }, [isSettingsOpen, threadId, currentThread]);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if ((!newMessage.trim() && !selectedFile) || !user || !profile) return;
+        if ((!newMessage.trim() && !selectedFile) || !user || !profile || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             await sendMessage(threadId, newMessage, profile.displayName || user.email || 'Unknown', selectedFile || undefined);
             setNewMessage('');
@@ -165,6 +168,8 @@ export default function ChatRoomPage() {
         } catch (error: any) {
             console.error(error);
             alert(`送信に失敗しました: ${error.message || '不明なエラー'}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -844,7 +849,7 @@ export default function ChatRoomPage() {
                     />
                     <button
                         type="submit"
-                        disabled={!newMessage.trim() && !selectedFile}
+                        disabled={(!newMessage.trim() && !selectedFile) || isSubmitting}
                         style={{
                             background: 'transparent',
                             color: (newMessage.trim() || selectedFile) ? '#007bff' : '#ccc',
@@ -854,7 +859,8 @@ export default function ChatRoomPage() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             padding: '0.5rem',
-                            transition: 'color 0.2s'
+                            transition: 'color 0.2s',
+                            opacity: isSubmitting ? 0.5 : 1
                         }}
                     >
                         <Send size={24} />
