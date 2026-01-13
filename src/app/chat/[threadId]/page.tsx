@@ -245,9 +245,17 @@ export default function ChatRoomPage() {
         }
     }, [newMessage]);
 
-    const handleQuote = (text: string) => {
-        const quoteText = text.split('\n').map(line => `> ${line}`).join('\n') + '\n';
-        setNewMessage(prev => prev + quoteText);
+    const handleQuote = (message: any) => {
+        const timestamp = format(new Date(message.created_at), 'yyyy/MM/dd HH:mm', { locale: ja });
+        const header = `[${timestamp}] ${message.author_name}\n`;
+        const quoteText = header + message.content.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n';
+
+        setNewMessage(prev => {
+            // Append to previous message if it exists and doesn't end with newline
+            const prefix = prev && !prev.endsWith('\n') ? '\n' : '';
+            return prev + prefix + quoteText;
+        });
+
         // Focus input
         if (textareaRef.current) {
             textareaRef.current.focus();
@@ -572,9 +580,8 @@ export default function ChatRoomPage() {
                                                 >
                                                     <button
                                                         onClick={() => {
-                                                            setNewMessage(prev => `> ${msg.content}\n${prev}`);
+                                                            handleQuote(msg);
                                                             setActiveMessageId(null);
-                                                            textareaRef.current?.focus();
                                                         }}
                                                         className="btn btn-ghost"
                                                         style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}
