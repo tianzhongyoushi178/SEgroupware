@@ -139,6 +139,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .divider {

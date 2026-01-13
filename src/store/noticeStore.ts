@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { Notice } from '@/types/notice';
+import { Notice, NoticeComment } from '@/types/notice';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from './authStore';
 
 interface NoticeState {
     notices: Notice[];
@@ -13,12 +14,22 @@ interface NoticeState {
     markAsRead: (id: string, userId: string) => Promise<void>;
     deleteNotice: (id: string) => Promise<void>;
     toggleNoticeFlag: (noticeId: string, userId: string) => Promise<void>;
+
+    // Comments
+    comments: NoticeComment[];
+    isLoadingComments: boolean;
+    fetchComments: (noticeId: string) => Promise<void>;
+    addComment: (noticeId: string, content: string) => Promise<void>;
 }
 
 export const useNoticeStore = create<NoticeState>((set, get) => ({
     notices: [],
     isLoading: false,
     error: null,
+
+    // Comments State
+    comments: [],
+    isLoadingComments: false,
 
     fetchNotices: async () => {
         const { data, error } = await supabase
@@ -27,7 +38,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching notices:', error);
+            console.error('Error fetching notices:', JSON.stringify(error, null, 2));
             set({ error: error.message, isLoading: false });
             return;
         }
@@ -53,13 +64,40 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             readStatusVisibleTo: n.read_status_visible_to || 'all',
             startDate: n.start_date,
             endDate: n.end_date,
-            isPinned: n.is_pinned,
             isFlagged: myFlags.has(n.id), // Set local flag state
+            targetAudience: n.target_audience || ['all'],
             // isRead is calculated in component based on user context
             authorId: n.author_id // Ensure authorId is mapped
         }));
 
-        set({ notices: mappedNotices, isLoading: false });
+        // Filter based on user role (Client-side filtering for simplicity)
+        // Ideally RLS or query filter
+        /*
+        const { user, profile } = useAuthStore.getState();
+        const filteredNotices = mappedNotices.filter(n => {
+            if (n.targetAudience?.includes('all')) return true;
+            if (profile?.role === 'admin' && n.targetAudience?.includes('admin')) return true;
+            // Add more specific user checks if needed
+            return false;
+        });
+        */
+        // For now, let's keep all in store and filter in UI selector if needed OR strictly filter here.
+        // It's safer to filter here so components don't need to know.
+        // Accessing other store inside store action:
+        const { user, profile } = useAuthStore.getState();
+        const isAdmin = profile?.role === 'admin';
+
+        const filteredNotices = mappedNotices.filter(n => {
+            const audience = n.targetAudience || ['all'];
+            if (audience.includes('all')) return true;
+            if (audience.includes('admin') && isAdmin) return true;
+            if (user && audience.includes(`user:${user.id}`)) return true;
+            // Creator can always see
+            if (user && n.authorId === user.id) return true;
+            return false;
+        });
+
+        set({ notices: filteredNotices, isLoading: false });
     },
 
     subscribeNotices: () => {
@@ -96,9 +134,10 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 author_id: notice.authorId,
                 read_status: {}, // Initialize empty
                 read_status_visible_to: notice.readStatusVisibleTo || 'all',
+
                 start_date: notice.startDate,
                 end_date: notice.endDate,
-                is_pinned: notice.isPinned || false
+                target_audience: notice.targetAudience || ['all']
             });
 
         if (error) {
@@ -115,7 +154,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         if (updates.readStatusVisibleTo !== undefined) dbUpdates.read_status_visible_to = updates.readStatusVisibleTo;
         if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
         if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
-        if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
+        if (updates.targetAudience !== undefined) dbUpdates.target_audience = updates.targetAudience;
 
         const { error } = await supabase
             .from('notices')
@@ -214,4 +253,60 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             }
         }
     },
+
+    fetchComments: async (noticeId) => {
+        set({ isLoadingComments: true });
+        const { data, error } = await supabase
+            .from('notice_comments')
+            .select(`
+                *,
+                user:profiles!user_id (
+                    display_name,
+                    avatar_url
+                )
+            `)
+            .eq('notice_id', noticeId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching comments:', error);
+            set({ isLoadingComments: false });
+            return;
+        }
+
+        const mappedComments: NoticeComment[] = data.map((c: any) => ({
+            id: c.id,
+            noticeId: c.notice_id,
+            userId: c.user_id,
+            content: c.content,
+            createdAt: c.created_at,
+            user: {
+                displayName: c.user?.display_name || 'Unknown',
+                avatarUrl: c.user?.avatar_url
+            }
+        }));
+
+        set({ comments: mappedComments, isLoadingComments: false });
+    },
+
+    addComment: async (noticeId, content) => {
+        const { user } = useAuthStore.getState();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+            .from('notice_comments')
+            .insert({
+                notice_id: noticeId,
+                user_id: user.id,
+                content
+            });
+
+        if (error) {
+            console.error('Error adding comment:', error);
+            throw error;
+        }
+
+        // Refresh comments
+        get().fetchComments(noticeId);
+    }
 }));

@@ -6,8 +6,20 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
-import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle, Smile, Plus, MoreVertical, MessageSquare, Quote } from 'lucide-react';
 import NoteOverlay from '@/components/chat/NoteOverlay';
+import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
+import NoticeFormModal from '@/components/notices/NoticeFormModal';
+import { Notice } from '@/types/notice';
+
+const STAMPS = [
+    { id: 'ok', src: '/stamps/stamp_ok.png', label: 'OK' },
+    { id: 'good', src: '/stamps/stamp_good.png', label: 'Good' },
+    { id: 'check', src: '/stamps/stamp_check.png', label: 'Check' },
+];
 
 export default function ChatRoomPage() {
     const { threadId } = useParams() as { threadId: string };
@@ -23,7 +35,9 @@ export default function ChatRoomPage() {
         updateThreadSettings,
         fetchThreadParticipants,
         deleteThread,
-        deleteMessage
+        deleteMessage,
+        addReaction,
+        removeReaction
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
@@ -46,12 +60,26 @@ export default function ChatRoomPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
     const [isMobile, setIsMobile] = useState(false);
+    const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
+
+    // New State for Message Actions
+    const [activeMessageId, setActiveMessageId] = useState<string | null>(null); // For menu
+    const [announcePrefill, setAnnouncePrefill] = useState<Partial<Notice> | undefined>(undefined);
+    const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
+
+    // Reaction Preview State
+    const [previewReaction, setPreviewReaction] = useState<{ messageId: string, stampId: string, userIds: string[] } | null>(null);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Ensure users are loaded for reaction preview
+    useEffect(() => {
+        fetchUsers();
     }, []);
 
     const currentMessages = messages[threadId] || [];
@@ -125,10 +153,13 @@ export default function ChatRoomPage() {
         }
     }, [isSettingsOpen, threadId, currentThread]);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if ((!newMessage.trim() && !selectedFile) || !user || !profile) return;
+        if ((!newMessage.trim() && !selectedFile) || !user || !profile || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             await sendMessage(threadId, newMessage, profile.displayName || user.email || 'Unknown', selectedFile || undefined);
             setNewMessage('');
@@ -137,6 +168,8 @@ export default function ChatRoomPage() {
         } catch (error: any) {
             console.error(error);
             alert(`送信に失敗しました: ${error.message || '不明なエラー'}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -451,101 +484,277 @@ export default function ChatRoomPage() {
                                             borderTopLeftRadius: !isMe ? '0' : '1.2rem',
                                             position: 'relative',
                                             boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                                            wordBreak: 'break-word',
-                                            lineHeight: '1.5',
-                                            whiteSpace: 'pre-wrap',
-                                            fontStyle: msg.is_deleted ? 'italic' : 'normal',
-                                            cursor: !msg.is_deleted ? 'pointer' : 'default',
-                                            minWidth: '60px'
+                                            cursor: 'pointer', // Suggest interaction
+                                            border: activeMessageId === msg.id ? '2px solid var(--accent)' : 'none' // Highlight active
                                         }}
-                                            onClick={() => !msg.is_deleted && handleQuote(msg.content)}
-                                            onContextMenu={(e) => {
-                                                e.preventDefault();
-                                                if (msg.is_deleted) return;
-                                                // Basic implementation: confirm to pin
-                                                if (isAdmin || currentThread?.created_by === user?.id) {
-                                                    if (confirm('このメッセージをアナウンスとしてピン留めしますか？')) {
-                                                        useChatStore.getState().pinMessage(currentThread!.id, msg.id);
-                                                    }
-                                                }
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
                                             }}
-                                            title="クリック: 引用 / 右クリック: アナウンス登録"
                                         >
-                                            {msg.is_deleted ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <Trash2 size={14} /> このメッセージは削除されました
-                                                </span>
-                                            ) : (
-                                                <>
-                                                    {formatMessage(msg.content)}
-                                                    {msg.attachment_url && (
-                                                        <div style={{ marginTop: '0.5rem' }}>
-                                                            {msg.attachment_type?.startsWith('image/') ? (
-                                                                <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img
-                                                                        src={msg.attachment_url}
-                                                                        alt="attachment"
-                                                                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '0.5rem', display: 'block' }}
-                                                                    />
-                                                                </a>
-                                                            ) : (
-                                                                <a
-                                                                    href={msg.attachment_url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    style={{
-                                                                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                                                        color: isMe ? 'white' : 'var(--primary)',
-                                                                        textDecoration: 'none',
-                                                                        fontSize: '0.85rem',
-                                                                        background: 'rgba(0,0,0,0.1)',
-                                                                        padding: '0.5rem',
-                                                                        borderRadius: '0.5rem'
-                                                                    }}
-                                                                >
-                                                                    <FileText size={16} />
-                                                                    <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                        {msg.attachment_name || '添付ファイル'}
-                                                                    </span>
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                        {!msg.is_deleted && (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                                <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap' }}>
-                                                    {new Date(msg.created_at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                                {isMe && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteMessage(msg.id);
-                                                        }}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            padding: '0',
-                                                            color: 'rgba(255,255,255,0.9)', // Increased visibility
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            zIndex: 5 // Ensure it's on top
-                                                        }}
-                                                        title="削除"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.95rem' }}>
+                                                {msg.is_deleted ? (
+                                                    <span style={{ fontStyle: 'italic', opacity: 0.6, fontSize: '0.9rem' }}>
+                                                        メッセージは削除されました
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        {msg.content}
+                                                        {msg.attachment_url && (
+                                                            <div style={{ marginTop: '0.5rem' }}>
+                                                                {msg.attachment_type?.startsWith('image/') ? (
+                                                                    <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                        <img
+                                                                            src={msg.attachment_url}
+                                                                            alt="attachment"
+                                                                            style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '0.5rem', border: '1px solid rgba(0,0,0,0.1)' }}
+                                                                        />
+                                                                    </a>
+                                                                ) : (
+                                                                    <a
+                                                                        href={msg.attachment_url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        style={{
+                                                                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                                                            color: isMe ? 'white' : 'var(--primary)',
+                                                                            textDecoration: 'none',
+                                                                            fontSize: '0.85rem',
+                                                                            background: 'rgba(0,0,0,0.1)',
+                                                                            padding: '0.5rem',
+                                                                            borderRadius: '0.5rem'
+                                                                        }}
+                                                                    >
+                                                                        <FileText size={16} />
+                                                                        <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                            {msg.attachment_name || '添付ファイル'}
+                                                                        </span>
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
+
+                                            {!msg.is_deleted && (
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                                                    <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                                                        {new Date(msg.created_at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Action Menu Popover */}
+                                            {activeMessageId === msg.id && !msg.is_deleted && (
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        // If message is near bottom (last 2), open upwards
+                                                        top: index >= currentMessages.length - 2 ? 'auto' : '100%',
+                                                        bottom: index >= currentMessages.length - 2 ? '100%' : 'auto',
+                                                        left: isMe ? 'auto' : '0',
+                                                        right: isMe ? '0' : 'auto',
+                                                        marginTop: index >= currentMessages.length - 2 ? '0' : '0.5rem',
+                                                        marginBottom: index >= currentMessages.length - 2 ? '0.5rem' : '0',
+                                                        background: 'var(--surface)',
+                                                        borderRadius: '0.75rem',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                        zIndex: 100,
+                                                        overflow: 'hidden',
+                                                        minWidth: '180px',
+                                                        padding: '0.5rem',
+                                                        border: '1px solid var(--border)'
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        onClick={() => {
+                                                            setNewMessage(prev => `> ${msg.content}\n${prev}`);
+                                                            setActiveMessageId(null);
+                                                            textareaRef.current?.focus();
+                                                        }}
+                                                        className="btn btn-ghost"
+                                                        style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}
+                                                    >
+                                                        <Quote size={16} /> 引用する
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setAnnouncePrefill({
+                                                                title: `チャットからの共有: ${msg.content.slice(0, 20)}...`,
+                                                                content: `チャットでの発言を共有します。\n\n> ${msg.content}`,
+                                                            });
+                                                            setIsNoticeModalOpen(true);
+                                                            setActiveMessageId(null);
+                                                        }}
+                                                        className="btn btn-ghost"
+                                                        style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}
+                                                    >
+                                                        <Megaphone size={16} /> アナウンスにする
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setReactionPickerMessageId(msg.id);
+                                                            setActiveMessageId(null);
+                                                        }}
+                                                        className="btn btn-ghost"
+                                                        style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}
+                                                    >
+                                                        <Smile size={16} /> スタンプ
+                                                    </button>
+                                                    {(isMe || isAdmin) && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                // Close menu first
+                                                                setActiveMessageId(null);
+                                                                // Use timeout to allow UI update before confirm (optional, but good for mobile)
+                                                                setTimeout(() => handleDeleteMessage(msg.id), 10);
+                                                            }}
+                                                            className="btn btn-ghost"
+                                                            style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--error)' }}
+                                                        >
+                                                            <Trash2 size={16} /> 削除する
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Menu Backdrop (Transparent) */}
+                                        {activeMessageId === msg.id && (
+                                            <div
+                                                style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveMessageId(null);
+                                                }}
+                                            />
                                         )}
+
+                                        {/* Reactions Display */}
+                                        {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                                                {Object.entries(msg.reactions).map(([stampId, userIds]) => {
+                                                    if (!userIds || userIds.length === 0) return null;
+                                                    const stamp = STAMPS.find(s => s.id === stampId);
+                                                    if (!stamp) return null;
+                                                    const isReactedByMe = userIds.includes(user?.id || '');
+                                                    return (
+                                                        <button
+                                                            key={stampId}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Show user list instead of toggle
+                                                                setPreviewReaction({ messageId: msg.id, stampId, userIds });
+                                                            }}
+                                                            style={{
+                                                                background: isReactedByMe ? 'rgba(0,123,255,0.2)' : 'rgba(255,255,255,0.8)',
+                                                                border: isReactedByMe ? '1px solid #007bff' : '1px solid #ddd',
+                                                                borderRadius: '12px',
+                                                                padding: '2px 6px',
+                                                                cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', gap: '4px',
+                                                                fontSize: '0.75rem'
+                                                            }}
+                                                            title={userIds.length + '人がリアクションしました'}
+                                                        >
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img src={stamp.src} alt={stamp.label} style={{ width: '20px', height: '20px' }} />
+                                                            <span style={{ color: '#555' }}>{userIds.length}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* Reaction Picker Button (Visible on hover or if picker is open) */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                            marginTop: '2px',
+                                            position: 'relative' // Add relative positioning context here
+                                        }}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setReactionPickerMessageId(reactionPickerMessageId === msg.id ? null : msg.id);
+                                                }}
+                                                style={{
+                                                    background: 'none', border: 'none', cursor: 'pointer', color: '#999',
+                                                    padding: '2px', display: 'flex', alignItems: 'center'
+                                                }}
+                                                title="リアクションを追加"
+                                            >
+                                                <Smile size={16} />
+                                            </button>
+
+                                            {reactionPickerMessageId === msg.id && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    // If message is near bottom (last 2), open upwards
+                                                    top: index >= currentMessages.length - 2 ? 'auto' : '100%',
+                                                    bottom: index >= currentMessages.length - 2 ? '100%' : 'auto',
+                                                    marginTop: index >= currentMessages.length - 2 ? '0' : '4px',
+                                                    marginBottom: index >= currentMessages.length - 2 ? '4px' : '0',
+                                                    [isMe ? 'right' : 'left']: 0,
+                                                    zIndex: 110,
+                                                    background: 'white',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '8px',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    gap: '8px',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                                    onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside
+                                                >
+                                                    {STAMPS.map(stamp => {
+                                                        const currentReactions = msg.reactions || {};
+                                                        const userIds = currentReactions[stamp.id] || [];
+                                                        const isReactedByMe = userIds.includes(user?.id || '');
+
+                                                        return (
+                                                            <button
+                                                                key={stamp.id}
+                                                                onClick={() => {
+                                                                    if (isReactedByMe) {
+                                                                        removeReaction(threadId, msg.id, stamp.id);
+                                                                    } else {
+                                                                        addReaction(threadId, msg.id, stamp.id);
+                                                                    }
+                                                                    setReactionPickerMessageId(null);
+                                                                }}
+                                                                style={{
+                                                                    background: isReactedByMe ? 'rgba(0,123,255,0.1)' : 'none',
+                                                                    border: isReactedByMe ? '1px solid #007bff' : 'none',
+                                                                    cursor: 'pointer',
+                                                                    padding: '4px', borderRadius: '4px',
+                                                                    transition: 'background 0.2s'
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.background = isReactedByMe ? 'rgba(0,123,255,0.2)' : '#f0f0f0'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.background = isReactedByMe ? 'rgba(0,123,255,0.1)' : 'none'}
+                                                                title={isReactedByMe ? 'リアクションを削除' : 'リアクションを追加'}
+                                                            >
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img src={stamp.src} alt={stamp.label} style={{ width: '32px', height: '32px' }} />
+                                                            </button>
+                                                        );
+                                                    })}
+                                                    <button
+                                                        onClick={() => setReactionPickerMessageId(null)}
+                                                        style={{ marginLeft: '4px', border: 'none', background: 'none', cursor: 'pointer', color: '#999' }}
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -640,7 +849,7 @@ export default function ChatRoomPage() {
                     />
                     <button
                         type="submit"
-                        disabled={!newMessage.trim() && !selectedFile}
+                        disabled={(!newMessage.trim() && !selectedFile) || isSubmitting}
                         style={{
                             background: 'transparent',
                             color: (newMessage.trim() || selectedFile) ? '#007bff' : '#ccc',
@@ -650,7 +859,8 @@ export default function ChatRoomPage() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             padding: '0.5rem',
-                            transition: 'color 0.2s'
+                            transition: 'color 0.2s',
+                            opacity: isSubmitting ? 0.5 : 1
                         }}
                     >
                         <Send size={24} />
@@ -812,6 +1022,70 @@ export default function ChatRoomPage() {
                     </div>
                 )
             }
+
+            {/* Reaction Preview Modal */}
+            {previewReaction && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 200,
+                    background: 'rgba(0,0,0,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '1rem'
+                }}
+                    onClick={() => setPreviewReaction(null)}
+                >
+                    <div style={{
+                        background: 'white', borderRadius: '1rem', width: '100%', maxWidth: '300px',
+                        overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div style={{
+                            padding: '1rem', borderBottom: '1px solid #eee',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                        }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={STAMPS.find(s => s.id === previewReaction.stampId)?.src}
+                                    alt="stamp"
+                                    style={{ width: '24px', height: '24px' }}
+                                />
+                                <span>リアクションした人</span>
+                            </h3>
+                            <button
+                                onClick={() => setPreviewReaction(null)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999' }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        {/* List */}
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {previewReaction.userIds.map(uid => {
+                                const u = allUsers.find(user => user.id === uid);
+                                return (
+                                    <div key={uid} style={{
+                                        padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        borderBottom: '1px solid #f5f5f5'
+                                    }}>
+                                        <div style={{
+                                            width: '32px', height: '32px', borderRadius: '50%', background: '#ccc',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                                            overflow: 'hidden', fontSize: '0.8rem'
+                                        }}>
+                                            <User size={18} />
+                                        </div>
+                                        <div style={{ fontSize: '0.9rem', color: '#333' }}>
+                                            {u ? u.display_name : '不明なユーザー'}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NoteOverlay
                 isOpen={isNoteOpen}

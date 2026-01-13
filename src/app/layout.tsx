@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import TutorialOverlay from '@/components/tutorial/TutorialOverlay';
 import AuthGuard from '@/components/auth/AuthGuard';
+import ServiceWorkerRegister from '@/components/common/ServiceWorkerRegister';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,6 +20,12 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: 'Sales Hub',
   description: 'Sales Hub Application',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SE Groupware',
+  },
   icons: {
     apple: '/logo.png',
   },
@@ -33,6 +40,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <ErrorBoundary>
+          <ServiceWorkerRegister />
           <ThemeInitializer />
           <AuthGuard>
             <Sidebar />

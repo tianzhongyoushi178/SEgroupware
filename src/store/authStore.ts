@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
         });
 
-        // Listen for changes
+        // Subscription to Auth State Changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -69,7 +69,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             set((state) => {
                 const currentProfile = state.profile;
-                // Only preserve if it's the same user
                 const isSameUser = currentProfile?.uid === user?.id;
 
                 return {
@@ -80,18 +79,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
                         role: isAdmin ? 'admin' : 'user',
                         createdAt: user.created_at,
-                        // Preserve preferences and tutorial status if same user, otherwise reset
                         preferences: isSameUser ? (currentProfile?.preferences || {}) : {},
                         isTutorialCompleted: isSameUser ? (currentProfile?.isTutorialCompleted || false) : false
                     } : null,
                     isAdmin,
                     isLoading: false
-                    // Do NOT set isInitialized here, rely on getSession for the first load authority
                 };
             });
         });
 
-        return () => subscription.unsubscribe();
+        // Subscription to Profiles Table (Real-time Sync)
+        const profileSub = supabase
+            .channel('public:profiles')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+                const currentUser = get().user;
+                if (currentUser && payload.new.id === currentUser.id) {
+                    const newProfileData = payload.new;
+                    set((state) => {
+                         if (!state.profile) return state;
+                         return {
+                             profile: {
+                                 ...state.profile,
+                                 preferences: newProfileData.preferences,
+                                 isTutorialCompleted: newProfileData.is_tutorial_completed,
+                                 displayName: newProfileData.display_name // Sync name changes too
+                             }
+                         };
+                    });
+                }
+            })
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+            supabase.removeChannel(profileSub);
+        };
     },
 
     login: async (email, password, isSignUp = false) => {

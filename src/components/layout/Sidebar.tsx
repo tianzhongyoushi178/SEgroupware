@@ -209,6 +209,29 @@ export default function Sidebar() {
               </Link>
             );
           })}
+
+          {/* Notification Settings Button (Mobile Only) */}
+          <Link
+            href="/settings#tutorial-settings-notifications"
+            className={styles.navItem}
+            title="通知設定"
+            style={{
+              fontSize: '0.75rem',
+              padding: '0.5rem',
+              background: 'transparent',
+              borderRadius: '8px',
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              color: 'var(--text-secondary)' // Distinct color or inherit
+            }}
+          >
+            <Settings size={20} />
+          </Link>
         </div>
       </aside>
     );

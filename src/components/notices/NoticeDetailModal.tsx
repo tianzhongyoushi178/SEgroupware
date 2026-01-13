@@ -22,13 +22,20 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModalProps) {
-    const { markAsRead, deleteNotice } = useNoticeStore();
+    const { markAsRead, deleteNotice, comments, fetchComments, addComment, isLoadingComments } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const { getAllProfiles } = useAppSettingsStore();
     const [userMap, setUserMap] = useState<Record<string, string>>({});
     const [loadingMap, setLoadingMap] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [newComment, setNewComment] = useState('');
     const router = useRouter(); // Added useRouter
+
+    useEffect(() => {
+        if (notice) {
+            fetchComments(notice.id);
+        }
+    }, [notice]);
 
     useEffect(() => {
         if (notice && (notice.readStatusVisibleTo === 'all' || isAdmin)) {
@@ -43,6 +50,16 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
             });
         }
     }, [notice, isAdmin, getAllProfiles]);
+
+    const handleAddComment = async () => {
+        if (!notice || !newComment.trim()) return;
+        try {
+            await addComment(notice.id, newComment);
+            setNewComment('');
+        } catch (error) {
+            console.error('Error adding comment', error);
+        }
+    };
 
     if (!notice) return null;
 
@@ -163,8 +180,101 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                     })}
                 </div>
 
+                {/* Comments Section */}
+                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        コメント ({comments.length})
+                    </h3>
+
+                    <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {isLoadingComments ? (
+                            <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)' }}>読み込み中...</div>
+                        ) : comments.length > 0 ? (
+                            comments.map((comment) => (
+                                <div key={comment.id} style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <div
+                                        style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: '50%',
+                                            background: '#ddd',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.8rem',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        {comment.user?.avatarUrl ? (
+                                            <img src={comment.user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            comment.user?.displayName?.charAt(0) || '?'
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                            <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{comment.user?.displayName}</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                {format(new Date(comment.createdAt), 'M/d HH:mm', { locale: ja })}
+                                            </span>
+                                        </div>
+                                        <div style={{
+                                            background: 'var(--background-secondary)',
+                                            padding: '0.75rem',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '0.9rem',
+                                            whiteSpace: 'pre-wrap',
+                                            wordBreak: 'break-word'
+                                        }}>
+                                            {comment.content}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', background: 'var(--background-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                コメントはまだありません
+                            </div>
+                        )}
+                    </div>
+
+                    {user && (
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <textarea
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="コメントを追加..."
+                                rows={2}
+                                style={{
+                                    flex: 1,
+                                    padding: '0.75rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--border)',
+                                    outline: 'none',
+                                    resize: 'vertical',
+                                    fontFamily: 'inherit'
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleAddComment();
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={handleAddComment}
+                                disabled={!newComment.trim()}
+                                className="btn btn-primary"
+                                style={{ height: 'fit-content', alignSelf: 'flex-end' }}
+                            >
+                                送信
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 {/* Footer / Actions */}
-                <footer style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                <footer style={{ marginTop: '2rem', paddingTop: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                         {/* Mark as Read Button */}
                         {user?.id && !notice.readStatus?.[user.id] && (
