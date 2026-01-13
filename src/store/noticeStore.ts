@@ -12,6 +12,7 @@ interface NoticeState {
     updateNotice: (id: string, updates: Partial<Notice>) => Promise<void>;
     markAsRead: (id: string, userId: string) => Promise<void>;
     deleteNotice: (id: string) => Promise<void>;
+    toggleNoticeFlag: (noticeId: string, userId: string) => Promise<void>;
 }
 
 export const useNoticeStore = create<NoticeState>((set, get) => ({
@@ -31,6 +32,19 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             return;
         }
 
+        // Fetch flags for current user
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        const myFlags = new Set<string>();
+
+        if (userId) {
+            const { data: flags } = await supabase
+                .from('notice_flags')
+                .select('notice_id')
+                .eq('user_id', userId);
+            flags?.forEach(f => myFlags.add(f.notice_id));
+        }
+
         // Map DB fields to Frontend types
         const mappedNotices = (data || []).map(n => ({
             ...n,
@@ -39,6 +53,8 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             readStatusVisibleTo: n.read_status_visible_to || 'all',
             startDate: n.start_date,
             endDate: n.end_date,
+            isPinned: n.is_pinned,
+            isFlagged: myFlags.has(n.id), // Set local flag state
             // isRead is calculated in component based on user context
             authorId: n.author_id // Ensure authorId is mapped
         }));
@@ -81,7 +97,8 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
                 read_status: {}, // Initialize empty
                 read_status_visible_to: notice.readStatusVisibleTo || 'all',
                 start_date: notice.startDate,
-                end_date: notice.endDate
+                end_date: notice.endDate,
+                is_pinned: notice.isPinned || false
             });
 
         if (error) {
@@ -98,6 +115,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         if (updates.readStatusVisibleTo !== undefined) dbUpdates.read_status_visible_to = updates.readStatusVisibleTo;
         if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
         if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+        if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
 
         const { error } = await supabase
             .from('notices')
@@ -148,6 +166,52 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
         if (error) {
             console.error('Error deleting notice:', error);
             throw error;
+        }
+    },
+
+    toggleNoticeFlag: async (noticeId, userId) => {
+        // optimistically update
+        set(state => ({
+            notices: state.notices.map(n =>
+                n.id === noticeId ? { ...n, isFlagged: !n.isFlagged } : n
+            )
+        }));
+
+        const notice = get().notices.find(n => n.id === noticeId);
+        if (!notice) return;
+
+        if (notice.isFlagged) {
+            // currently flagged (after optimistic update), so we INSERT
+            const { error } = await supabase
+                .from('notice_flags')
+                .insert({ user_id: userId, notice_id: noticeId });
+
+            if (error) {
+                console.error('Error flagging notice:', error);
+                // revert
+                set(state => ({
+                    notices: state.notices.map(n =>
+                        n.id === noticeId ? { ...n, isFlagged: !n.isFlagged } : n
+                    )
+                }));
+            }
+        } else {
+            // currently unflagged, so we DELETE
+            const { error } = await supabase
+                .from('notice_flags')
+                .delete()
+                .eq('user_id', userId)
+                .eq('notice_id', noticeId);
+
+            if (error) {
+                console.error('Error unflagging notice:', error);
+                // revert
+                set(state => ({
+                    notices: state.notices.map(n =>
+                        n.id === noticeId ? { ...n, isFlagged: !n.isFlagged } : n
+                    )
+                }));
+            }
         }
     },
 }));

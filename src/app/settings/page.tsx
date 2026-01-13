@@ -18,6 +18,8 @@ export default function SettingsPage() {
         setTheme,
         toggleDesktopNotification,
         sendTestNotification,
+        defaultNoticeView,
+        setDefaultNoticeView,
     } = useSettingsStore();
 
     const { isAdmin, logout, profile, updateProfileName, updatePreferences } = useAuthStore();
@@ -628,6 +630,39 @@ export default function SettingsPage() {
                             </div>
                         </section>
 
+                        {/* お知らせ表示設定 */}
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.headerContent}>
+                                    <Bell size={20} style={{ color: '#2563eb' }} />
+                                    <h2 className={styles.sectionTitle}>お知らせ設定</h2>
+                                </div>
+                                <p className={styles.sectionDescription}>お知らせの表示に関する設定を行います</p>
+                            </div>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <p className={styles.toggleText}>初期表示設定</p>
+                                        <p className={styles.toggleSubtext}>お知らせページを開いた時の初期表示を設定します</p>
+                                    </div>
+                                    <div className={styles.themeToggle}>
+                                        <button
+                                            onClick={() => setDefaultNoticeView('all')}
+                                            className={`${styles.themeButton} ${defaultNoticeView === 'all' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                        >
+                                            すべて
+                                        </button>
+                                        <button
+                                            onClick={() => setDefaultNoticeView('unread')}
+                                            className={`${styles.themeButton} ${defaultNoticeView === 'unread' ? styles.themeButtonActive : styles.themeButtonInactive}`}
+                                        >
+                                            未読のみ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                         {/* ログアウト */}
                         <div style={{ marginTop: '2rem', paddingBottom: '2rem' }}>
                             <button
@@ -762,59 +797,61 @@ export default function SettingsPage() {
             </div>
 
             {/* Edit Link Modal */}
-            {editingLink && (
-                <div style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
+            {
+                editingLink && (
                     <div style={{
-                        background: 'var(--surface)', padding: '2rem', borderRadius: '1rem',
-                        width: '90%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
-                        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>リンクを編集</h2>
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>タイトル</label>
-                                <input
-                                    type="text"
-                                    value={editingLink.title}
-                                    onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
-                                    className={styles.input}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>URL</label>
-                                <input
-                                    type="text"
-                                    value={editingLink.url}
-                                    onChange={e => setEditingLink({ ...editingLink, url: e.target.value })}
-                                    className={styles.input}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                                <button
-                                    onClick={() => setEditingLink(null)}
-                                    style={{
-                                        padding: '0.5rem 1rem', background: '#f3f4f6', color: '#4b5563',
-                                        border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
-                                    }}
-                                >
-                                    キャンセル
-                                </button>
-                                <button
-                                    onClick={handleUpdateLink}
-                                    style={{
-                                        padding: '0.5rem 1rem', background: 'var(--primary)', color: 'white',
-                                        border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
-                                    }}
-                                >
-                                    更新
-                                </button>
+                        <div style={{
+                            background: 'var(--surface)', padding: '2rem', borderRadius: '1rem',
+                            width: '90%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}>
+                            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>リンクを編集</h2>
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>タイトル</label>
+                                    <input
+                                        type="text"
+                                        value={editingLink.title}
+                                        onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
+                                        className={styles.input}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>URL</label>
+                                    <input
+                                        type="text"
+                                        value={editingLink.url}
+                                        onChange={e => setEditingLink({ ...editingLink, url: e.target.value })}
+                                        className={styles.input}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                                    <button
+                                        onClick={() => setEditingLink(null)}
+                                        style={{
+                                            padding: '0.5rem 1rem', background: '#f3f4f6', color: '#4b5563',
+                                            border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
+                                        }}
+                                    >
+                                        キャンセル
+                                    </button>
+                                    <button
+                                        onClick={handleUpdateLink}
+                                        style={{
+                                            padding: '0.5rem 1rem', background: 'var(--primary)', color: 'white',
+                                            border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: '500'
+                                        }}
+                                    >
+                                        更新
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
 import { useAuthStore } from '@/store/authStore';
 import { NoticeCategory, Notice } from '@/types/notice';
-import { X } from 'lucide-react';
+import { X, Flag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface NoticeFormModalProps {
@@ -244,6 +244,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                         </p>
                     </div>
 
+
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                         <button type="button" onClick={onClose} className="btn btn-ghost">
                             キャンセル
@@ -253,7 +254,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData }: Notice
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

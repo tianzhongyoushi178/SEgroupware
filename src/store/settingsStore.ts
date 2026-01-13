@@ -6,6 +6,7 @@ interface SettingsState {
     notifications: {
         desktop: boolean;
     };
+    defaultNoticeView: 'all' | 'unread';
     profile: {
         name: string;
         email: string;
@@ -14,6 +15,7 @@ interface SettingsState {
     setTheme: (theme: 'light' | 'dark') => void;
     setNiCollaboCookie: (cookie: string) => void;
     toggleDesktopNotification: (enabled: boolean) => Promise<void>;
+    setDefaultNoticeView: (view: 'all' | 'unread') => void;
     updateProfile: (profile: Partial<SettingsState['profile']>) => void;
     requestNotificationPermission: () => Promise<boolean>;
     sendTestNotification: () => void;
@@ -26,6 +28,7 @@ export const useSettingsStore = create<SettingsState>()(
             notifications: {
                 desktop: false,
             },
+            defaultNoticeView: 'all',
             profile: {
                 name: '田中 太郎',
                 email: 'tanaka.taro@example.com',
@@ -33,6 +36,8 @@ export const useSettingsStore = create<SettingsState>()(
             niCollaboCookie: 'n7o9ahn4jhfap86g90cik8kta2',
 
             setTheme: (theme) => set({ theme }),
+
+            setDefaultNoticeView: (view) => set({ defaultNoticeView: view }),
 
             setNiCollaboCookie: (cookie) => set({ niCollaboCookie: cookie }),
 
@@ -102,6 +107,7 @@ export const useSettingsStore = create<SettingsState>()(
             partialize: (state) => ({
                 theme: state.theme,
                 notifications: state.notifications,
+                defaultNoticeView: state.defaultNoticeView,
                 profile: state.profile,
                 niCollaboCookie: state.niCollaboCookie, // Persist cookie
             }),

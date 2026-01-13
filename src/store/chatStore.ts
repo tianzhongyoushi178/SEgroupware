@@ -15,6 +15,7 @@ export interface ChatThread {
     is_private?: boolean;
     last_read_at?: string; // Added for "Unread Starts Here" feature
     pinned_message_id?: string | null;
+    last_message_content?: string;
 }
 
 export interface ChatMessage {
@@ -182,7 +183,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 request_reason: reason,
                 status: initialStatus,
                 created_by: userId,
-                is_private: isPrivate
+                is_private: isPrivate,
+                last_message_at: new Date().toISOString()
             })
             .select()
             .single();
@@ -345,6 +347,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         // Auto-mark as read for the sender
         await get().markThreadAsRead(threadId);
+
+        // Update thread's last_message_at and last_message_content
+        const { error: updateThreadError } = await supabase
+            .from('threads')
+            .update({
+                last_message_at: new Date().toISOString(),
+                last_message_content: content
+            })
+            .eq('id', threadId);
+
+        if (updateThreadError) {
+            console.error('Failed to update thread metadata', updateThreadError);
+        }
     },
 
     deleteMessage: async (threadId, messageId) => {

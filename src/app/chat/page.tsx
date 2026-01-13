@@ -187,7 +187,35 @@ export default function ChatListPage() {
                                     ) : null}
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                    {activeTab === 'pending' ? `申請理由: ${thread.request_reason}` : `作成日: ${new Date(thread.created_at).toLocaleDateString()}`}
+                                    {activeTab === 'pending' ? (
+                                        `申請理由: ${thread.request_reason}`
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Clock size={14} />
+                                                <span>
+                                                    {thread.last_message_at
+                                                        ? new Date(thread.last_message_at).toLocaleString('ja-JP', {
+                                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                        })
+                                                        : new Date(thread.created_at).toLocaleDateString()
+                                                    }
+                                                </span>
+                                            </div>
+                                            {thread.last_message_content && (
+                                                <div style={{
+                                                    fontSize: '0.9rem',
+                                                    color: 'var(--text-primary)',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    maxWidth: '300px'
+                                                }}>
+                                                    {thread.last_message_content}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             {isAdmin && activeTab === 'pending' && (

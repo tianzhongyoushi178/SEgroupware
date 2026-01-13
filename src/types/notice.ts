@@ -13,4 +13,6 @@ export interface Notice {
     readStatusVisibleTo?: 'all' | 'author_admin';
     startDate?: string;
     endDate?: string;
+    isPinned?: boolean;
+    isFlagged?: boolean; // Computed property for current user's flag
 }

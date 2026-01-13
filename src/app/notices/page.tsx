@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Bell, Info, AlertTriangle, CheckCircle, Trash2, Filter, ArrowUpDown } from 'lucide-react'; // Added icons
+import { Bell, Info, AlertTriangle, CheckCircle, Trash2, Filter, ArrowUpDown, Flag } from 'lucide-react'; // Added icons
 import { Notice, NoticeCategory } from '@/types/notice';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
 import NoticeDetailModal from '@/components/notices/NoticeDetailModal';
 import { useAuthStore } from '@/store/authStore';
+import { useSettingsStore } from '@/store/settingsStore';
 
 const categoryConfig: Record<NoticeCategory, { label: string; color: string; icon: any }> = {
     system: { label: 'システム', color: '#2563eb', icon: Info },
@@ -17,7 +18,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticesPage() {
-    const { notices, markAsRead, deleteNotice, fetchNotices } = useNoticeStore();
+    const { notices, markAsRead, deleteNotice, fetchNotices, toggleNoticeFlag } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
@@ -25,8 +26,14 @@ export default function NoticesPage() {
     const selectedNotice = notices.find(n => n.id === selectedNoticeId) || null;
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
+    const { defaultNoticeView } = useSettingsStore();
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+
+    // Initialize with default setting
+    useEffect(() => {
+        setShowUnreadOnly(defaultNoticeView === 'unread');
+    }, [defaultNoticeView]);
 
     // Responsive check
     useEffect(() => {
@@ -71,8 +78,8 @@ export default function NoticesPage() {
             // Correctly determine if read for the current user based on readStatus map
             const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;
 
-            // If checking "Unread Only", hide if already read
-            if (showUnreadOnly && isRead) return false;
+            // If checking "Unread Only", hide if already read unless it is flagged by user
+            if (showUnreadOnly && isRead && !notice.isFlagged) return false;
 
             return true;
         })
@@ -282,6 +289,23 @@ export default function NoticesPage() {
                                             by {notice.author}
                                         </span>
                                     )}
+                                    {notice.isFlagged && (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                            background: '#ef4444',
+                                            color: 'white',
+                                            padding: '0.125rem 0.5rem',
+                                            borderRadius: '999px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 'bold',
+                                            marginLeft: 'auto'
+                                        }}>
+                                            <Flag size={12} fill="currentColor" />
+                                            <span>フラグ</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -300,44 +324,62 @@ export default function NoticesPage() {
                                 </p>
                             </div>
 
-                            {!isMobile && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px' }}>
-                                    {!isRead && user?.id ? (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                markAsRead(notice.id, user.id);
-                                            }}
-                                            className="btn btn-ghost"
-                                            title="既読にする"
-                                            style={{ color: 'var(--success)' }}
-                                        >
-                                            <CheckCircle size={28} />
-                                        </button>
-                                    ) : (
-                                        <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                            <CheckCircle size={24} />
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
-                                        </div>
-                                    )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px', borderLeft: '1px solid var(--border)', paddingLeft: '1rem', marginLeft: '0.5rem' }}>
+                                {user?.id && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleNoticeFlag(notice.id, user.id);
+                                        }}
+                                        className="btn btn-ghost"
+                                        title={notice.isFlagged ? "フラグを外す" : "フラグを立てる"}
+                                        style={{
+                                            color: notice.isFlagged ? '#ef4444' : 'var(--text-tertiary)',
+                                            opacity: notice.isFlagged ? 1 : 0.5
+                                        }}
+                                    >
+                                        <Flag size={24} fill={notice.isFlagged ? 'currentColor' : 'none'} />
+                                    </button>
+                                )}
+                                {!isMobile && (
+                                    <>
+                                        {!isRead && user?.id ? (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    markAsRead(notice.id, user.id);
+                                                }}
+                                                className="btn btn-ghost"
+                                                title="既読にする"
+                                                style={{ color: 'var(--success)' }}
+                                            >
+                                                <CheckCircle size={28} />
+                                            </button>
+                                        ) : (
+                                            <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <CheckCircle size={24} />
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
+                                            </div>
+                                        )}
 
-                                    {(isAdmin || (user?.id && notice.authorId === user.id)) && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (confirm('本当に削除しますか？')) {
-                                                    deleteNotice(notice.id);
-                                                }
-                                            }}
-                                            className="btn btn-ghost"
-                                            title="削除"
-                                            style={{ color: 'var(--text-secondary)' }}
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    )}
-                                </div>
-                            )}
+                                        {(isAdmin || (user?.id && notice.authorId === user.id)) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (confirm('本当に削除しますか？')) {
+                                                        deleteNotice(notice.id);
+                                                    }
+                                                }}
+                                                className="btn btn-ghost"
+                                                title="削除"
+                                                style={{ color: 'var(--text-secondary)' }}
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
