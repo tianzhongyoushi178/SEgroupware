@@ -22,7 +22,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModalProps) {
-    const { markAsRead, deleteNotice, comments, fetchComments, addComment, isLoadingComments } = useNoticeStore();
+    const { markAsRead, deleteNotice, comments, fetchComments, addComment, deleteComment, isLoadingComments } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const { getAllProfiles } = useAppSettingsStore();
     const [userMap, setUserMap] = useState<Record<string, string>>({});
@@ -229,6 +229,25 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
                                             {comment.content}
                                         </div>
                                     </div>
+                                    {user?.id === comment.userId && (
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('コメントを削除しますか？')) {
+                                                    await deleteComment(comment.id);
+                                                }
+                                            }}
+                                            className="btn btn-ghost"
+                                            style={{
+                                                padding: '0.25rem',
+                                                height: 'auto',
+                                                alignSelf: 'flex-start',
+                                                color: 'var(--text-secondary)'
+                                            }}
+                                            title="削除"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             ))
                         ) : (
