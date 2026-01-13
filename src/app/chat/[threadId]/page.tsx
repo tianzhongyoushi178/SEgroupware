@@ -247,7 +247,7 @@ export default function ChatRoomPage() {
 
     const handleQuote = (message: any) => {
         const timestamp = format(new Date(message.created_at), 'yyyy/MM/dd HH:mm', { locale: ja });
-        const header = `[${timestamp}] 送信者：${message.author_name}\n`;
+        const header = `> [${timestamp}] 送信者：${message.author_name}\n`;
         const quoteText = header + message.content.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n';
 
         setNewMessage(prev => {
