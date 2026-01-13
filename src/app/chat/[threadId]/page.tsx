@@ -589,18 +589,17 @@ export default function ChatRoomPage() {
                                                         <Quote size={16} /> 引用する
                                                     </button>
                                                     <button
-                                                        onClick={() => {
-                                                            setAnnouncePrefill({
-                                                                title: `チャットからの共有: ${msg.content.slice(0, 20)}...`,
-                                                                content: `チャットでの発言を共有します。\n\n> ${msg.content}`,
-                                                            });
-                                                            setIsNoticeModalOpen(true);
+                                                        onClick={async () => {
+                                                            if (confirm('このメッセージをアナウンス（上部固定）にしますか？')) {
+                                                                await useChatStore.getState().pinMessage(threadId, msg.id);
+                                                                toast.success('アナウンスを固定しました');
+                                                            }
                                                             setActiveMessageId(null);
                                                         }}
                                                         className="btn btn-ghost"
                                                         style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem', padding: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}
                                                     >
-                                                        <Megaphone size={16} /> アナウンスにする
+                                                        <Megaphone size={16} /> アナウンスとして固定
                                                     </button>
                                                     <button
                                                         onClick={() => {
@@ -1093,6 +1092,7 @@ export default function ChatRoomPage() {
                     </div>
                 </div>
             )}
+
 
             <NoteOverlay
                 isOpen={isNoteOpen}
