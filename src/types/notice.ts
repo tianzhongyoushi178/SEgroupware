@@ -13,10 +13,7 @@ export interface Notice {
     readStatusVisibleTo?: 'all' | 'author_admin';
     startDate?: string;
     endDate?: string;
-<<<<<<< HEAD
-    isPinned?: boolean;
     isFlagged?: boolean; // Computed property for current user's flag
-=======
     targetAudience?: string[]; // ['all'] or ['admin', 'user:id', etc]
 }
 
@@ -30,5 +27,4 @@ export interface NoticeComment {
         displayName: string;
         avatarUrl?: string;
     };
->>>>>>> e5a7a5402aedd15a40f8d7d6de32b3a38585f7e4
 }
