@@ -367,7 +367,7 @@ export default function ChatRoomPage() {
                             return pinnedMsg ? pinnedMsg.content : 'メッセージを読み込み中...';
                         })()}
                     </div>
-                    {(isAdmin || currentThread.created_by === user?.id) && (
+                    {(isAdmin || (currentThread.pinned_by ? currentThread.pinned_by === user?.id : currentThread.created_by === user?.id)) && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

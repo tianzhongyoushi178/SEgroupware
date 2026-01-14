@@ -16,6 +16,7 @@ export interface ChatThread {
     is_private?: boolean;
     last_read_at?: string; // Added for "Unread Starts Here" feature
     pinned_message_id?: string | null;
+    pinned_by?: string | null; // Added: Who pinned the message
     last_message_content?: string;
 }
 
@@ -670,9 +671,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     pinMessage: async (threadId, messageId) => {
+        const userId = get().currentUserId;
         const { error } = await supabase
             .from('threads')
-            .update({ pinned_message_id: messageId })
+            .update({
+                pinned_message_id: messageId,
+                pinned_by: userId // Record who pinned it
+            })
             .eq('id', threadId);
 
         if (error) {
@@ -683,7 +688,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Optimistic update
         set(state => ({
             threads: state.threads.map(t =>
-                t.id === threadId ? { ...t, pinned_message_id: messageId } : t
+                t.id === threadId ? { ...t, pinned_message_id: messageId, pinned_by: userId } : t
             )
         }));
     },
@@ -691,7 +696,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     unpinMessage: async (threadId) => {
         const { error } = await supabase
             .from('threads')
-            .update({ pinned_message_id: null })
+            .update({
+                pinned_message_id: null,
+                pinned_by: null
+            })
             .eq('id', threadId);
 
         if (error) {
@@ -702,7 +710,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Optimistic update
         set(state => ({
             threads: state.threads.map(t =>
-                t.id === threadId ? { ...t, pinned_message_id: undefined } : t
+                t.id === threadId ? { ...t, pinned_message_id: undefined, pinned_by: undefined } : t
             )
         }));
     },

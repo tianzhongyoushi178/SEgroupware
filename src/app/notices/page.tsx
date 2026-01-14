@@ -110,51 +110,110 @@ export default function NoticesPage() {
 
                 {/* Mobile Tabs */}
                 {isMobile ? (
-                    <div id="tutorial-notice-filter-mobile" style={{
+                    <div style={{
                         position: 'sticky',
                         top: 0,
                         zIndex: 10,
                         background: 'var(--background)',
-                        padding: '0.5rem 1rem',
+                        paddingBottom: '0.5rem',
                         borderBottom: '1px solid var(--border)',
                         display: 'flex',
-                        gap: '0.5rem',
-                        overflowX: 'auto',
-                        whiteSpace: 'nowrap',
-                        scrollbarWidth: 'none'
+                        flexDirection: 'column',
+                        gap: '0.5rem'
                     }}>
-                        <button
-                            onClick={() => setFilterCategory('all')}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '999px',
-                                background: filterCategory === 'all' ? 'var(--primary)' : 'var(--surface)',
-                                color: filterCategory === 'all' ? 'white' : 'var(--text-secondary)',
-                                border: '1px solid var(--border)',
-                                fontSize: '0.875rem',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            すべて
-                        </button>
-                        {Object.entries(categoryConfig).map(([key, config]) => (
+                        {/* 1. Category Tabs */}
+                        <div id="tutorial-notice-filter-mobile" style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            overflowX: 'auto',
+                            whiteSpace: 'nowrap',
+                            scrollbarWidth: 'none',
+                            padding: '0.5rem 1rem 0 1rem'
+                        }}>
                             <button
-                                key={key}
-                                onClick={() => setFilterCategory(key as NoticeCategory)}
+                                onClick={() => setFilterCategory('all')}
                                 style={{
-                                    padding: '0.5rem 1rem',
+                                    padding: '0.4rem 0.8rem',
                                     borderRadius: '999px',
-                                    background: filterCategory === key ? config.color : 'var(--surface)',
-                                    color: filterCategory === key ? 'white' : config.color,
-                                    border: filterCategory === key ? 'none' : `1px solid ${config.color}30`,
-                                    fontSize: '0.875rem',
+                                    background: filterCategory === 'all' ? 'var(--primary)' : 'var(--surface)',
+                                    color: filterCategory === 'all' ? 'white' : 'var(--text-secondary)',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.8rem',
                                     fontWeight: 'bold',
-                                    opacity: filterCategory === key || filterCategory === 'all' ? 1 : 0.6
+                                    flexShrink: 0,
+                                    boxShadow: filterCategory === 'all' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                                    transition: 'all 0.2s'
                                 }}
                             >
-                                {config.label}
+                                すべて
                             </button>
-                        ))}
+                            {Object.entries(categoryConfig).map(([key, config]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => setFilterCategory(key as NoticeCategory)}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '999px',
+                                        background: filterCategory === key ? config.color : 'var(--surface)',
+                                        color: filterCategory === key ? 'white' : config.color,
+                                        border: filterCategory === key ? 'none' : `1px solid ${config.color}30`,
+                                        fontSize: '0.8rem',
+                                        fontWeight: 'bold',
+                                        opacity: filterCategory === key || filterCategory === 'all' ? 1 : 0.6,
+                                        flexShrink: 0,
+                                        boxShadow: filterCategory === key ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {config.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 2. Sort & Unread Toggle Bar */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: '0.8rem',
+                            padding: '0 1rem',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <button
+                                onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                    background: 'none', border: 'none',
+                                    color: 'var(--text-secondary)',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                <ArrowUpDown size={14} />
+                                {sortOrder === 'newest' ? '新しい順' : '古い順'}
+                            </button>
+
+                            <div style={{ width: '1px', height: '16px', background: 'var(--border)' }}></div>
+
+                            <label style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: showUnreadOnly ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                                transition: 'background 0.2s'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={showUnreadOnly}
+                                    onChange={(e) => setShowUnreadOnly(e.target.checked)}
+                                    style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+                                />
+                                <span style={{
+                                    fontWeight: showUnreadOnly ? 'bold' : 'normal',
+                                    color: showUnreadOnly ? 'var(--primary)' : 'var(--text-secondary)'
+                                }}>未読のみ</span>
+                            </label>
+                        </div>
                     </div>
                 ) : (
                     /* Desktop Controls */
