@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNoticeStore } from '@/store/noticeStore';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Bell, Info, AlertTriangle, CheckCircle, Trash2, Filter, ArrowUpDown, Flag } from 'lucide-react'; // Added icons
+import { Bell, Info, AlertTriangle, CheckCircle, Trash2, Filter, ArrowUpDown, Flag, Search } from 'lucide-react'; // Added icons
 import { Notice, NoticeCategory } from '@/types/notice';
 import NoticeFormModal from '@/components/notices/NoticeFormModal';
 import NoticeDetailModal from '@/components/notices/NoticeDetailModal';
@@ -28,6 +28,7 @@ export default function NoticesPage() {
     const [filterCategory, setFilterCategory] = useState<NoticeCategory | 'all'>('all');
     const { defaultNoticeView } = useSettingsStore();
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isMobile, setIsMobile] = useState(false);
 
     // Initialize with default setting
@@ -60,6 +61,14 @@ export default function NoticesPage() {
             if (new Date(notice.createdAt) < oneMonthAgo) return false;
 
             if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
+
+            // Search Query
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (!notice.title.toLowerCase().includes(query) && !notice.content.toLowerCase().includes(query)) {
+                    return false;
+                }
+            }
 
             // Date Filtering
             const now = new Date();
@@ -121,6 +130,28 @@ export default function NoticesPage() {
                         flexDirection: 'column',
                         gap: '0.5rem'
                     }}>
+                        {/* Search Bar Mobile */}
+                        <div style={{ padding: '0 1rem', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <div style={{ position: 'relative', width: '100%' }}>
+                                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="検索..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.4rem 0.4rem 0.4rem 2rem',
+                                        borderRadius: '999px',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--surface)',
+                                        color: 'var(--text-main)',
+                                        fontSize: '0.9rem'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
                         {/* 1. Category Tabs */}
                         <div id="tutorial-notice-filter-mobile" style={{
                             display: 'flex',
@@ -128,7 +159,7 @@ export default function NoticesPage() {
                             overflowX: 'auto',
                             whiteSpace: 'nowrap',
                             scrollbarWidth: 'none',
-                            padding: '0.5rem 1rem 0 1rem'
+                            padding: '0 1rem'
                         }}>
                             <button
                                 onClick={() => setFilterCategory('all')}
@@ -227,6 +258,27 @@ export default function NoticesPage() {
                         flexWrap: 'wrap',
                         alignItems: 'center'
                     }}>
+                        <div style={{ position: 'relative', width: '240px' }}>
+                            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                            <input
+                                type="text"
+                                placeholder="キーワード検索..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.5rem 0.5rem 0.5rem 2.2rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--background)',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.875rem'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <ArrowUpDown size={16} />
                             <select
