@@ -120,27 +120,26 @@ export const useSettingsStore = create<SettingsState>()(
 
                     return { notifications: newNotifications };
                 });
-            });
             },
 
-setChatSendOnEnter: (enabled) => {
-    set({ chatSendOnEnter: enabled });
-},
+            setChatSendOnEnter: (enabled) => {
+                set({ chatSendOnEnter: enabled });
+            },
 
-    syncWithProfile: (preferences) => {
-        if (!preferences) return;
-        set((state) => ({
-            theme: preferences.theme ?? state.theme,
-            notifications: preferences.notifications ? { ...state.notifications, ...preferences.notifications } : state.notifications,
-            defaultNoticeView: preferences.defaultNoticeView ?? state.defaultNoticeView,
-            niCollaboCookie: preferences.niCollaboCookie ?? state.niCollaboCookie,
-        }));
-    },
+            syncWithProfile: (preferences) => {
+                if (!preferences) return;
+                set((state) => ({
+                    theme: preferences.theme ?? state.theme,
+                    notifications: preferences.notifications ? { ...state.notifications, ...preferences.notifications } : state.notifications,
+                    defaultNoticeView: preferences.defaultNoticeView ?? state.defaultNoticeView,
+                    niCollaboCookie: preferences.niCollaboCookie ?? state.niCollaboCookie,
+                }));
+            },
 
-        updateProfile: (profile) =>
-            set((state) => ({
-                profile: { ...state.profile, ...profile },
-            })),
+            updateProfile: (profile) =>
+                set((state) => ({
+                    profile: { ...state.profile, ...profile },
+                })),
 
             requestNotificationPermission: async () => {
                 if (!('Notification' in window)) {
@@ -168,38 +167,38 @@ setChatSendOnEnter: (enabled) => {
                 }
             },
 
-                sendTestNotification: () => {
-                    const { notifications } = get();
-                    if (!notifications.desktop) {
-                        alert('デスクトップ通知が有効になっていません。');
-                        return;
-                    }
+            sendTestNotification: () => {
+                const { notifications } = get();
+                if (!notifications.desktop) {
+                    alert('デスクトップ通知が有効になっていません。');
+                    return;
+                }
 
-                    if (!('Notification' in window)) {
-                        alert('このブラウザは通知をサポートしていません。');
-                        return;
-                    }
+                if (!('Notification' in window)) {
+                    alert('このブラウザは通知をサポートしていません。');
+                    return;
+                }
 
-                    if (Notification.permission === 'granted') {
-                        new Notification('テスト通知', {
-                            body: 'これはSEグループウェアからのテスト通知です。',
-                            icon: '/logo.png',
-                        });
-                    } else {
-                        alert('通知の許可がありません。');
-                    }
-                },
+                if (Notification.permission === 'granted') {
+                    new Notification('テスト通知', {
+                        body: 'これはSEグループウェアからのテスト通知です。',
+                        icon: '/logo.png',
+                    });
+                } else {
+                    alert('通知の許可がありません。');
+                }
+            },
         }),
-{
-    name: 'settings-storage',
-        partialize: (state) => ({
-            theme: state.theme,
-            notifications: state.notifications,
-            chatSendOnEnter: state.chatSendOnEnter,
-            defaultNoticeView: state.defaultNoticeView,
-            profile: state.profile,
-            niCollaboCookie: state.niCollaboCookie, // Persist cookie
-        }),
+        {
+            name: 'settings-storage',
+            partialize: (state) => ({
+                theme: state.theme,
+                notifications: state.notifications,
+                chatSendOnEnter: state.chatSendOnEnter,
+                defaultNoticeView: state.defaultNoticeView,
+                profile: state.profile,
+                niCollaboCookie: state.niCollaboCookie, // Persist cookie
+            }),
         }
     )
 );
