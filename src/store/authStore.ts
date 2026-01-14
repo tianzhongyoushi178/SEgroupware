@@ -91,24 +91,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Subscription to Profiles Table (Real-time Sync)
         const profileSub = supabase
             .channel('public:profiles')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+                console.log('Profile change event received:', payload);
                 const currentUser = get().user;
-                if (currentUser && payload.new.id === currentUser.id) {
-                    const newProfileData = payload.new;
+                if (!currentUser) return;
+
+                // Allow payload.new (UPDATE/INSERT)
+                const newRecord = payload.new as any;
+
+                if (newRecord && newRecord.id === currentUser.id) {
+                    const newProfileData = newRecord;
+                    console.log('Syncing profile preferences:', newProfileData.preferences);
                     set((state) => {
-                         if (!state.profile) return state;
-                         return {
-                             profile: {
-                                 ...state.profile,
-                                 preferences: newProfileData.preferences,
-                                 isTutorialCompleted: newProfileData.is_tutorial_completed,
-                                 displayName: newProfileData.display_name // Sync name changes too
-                             }
-                         };
+                        if (!state.profile) return state;
+                        return {
+                            profile: {
+                                ...state.profile,
+                                preferences: newProfileData.preferences,
+                                isTutorialCompleted: newProfileData.is_tutorial_completed,
+                                displayName: newProfileData.display_name // Sync name changes too
+                            }
+                        };
                     });
                 }
             })
-            .subscribe();
+            .subscribe((status) => {
+                console.log('Profile subscription status:', status);
+            });
 
         return () => {
             subscription.unsubscribe();
@@ -196,7 +205,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 preferences: newPreferences
             }, { onConflict: 'id' });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Failed to update preferences in DB:', error);
+            throw error;
+        }
 
         // Optimistic update
         if (currentProfile) {
