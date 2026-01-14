@@ -37,12 +37,23 @@ export default function ChatRoomPage() {
         deleteThread,
         deleteMessage,
         addReaction,
-        removeReaction
+        removeReaction,
+        drafts,
+        setDraft
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
 
-    const [newMessage, setNewMessage] = useState('');
+    // const [newMessage, setNewMessage] = useState(''); // Replaced by global draft
+    const newMessage = drafts[threadId] || '';
+    const setNewMessage = (val: string | ((prev: string) => string)) => {
+        if (typeof val === 'function') {
+            setDraft(threadId, val(drafts[threadId] || ''));
+        } else {
+            setDraft(threadId, val);
+        }
+    };
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNoteOpen, setIsNoteOpen] = useState(false);
