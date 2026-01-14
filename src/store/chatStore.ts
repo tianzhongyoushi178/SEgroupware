@@ -57,8 +57,6 @@ interface ChatState {
     messages: Record<string, ChatMessage[]>; // Keyed by threadId
     isLoading: boolean;
     error: string | null;
-    isLoading: boolean;
-    error: string | null;
     currentUserId: string | null;
 
     // Search
