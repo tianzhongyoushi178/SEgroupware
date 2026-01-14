@@ -23,13 +23,58 @@ export default function ChatListPage() {
     const router = useRouter();
 
     // Global initialization is handled in Sidebar/Layout
-    // ...
+    // useEffect(() => {
+    //     if (user) {
+    //         initialize(user.id);
+    //         const unsubscribe = subscribeToAll();
+    //         return () => unsubscribe();
+    //     }
+    // }, [user]);
 
-    // ... (modal open effect)
+    useEffect(() => {
+        if (isModalOpen) {
+            fetchUsers();
+            setNewThreadTitle('');
+            setNewThreadReason('');
+            setIsPrivate(false);
+            setSelectedParticipants([]);
+        }
+    }, [isModalOpen]);
 
-    // ... (handleCreateThread)
+    const handleCreateThread = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const status = isAdmin ? 'approved' : 'pending';
+            await startThread(newThreadTitle, newThreadReason, isPrivate, selectedParticipants, status);
+            setIsModalOpen(false);
+            setNewThreadTitle('');
+            setNewThreadReason('');
+            if (isAdmin) {
+                alert('スレッドを作成しました。');
+            } else {
+                alert('スレッド作成を申請しました。管理者の承認をお待ちください。');
+            }
+        } catch (error: any) {
+            console.error('Thread creation error:', error);
+            alert(`エラーが発生しました: ${error.message || '不明なエラー'}`);
+        }
+    };
 
-    // ... (handleApprove, handleReject)
+    const handleApprove = async (id: string, e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent link click
+        e.stopPropagation();
+        if (confirm('このスレッドを承認しますか？')) {
+            await updateThreadStatus(id, 'approved');
+        }
+    };
+
+    const handleReject = async (id: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm('このスレッドを却下しますか？')) {
+            await updateThreadStatus(id, 'rejected');
+        }
+    };
 
     const displayedThreads = threads
         .filter(t => t.status === activeTab)
