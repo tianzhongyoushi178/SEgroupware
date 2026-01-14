@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { ArrowLeft, Send, Trash2, User, Bot, Paperclip, FileText, X, Settings, StickyNote, Megaphone, ChevronDown, Check, AlertTriangle, Smile, Plus, MoreVertical, MessageSquare, Quote } from 'lucide-react';
 import NoteOverlay from '@/components/chat/NoteOverlay';
 import { format } from 'date-fns';
@@ -43,6 +44,7 @@ export default function ChatRoomPage() {
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
+    const { chatSendOnEnter, setChatSendOnEnter } = useSettingsStore();
 
     // const [newMessage, setNewMessage] = useState(''); // Replaced by global draft
     const newMessage = drafts[threadId] || '';
@@ -842,11 +844,14 @@ export default function ChatRoomPage() {
                         onChange={e => setNewMessage(e.target.value)}
                         onPaste={handlePaste}
                         onKeyDown={e => {
-                            // Desktop: Enter sends, Shift+Enter newlines
+                            // Desktop: Enter sends if enabled, Shift+Enter newlines
                             // Mobile: Enter newlines (default), only Send button sends
                             if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSend(e);
+                                if (chatSendOnEnter) {
+                                    e.preventDefault();
+                                    handleSend(e);
+                                }
+                                // If chatSendOnEnter is false, do nothing (default behavior is newline)
                             }
                         }}
                         placeholder="メッセージを入力"
@@ -864,6 +869,21 @@ export default function ChatRoomPage() {
                             fontFamily: 'inherit'
                         }}
                     />
+                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '0.5rem' }}>
+                        <label style={{
+                            display: 'flex', alignItems: 'center', cursor: 'pointer',
+                            fontSize: '0.75rem', color: '#666', userSelect: 'none',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            <input
+                                type="checkbox"
+                                checked={chatSendOnEnter}
+                                onChange={(e) => setChatSendOnEnter(e.target.checked)}
+                                style={{ marginRight: '0.25rem' }}
+                            />
+                            {!isMobile && 'Enterで送信'}
+                        </label>
+                    </div>
                     <button
                         type="submit"
                         disabled={(!newMessage.trim() && !selectedFile) || isSubmitting}

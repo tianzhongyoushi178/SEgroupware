@@ -8,6 +8,7 @@ interface SettingsState {
         notice: boolean; // お知らせ通知
         chat: boolean;   // チャット通知
     };
+    chatSendOnEnter: boolean; // Enterで送信するかどうか
     defaultNoticeView: 'all' | 'unread';
     profile: {
         name: string;
@@ -17,7 +18,8 @@ interface SettingsState {
     setTheme: (theme: 'light' | 'dark') => void;
     setNiCollaboCookie: (cookie: string) => void;
     toggleDesktopNotification: (enabled: boolean) => Promise<void>;
-    toggleNotificationType: (type: 'notice' | 'chat', enabled: boolean) => void; // 新規追加
+    toggleNotificationType: (type: 'notice' | 'chat', enabled: boolean) => void;
+    setChatSendOnEnter: (enabled: boolean) => void;
     setDefaultNoticeView: (view: 'all' | 'unread') => void;
     updateProfile: (profile: Partial<SettingsState['profile']>) => void;
     syncWithProfile: (preferences: any) => void;
@@ -34,6 +36,8 @@ export const useSettingsStore = create<SettingsState>()(
                 notice: true, // デフォルトON
                 chat: true,   // デフォルトON
             },
+            chatSendOnEnter: true, // デフォルトON
+
             defaultNoticeView: 'all',
             profile: {
                 name: '田中 太郎',
@@ -116,22 +120,27 @@ export const useSettingsStore = create<SettingsState>()(
 
                     return { notifications: newNotifications };
                 });
+            });
             },
 
-            syncWithProfile: (preferences) => {
-                if (!preferences) return;
-                set((state) => ({
-                    theme: preferences.theme ?? state.theme,
-                    notifications: preferences.notifications ? { ...state.notifications, ...preferences.notifications } : state.notifications,
-                    defaultNoticeView: preferences.defaultNoticeView ?? state.defaultNoticeView,
-                    niCollaboCookie: preferences.niCollaboCookie ?? state.niCollaboCookie,
-                }));
-            },
+setChatSendOnEnter: (enabled) => {
+    set({ chatSendOnEnter: enabled });
+},
 
-            updateProfile: (profile) =>
-                set((state) => ({
-                    profile: { ...state.profile, ...profile },
-                })),
+    syncWithProfile: (preferences) => {
+        if (!preferences) return;
+        set((state) => ({
+            theme: preferences.theme ?? state.theme,
+            notifications: preferences.notifications ? { ...state.notifications, ...preferences.notifications } : state.notifications,
+            defaultNoticeView: preferences.defaultNoticeView ?? state.defaultNoticeView,
+            niCollaboCookie: preferences.niCollaboCookie ?? state.niCollaboCookie,
+        }));
+    },
+
+        updateProfile: (profile) =>
+            set((state) => ({
+                profile: { ...state.profile, ...profile },
+            })),
 
             requestNotificationPermission: async () => {
                 if (!('Notification' in window)) {
@@ -159,37 +168,38 @@ export const useSettingsStore = create<SettingsState>()(
                 }
             },
 
-            sendTestNotification: () => {
-                const { notifications } = get();
-                if (!notifications.desktop) {
-                    alert('デスクトップ通知が有効になっていません。');
-                    return;
-                }
+                sendTestNotification: () => {
+                    const { notifications } = get();
+                    if (!notifications.desktop) {
+                        alert('デスクトップ通知が有効になっていません。');
+                        return;
+                    }
 
-                if (!('Notification' in window)) {
-                    alert('このブラウザは通知をサポートしていません。');
-                    return;
-                }
+                    if (!('Notification' in window)) {
+                        alert('このブラウザは通知をサポートしていません。');
+                        return;
+                    }
 
-                if (Notification.permission === 'granted') {
-                    new Notification('テスト通知', {
-                        body: 'これはSEグループウェアからのテスト通知です。',
-                        icon: '/logo.png',
-                    });
-                } else {
-                    alert('通知の許可がありません。');
-                }
-            },
+                    if (Notification.permission === 'granted') {
+                        new Notification('テスト通知', {
+                            body: 'これはSEグループウェアからのテスト通知です。',
+                            icon: '/logo.png',
+                        });
+                    } else {
+                        alert('通知の許可がありません。');
+                    }
+                },
         }),
-        {
-            name: 'settings-storage',
-            partialize: (state) => ({
-                theme: state.theme,
-                notifications: state.notifications,
-                defaultNoticeView: state.defaultNoticeView,
-                profile: state.profile,
-                niCollaboCookie: state.niCollaboCookie, // Persist cookie
-            }),
+{
+    name: 'settings-storage',
+        partialize: (state) => ({
+            theme: state.theme,
+            notifications: state.notifications,
+            chatSendOnEnter: state.chatSendOnEnter,
+            defaultNoticeView: state.defaultNoticeView,
+            profile: state.profile,
+            niCollaboCookie: state.niCollaboCookie, // Persist cookie
+        }),
         }
     )
 );
