@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { sendNotification } from '@/lib/notifications';
+import { useSettingsStore } from './settingsStore';
 
 export interface ChatThread {
     id: string;
@@ -539,7 +540,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
                     // Notification Logic
                     if (userId && newMsg.author_id !== userId) {
-                        sendNotification(`New message from ${newMsg.author_name}`, newMsg.content, `/chat/${newMsg.thread_id}`);
+                        const { notifications } = useSettingsStore.getState();
+                        if (notifications.desktop && (notifications.chat ?? true)) {
+                            sendNotification(`New message from ${newMsg.author_name}`, newMsg.content, `/chat/${newMsg.thread_id}`);
+                        }
                     }
                 } else if (payload.eventType === 'UPDATE') {
                     const updatedMsg = payload.new as ChatMessage;

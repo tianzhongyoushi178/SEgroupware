@@ -5,6 +5,8 @@ interface SettingsState {
     theme: 'light' | 'dark';
     notifications: {
         desktop: boolean;
+        notice: boolean; // お知らせ通知
+        chat: boolean;   // チャット通知
     };
     defaultNoticeView: 'all' | 'unread';
     profile: {
@@ -15,6 +17,7 @@ interface SettingsState {
     setTheme: (theme: 'light' | 'dark') => void;
     setNiCollaboCookie: (cookie: string) => void;
     toggleDesktopNotification: (enabled: boolean) => Promise<void>;
+    toggleNotificationType: (type: 'notice' | 'chat', enabled: boolean) => void; // 新規追加
     setDefaultNoticeView: (view: 'all' | 'unread') => void;
     updateProfile: (profile: Partial<SettingsState['profile']>) => void;
     requestNotificationPermission: () => Promise<boolean>;
@@ -27,6 +30,8 @@ export const useSettingsStore = create<SettingsState>()(
             theme: 'light',
             notifications: {
                 desktop: false,
+                notice: true, // デフォルトON
+                chat: true,   // デフォルトON
             },
             defaultNoticeView: 'all',
             profile: {
@@ -47,7 +52,13 @@ export const useSettingsStore = create<SettingsState>()(
                         const granted = await get().requestNotificationPermission();
                         if (granted) {
                             set((state) => ({
-                                notifications: { ...state.notifications, desktop: true },
+                                notifications: {
+                                    ...state.notifications,
+                                    desktop: true,
+                                    // 既存データの移行: undefinedの場合はtrueにする
+                                    notice: state.notifications.notice ?? true,
+                                    chat: state.notifications.chat ?? true
+                                },
                             }));
                         } else {
                             // 許可されなかった場合はOFFのまま
@@ -68,6 +79,15 @@ export const useSettingsStore = create<SettingsState>()(
                         notifications: { ...state.notifications, desktop: false },
                     }));
                 }
+            },
+
+            toggleNotificationType: (type, enabled) => {
+                set((state) => ({
+                    notifications: {
+                        ...state.notifications,
+                        [type]: enabled
+                    }
+                }));
             },
 
             updateProfile: (profile) =>

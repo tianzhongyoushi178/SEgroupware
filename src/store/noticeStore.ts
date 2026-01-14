@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { Notice, NoticeComment } from '@/types/notice';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from './authStore';
+import { sendNotification } from '@/lib/notifications';
+import { useSettingsStore } from './settingsStore';
 
 interface NoticeState {
     notices: Notice[];
@@ -113,7 +115,20 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'notices' },
-                () => {
+                (payload) => {
+                    // Check if it's an insert to trigger notification
+                    if (payload.eventType === 'INSERT') {
+                        const newNotice = payload.new as Notice;
+                        const { notifications } = useSettingsStore.getState();
+
+                        // Check settings
+                        if (notifications.desktop && (notifications.notice ?? true)) {
+                            // Optionally check target audience if logic permits (complex in realtime payload)
+                            // or just send generalized "New Notice"
+                            sendNotification(newNotice.title, '新しいお知らせが投稿されました');
+                        }
+                    }
+
                     get().fetchNotices();
                 }
             )

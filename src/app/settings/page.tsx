@@ -597,7 +597,7 @@ export default function SettingsPage() {
                             <div className={styles.content}>
                                 <div className={styles.toggleRow}>
                                     <div>
-                                        <p className={styles.toggleText}>デスクトップ通知</p>
+                                        <p className={styles.toggleText}>デスクトップ通知（全体）</p>
                                         <p className={styles.toggleSubtext}>
                                             ブラウザでのプッシュ通知を許可します
                                             <br />
@@ -615,8 +615,43 @@ export default function SettingsPage() {
                                         <span className={styles.slider}></span>
                                     </label>
                                 </div>
+
                                 {notifications.desktop && (
-                                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <div style={{ marginTop: '1rem', marginLeft: '1rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border)' }}>
+                                        <div className={styles.toggleRow} style={{ marginBottom: '1rem' }}>
+                                            <div>
+                                                <p className={styles.toggleText} style={{ fontSize: '0.9rem' }}>お知らせの通知</p>
+                                                <p className={styles.toggleSubtext}>新しいお知らせが投稿された時に通知します</p>
+                                            </div>
+                                            <label className={styles.switch} style={{ transform: 'scale(0.9)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notifications.notice ?? true}
+                                                    onChange={(e) => useSettingsStore.getState().toggleNotificationType('notice', e.target.checked)}
+                                                />
+                                                <span className={styles.slider}></span>
+                                            </label>
+                                        </div>
+
+                                        <div className={styles.toggleRow}>
+                                            <div>
+                                                <p className={styles.toggleText} style={{ fontSize: '0.9rem' }}>チャットの通知</p>
+                                                <p className={styles.toggleSubtext}>新しいメッセージを受信した時に通知します</p>
+                                            </div>
+                                            <label className={styles.switch} style={{ transform: 'scale(0.9)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notifications.chat ?? true}
+                                                    onChange={(e) => useSettingsStore.getState().toggleNotificationType('chat', e.target.checked)}
+                                                />
+                                                <span className={styles.slider}></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {notifications.desktop && (
+                                    <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
                                         <button
                                             onClick={sendTestNotification}
                                             style={{
