@@ -33,7 +33,6 @@ export interface ChatMessage {
     attachment_name?: string;
 
     is_deleted?: boolean;
-    is_deleted?: boolean;
     reactions?: Record<string, string[]>; // { stamp_id: [user_id, ...] }
 }
 
