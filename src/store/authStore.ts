@@ -92,7 +92,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const profileSub = supabase
             .channel('public:profiles')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
-                console.log('Profile change event received:', payload);
+                // console.log('Profile change event received:', payload);
                 const currentUser = get().user;
                 if (!currentUser) return;
 
@@ -101,7 +101,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
                 if (newRecord && newRecord.id === currentUser.id) {
                     const newProfileData = newRecord;
-                    console.log('Syncing profile preferences:', newProfileData.preferences);
+                    // console.log('Syncing profile preferences:', newProfileData.preferences);
                     set((state) => {
                         if (!state.profile) return state;
                         return {
@@ -115,9 +115,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     });
                 }
             })
-            .subscribe((status) => {
-                console.log('Profile subscription status:', status);
-            });
+            .subscribe();
 
         return () => {
             subscription.unsubscribe();
