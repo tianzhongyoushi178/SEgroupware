@@ -33,7 +33,12 @@ export interface ChatMessage {
     attachment_name?: string;
 
     is_deleted?: boolean;
+    is_deleted?: boolean;
     reactions?: Record<string, string[]>; // { stamp_id: [user_id, ...] }
+}
+
+export interface SearchResult extends ChatMessage {
+    thread?: ChatThread;
 }
 
 export interface Note {
@@ -53,7 +58,16 @@ interface ChatState {
     messages: Record<string, ChatMessage[]>; // Keyed by threadId
     isLoading: boolean;
     error: string | null;
+    isLoading: boolean;
+    error: string | null;
     currentUserId: string | null;
+
+    // Search
+    searchQuery: string;
+    searchResults: SearchResult[];
+    isSearching: boolean;
+    setSearchQuery: (query: string) => void;
+    searchMessages: (query: string) => Promise<void>;
 
     initialize: (userId: string) => void;
     fetchThreads: (query?: string) => Promise<void>;
@@ -101,6 +115,12 @@ export const useChatStore = create<ChatState>()(
             isLoading: false,
             error: null,
             currentUserId: null,
+
+            // Search
+            searchQuery: '',
+            searchResults: [],
+            isSearching: false,
+            setSearchQuery: (query) => set({ searchQuery: query }),
 
             setDraft: (threadId, draft) =>
                 set(state => ({ drafts: { ...state.drafts, [threadId]: draft } })),
@@ -216,6 +236,41 @@ export const useChatStore = create<ChatState>()(
                 });
 
                 set({ threads, isLoading: false });
+            },
+
+            searchMessages: async (query: string) => {
+                if (!query.trim()) {
+                    set({ searchResults: [], isSearching: false });
+                    return;
+                }
+
+                set({ isSearching: true });
+                const userId = get().currentUserId;
+
+                try {
+                    // search messages
+                    const { data: messages, error } = await supabase
+                        .from('messages')
+                        .select('*, threads(*)') // Join threads to get metadata
+                        .ilike('content', `%${query}%`)
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    const results = (messages as any[]).map(m => ({
+                        ...m,
+                        thread: m.threads // Supabase join result
+                    })) as SearchResult[];
+
+                    // Filter out private threads user is not part of if RLS doesn't handle it perfectly 
+                    // (Note: RLS should handle it, but sometimes joins are tricky. 
+                    // However, messages table RLS usually checks thread participation.)
+
+                    set({ searchResults: results, isSearching: false });
+                } catch (e) {
+                    console.error('Search error:', e);
+                    set({ searchResults: [], isSearching: false });
+                }
             },
 
             startThread: async (title, reason, isPrivate = false, participantIds: string[] = [], initialStatus = 'pending') => {

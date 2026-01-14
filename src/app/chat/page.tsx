@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 
 export default function ChatListPage() {
     const { user, isAdmin } = useAuthStore();
-    const { threads, fetchThreads, startThread, updateThreadStatus, initialize, subscribeToAll } = useChatStore();
+    const { threads, fetchThreads, startThread, updateThreadStatus, initialize, subscribeToAll, searchMessages, searchResults, isSearching } = useChatStore();
     const { users: allUsers, fetchUsers } = useUserStore();
     const [activeTab, setActiveTab] = useState<'approved' | 'pending'>('approved');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,11 +34,15 @@ export default function ChatListPage() {
     // Fetch threads when search query changes (debounced)
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchThreads(searchQuery);
+            if (searchQuery.trim()) {
+                searchMessages(searchQuery);
+            } else {
+                fetchThreads();
+            }
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, fetchThreads]);
+    }, [searchQuery, searchMessages, fetchThreads]);
 
     useEffect(() => {
         if (isModalOpen) {
@@ -102,7 +106,7 @@ export default function ChatListPage() {
                         <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                         <input
                             type="text"
-                            placeholder="キーワード検索..."
+                            placeholder="メッセージを検索..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             style={{
@@ -137,8 +141,8 @@ export default function ChatListPage() {
                 </div>
             </div>
 
-            {/* Tabs (Only for Admin) */}
-            {isAdmin && (
+            {/* Tabs (Only for Admin) - Hide when searching */}
+            {!searchQuery && isAdmin && (
                 <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)' }}>
                     <button
                         onClick={() => setActiveTab('approved')}
@@ -178,101 +182,140 @@ export default function ChatListPage() {
                 </div>
             )}
 
-            {/* List */}
+            {/* Search Results OR Thread List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {displayedThreads.length === 0 && (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        スレッドがありません
-                    </div>
-                )}
-                {displayedThreads.map(thread => (
-                    <Link
-                        key={thread.id}
-                        href={`/chat/${thread.id}`}
-                        style={{
-                            display: 'block',
-                            padding: '1rem',
-                            background: 'var(--surface)',
-                            borderRadius: '0.75rem',
-                            border: '1px solid var(--border)',
-                            textDecoration: 'none',
-                            color: 'inherit',
-                            transition: 'background 0.2s'
-                        }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {thread.title}
-                                    {thread.unreadCount && thread.unreadCount > 0 ? (
-                                        <span style={{
-                                            background: 'red',
-                                            color: 'white',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 'bold',
-                                            padding: '0.1rem 0.5rem',
-                                            borderRadius: '1rem',
-                                            minWidth: '20px',
-                                            textAlign: 'center',
-                                            display: 'inline-block'
-                                        }}>
-                                            {thread.unreadCount}
-                                        </span>
-                                    ) : null}
+                {/* Search Result Mode */}
+                {searchQuery ? (
+                    <>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', padding: '0 0.5rem' }}>
+                            {isSearching ? '検索中...' : `${searchResults.length} 件のメッセージが見つかりました`}
+                        </div>
+                        {searchResults.map(result => (
+                            <Link
+                                key={result.id}
+                                href={`/chat/${result.thread_id}`}
+                                style={{
+                                    display: 'block',
+                                    padding: '1rem',
+                                    background: 'var(--surface)',
+                                    borderRadius: '0.75rem',
+                                    border: '1px solid var(--border)',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                                    {result.thread?.title || '不明なスレッド'}
                                 </div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                    {activeTab === 'pending' ? (
-                                        `申請理由: ${thread.request_reason}`
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <Clock size={14} />
-                                                <span>
-                                                    {thread.last_message_at
-                                                        ? new Date(thread.last_message_at).toLocaleString('ja-JP', {
-                                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                        })
-                                                        : new Date(thread.created_at).toLocaleDateString()
-                                                    }
-                                                </span>
-                                            </div>
-                                            {thread.last_message_content && (
-                                                <div style={{
-                                                    fontSize: '0.9rem',
-                                                    color: 'var(--text-primary)',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    maxWidth: '300px'
+                                <div style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
+                                    {result.content}
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    <span>{result.author_name}</span>
+                                    <span>{new Date(result.created_at).toLocaleString('ja-JP')}</span>
+                                </div>
+                            </Link>
+                        ))}
+                    </>
+                ) : (
+                    /* Thread List Mode */
+                    <>
+                        {displayedThreads.length === 0 && (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                スレッドがありません
+                            </div>
+                        )}
+                        {displayedThreads.map(thread => (
+                            <Link
+                                key={thread.id}
+                                href={`/chat/${thread.id}`}
+                                style={{
+                                    display: 'block',
+                                    padding: '1rem',
+                                    background: 'var(--surface)',
+                                    borderRadius: '0.75rem',
+                                    border: '1px solid var(--border)',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {thread.title}
+                                            {thread.unreadCount && thread.unreadCount > 0 ? (
+                                                <span style={{
+                                                    background: 'red',
+                                                    color: 'white',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 'bold',
+                                                    padding: '0.1rem 0.5rem',
+                                                    borderRadius: '1rem',
+                                                    minWidth: '20px',
+                                                    textAlign: 'center',
+                                                    display: 'inline-block'
                                                 }}>
-                                                    {thread.last_message_content}
+                                                    {thread.unreadCount}
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            {activeTab === 'pending' ? (
+                                                `申請理由: ${thread.request_reason}`
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <Clock size={14} />
+                                                        <span>
+                                                            {thread.last_message_at
+                                                                ? new Date(thread.last_message_at).toLocaleString('ja-JP', {
+                                                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                                })
+                                                                : new Date(thread.created_at).toLocaleDateString()
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    {thread.last_message_content && (
+                                                        <div style={{
+                                                            fontSize: '0.9rem',
+                                                            color: 'var(--text-primary)',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            maxWidth: '300px'
+                                                        }}>
+                                                            {thread.last_message_content}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
+                                    {isAdmin && activeTab === 'pending' && (
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button
+                                                onClick={(e) => handleApprove(thread.id, e)}
+                                                style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                title="承認"
+                                            >
+                                                <CheckCircle />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleReject(thread.id, e)}
+                                                style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                title="却下"
+                                            >
+                                                <XCircle />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                            {isAdmin && activeTab === 'pending' && (
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={(e) => handleApprove(thread.id, e)}
-                                        style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer' }}
-                                        title="承認"
-                                    >
-                                        <CheckCircle />
-                                    </button>
-                                    <button
-                                        onClick={(e) => handleReject(thread.id, e)}
-                                        style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
-                                        title="却下"
-                                    >
-                                        <XCircle />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </Link>
-                ))}
+                            </Link>
+                        ))}
+                    </>
+                )}
             </div>
 
             {/* Create Modal */}
