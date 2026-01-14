@@ -31,6 +31,15 @@ export default function ChatListPage() {
     //     }
     // }, [user]);
 
+    // Fetch threads when search query changes (debounced)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchThreads(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, fetchThreads]);
+
     useEffect(() => {
         if (isModalOpen) {
             fetchUsers();
@@ -77,16 +86,7 @@ export default function ChatListPage() {
     };
 
     const displayedThreads = threads
-        .filter(t => t.status === activeTab)
-        .filter(t => {
-            if (!searchQuery) return true;
-            const query = searchQuery.toLowerCase();
-            return (
-                t.title.toLowerCase().includes(query) ||
-                (t.request_reason && t.request_reason.toLowerCase().includes(query)) ||
-                (t.last_message_content && t.last_message_content.toLowerCase().includes(query))
-            );
-        });
+        .filter(t => t.status === activeTab);
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>

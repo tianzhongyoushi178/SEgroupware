@@ -56,7 +56,7 @@ interface ChatState {
     currentUserId: string | null;
 
     initialize: (userId: string) => void;
-    fetchThreads: () => Promise<void>;
+    fetchThreads: (query?: string) => Promise<void>;
     startThread: (title: string, reason: string, isPrivate?: boolean, participantIds?: string[], initialStatus?: 'pending' | 'approved') => Promise<void>;
     updateThreadStatus: (threadId: string, status: 'approved' | 'rejected') => Promise<void>;
 
@@ -110,17 +110,45 @@ export const useChatStore = create<ChatState>()(
                 get().fetchThreads();
             },
 
-            fetchThreads: async () => {
+            fetchThreads: async (query?: string) => {
                 set({ isLoading: true });
 
                 const userId = get().currentUserId;
 
+                // 0. If query exists, look up thread IDs that contain matching messages
+                let matchedThreadIds: string[] = [];
+                if (query) {
+                    const { data: messages } = await supabase
+                        .from('messages')
+                        .select('thread_id')
+                        .ilike('content', `%${query}%`);
+
+                    if (messages) {
+                        matchedThreadIds = Array.from(new Set(messages.map(m => m.thread_id)));
+                    }
+                }
+
                 // 1. Fetch threads
-                const { data: threadsData, error: threadsError } = await supabase
+                let threadQuery = supabase
                     .from('threads')
                     .select('*')
                     .order('last_message_at', { ascending: false, nullsFirst: false }) // Sort by latest message
                     .order('created_at', { ascending: false });
+
+                if (query) {
+                    const orConditions = [
+                        `title.ilike.%${query}%`,
+                        `request_reason.ilike.%${query}%`,
+                        `last_message_content.ilike.%${query}%`
+                    ];
+                    // If we found messages matching the query, include those threads too
+                    if (matchedThreadIds.length > 0) {
+                        orConditions.push(`id.in.(${matchedThreadIds.join(',')})`);
+                    }
+                    threadQuery = threadQuery.or(orConditions.join(','));
+                }
+
+                const { data: threadsData, error: threadsError } = await threadQuery;
 
                 if (threadsError) {
                     console.error('Error fetching threads:', threadsError);
