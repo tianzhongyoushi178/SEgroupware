@@ -20,6 +20,7 @@ interface SettingsState {
     toggleNotificationType: (type: 'notice' | 'chat', enabled: boolean) => void; // 新規追加
     setDefaultNoticeView: (view: 'all' | 'unread') => void;
     updateProfile: (profile: Partial<SettingsState['profile']>) => void;
+    syncWithProfile: (preferences: any) => void;
     requestNotificationPermission: () => Promise<boolean>;
     sendTestNotification: () => void;
 }
@@ -40,53 +41,90 @@ export const useSettingsStore = create<SettingsState>()(
             },
             niCollaboCookie: 'n7o9ahn4jhfap86g90cik8kta2',
 
-            setTheme: (theme) => set({ theme }),
+            setTheme: (theme) => {
+                set({ theme });
+                import('./authStore').then(({ useAuthStore }) => {
+                    useAuthStore.getState().updatePreferences({ theme });
+                });
+            },
 
-            setDefaultNoticeView: (view) => set({ defaultNoticeView: view }),
+            setDefaultNoticeView: (view) => {
+                set({ defaultNoticeView: view });
+                import('./authStore').then(({ useAuthStore }) => {
+                    useAuthStore.getState().updatePreferences({ defaultNoticeView: view });
+                });
+            },
 
-            setNiCollaboCookie: (cookie) => set({ niCollaboCookie: cookie }),
+            setNiCollaboCookie: (cookie) => {
+                set({ niCollaboCookie: cookie });
+                import('./authStore').then(({ useAuthStore }) => {
+                    useAuthStore.getState().updatePreferences({ niCollaboCookie: cookie });
+                });
+            },
 
             toggleDesktopNotification: async (enabled) => {
+                let newNotifications = { ...get().notifications };
+
                 if (enabled) {
                     try {
                         const granted = await get().requestNotificationPermission();
                         if (granted) {
-                            set((state) => ({
-                                notifications: {
-                                    ...state.notifications,
-                                    desktop: true,
-                                    // 既存データの移行: undefinedの場合はtrueにする
-                                    notice: state.notifications.notice ?? true,
-                                    chat: state.notifications.chat ?? true
-                                },
-                            }));
+                            newNotifications = {
+                                ...newNotifications,
+                                desktop: true,
+                                // 既存データの移行: undefinedの場合はtrueにする
+                                notice: newNotifications.notice ?? true,
+                                chat: newNotifications.chat ?? true
+                            };
+                            set({ notifications: newNotifications });
                         } else {
                             // 許可されなかった場合はOFFのまま
                             alert('通知の許可が得られませんでした。\niOSの場合は：\n1. 「ホーム画面に追加」しているか確認\n2. iOS設定 > 通知 > (アプリ名) で許可されているか確認');
-                            set((state) => ({
-                                notifications: { ...state.notifications, desktop: false },
-                            }));
+                            newNotifications = { ...newNotifications, desktop: false };
+                            set({ notifications: newNotifications });
+                            return;
                         }
                     } catch (error) {
                         console.error('Notification permission error:', error);
                         alert('通知設定のエラーが発生しました: ' + (error as any).message);
-                        set((state) => ({
-                            notifications: { ...state.notifications, desktop: false },
-                        }));
+                        newNotifications = { ...newNotifications, desktop: false };
+                        set({ notifications: newNotifications });
+                        return;
                     }
                 } else {
-                    set((state) => ({
-                        notifications: { ...state.notifications, desktop: false },
-                    }));
+                    newNotifications = { ...newNotifications, desktop: false };
+                    set({ notifications: newNotifications });
                 }
+
+                // Sync to DB
+                import('./authStore').then(({ useAuthStore }) => {
+                    useAuthStore.getState().updatePreferences({ notifications: newNotifications });
+                });
             },
 
             toggleNotificationType: (type, enabled) => {
-                set((state) => ({
-                    notifications: {
+                set((state) => {
+                    const newNotifications = {
                         ...state.notifications,
                         [type]: enabled
-                    }
+                    };
+
+                    // Sync to DB
+                    import('./authStore').then(({ useAuthStore }) => {
+                        useAuthStore.getState().updatePreferences({ notifications: newNotifications });
+                    });
+
+                    return { notifications: newNotifications };
+                });
+            },
+
+            syncWithProfile: (preferences) => {
+                if (!preferences) return;
+                set((state) => ({
+                    theme: preferences.theme ?? state.theme,
+                    notifications: preferences.notifications ? { ...state.notifications, ...preferences.notifications } : state.notifications,
+                    defaultNoticeView: preferences.defaultNoticeView ?? state.defaultNoticeView,
+                    niCollaboCookie: preferences.niCollaboCookie ?? state.niCollaboCookie,
                 }));
             },
 

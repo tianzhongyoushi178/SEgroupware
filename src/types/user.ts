@@ -9,6 +9,14 @@ export interface UserProfile {
     createdAt: string;
     isTutorialCompleted?: boolean;
     preferences?: {
+        theme?: 'light' | 'dark';
+        notifications?: {
+            desktop: boolean;
+            notice: boolean;
+            chat: boolean;
+        };
+        defaultNoticeView?: 'all' | 'unread';
+        niCollaboCookie?: string;
         quickAccess?: {
             [key: string]: boolean;
         };

@@ -16,6 +16,7 @@ const tools = [
 import { useChatStore } from '@/store/chatStore';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useSettingsStore } from '@/store/settingsStore';
 
 import { useAuthStore } from '@/store/authStore';
 
@@ -36,7 +37,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     const { subscribeNotices } = useNoticeStore();
     const { subscribeToAll: subscribeChat, initialize: initChat } = useChatStore();
-    const { user } = useAuthStore();
+    const { user, profile } = useAuthStore();
+    const { syncWithProfile } = useSettingsStore();
+
+    useEffect(() => {
+        if (profile?.preferences) {
+            syncWithProfile(profile.preferences);
+        }
+    }, [profile?.preferences, syncWithProfile]);
 
     useEffect(() => {
         // Request notification permission
