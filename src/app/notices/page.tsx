@@ -253,18 +253,47 @@ export default function NoticesPage() {
                         >
                             <div
                                 style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: 'var(--radius-md)',
-                                    background: `${config.color}20`,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: config.color,
                                     flexShrink: 0,
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    gap: isMobile ? '0.5rem' : '0',
+                                    height: 'auto'
                                 }}
                             >
-                                <Icon size={24} />
+                                <div
+                                    style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        borderRadius: 'var(--radius-md)',
+                                        background: `${config.color}20`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: config.color,
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <Icon size={24} />
+                                </div>
+                                {isMobile && user?.id && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleNoticeFlag(notice.id, user.id);
+                                        }}
+                                        className="btn btn-ghost"
+                                        style={{
+                                            padding: '0.25rem',
+                                            height: 'auto',
+                                            color: notice.isFlagged ? '#ef4444' : 'var(--text-tertiary)',
+                                            opacity: notice.isFlagged ? 1 : 0.5
+                                        }}
+                                    >
+                                        <Flag size={20} fill={notice.isFlagged ? 'currentColor' : 'none'} />
+                                    </button>
+                                )}
                             </div>
 
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -324,62 +353,64 @@ export default function NoticesPage() {
                                 </p>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px', borderLeft: '1px solid var(--border)', paddingLeft: '1rem', marginLeft: '0.5rem' }}>
-                                {user?.id && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleNoticeFlag(notice.id, user.id);
-                                        }}
-                                        className="btn btn-ghost"
-                                        title={notice.isFlagged ? "フラグを外す" : "フラグを立てる"}
-                                        style={{
-                                            color: notice.isFlagged ? '#ef4444' : 'var(--text-tertiary)',
-                                            opacity: notice.isFlagged ? 1 : 0.5
-                                        }}
-                                    >
-                                        <Flag size={24} fill={notice.isFlagged ? 'currentColor' : 'none'} />
-                                    </button>
-                                )}
-                                {!isMobile && (
-                                    <>
-                                        {!isRead && user?.id ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    markAsRead(notice.id, user.id);
-                                                }}
-                                                className="btn btn-ghost"
-                                                title="既読にする"
-                                                style={{ color: 'var(--success)' }}
-                                            >
-                                                <CheckCircle size={28} />
-                                            </button>
-                                        ) : (
-                                            <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <CheckCircle size={24} />
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
-                                            </div>
-                                        )}
+                            {!isMobile && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', minWidth: '80px', borderLeft: '1px solid var(--border)', paddingLeft: '1rem', marginLeft: '0.5rem' }}>
+                                    {user?.id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleNoticeFlag(notice.id, user.id);
+                                            }}
+                                            className="btn btn-ghost"
+                                            title={notice.isFlagged ? "フラグを外す" : "フラグを立てる"}
+                                            style={{
+                                                color: notice.isFlagged ? '#ef4444' : 'var(--text-tertiary)',
+                                                opacity: notice.isFlagged ? 1 : 0.5
+                                            }}
+                                        >
+                                            <Flag size={24} fill={notice.isFlagged ? 'currentColor' : 'none'} />
+                                        </button>
+                                    )}
+                                    {!isMobile && (
+                                        <>
+                                            {!isRead && user?.id ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        markAsRead(notice.id, user.id);
+                                                    }}
+                                                    className="btn btn-ghost"
+                                                    title="既読にする"
+                                                    style={{ color: 'var(--success)' }}
+                                                >
+                                                    <CheckCircle size={28} />
+                                                </button>
+                                            ) : (
+                                                <div style={{ color: 'var(--success)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                    <CheckCircle size={24} />
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>既読済み</span>
+                                                </div>
+                                            )}
 
-                                        {(isAdmin || (user?.id && notice.authorId === user.id)) && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (confirm('本当に削除しますか？')) {
-                                                        deleteNotice(notice.id);
-                                                    }
-                                                }}
-                                                className="btn btn-ghost"
-                                                title="削除"
-                                                style={{ color: 'var(--text-secondary)' }}
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                                            {(isAdmin || (user?.id && notice.authorId === user.id)) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm('本当に削除しますか？')) {
+                                                            deleteNotice(notice.id);
+                                                        }
+                                                    }}
+                                                    className="btn btn-ghost"
+                                                    title="削除"
+                                                    style={{ color: 'var(--text-secondary)' }}
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -393,6 +424,6 @@ export default function NoticesPage() {
 
             <NoticeFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             <NoticeDetailModal notice={selectedNotice} onClose={() => setSelectedNoticeId(null)} />
-        </div>
+        </div >
     );
 }
