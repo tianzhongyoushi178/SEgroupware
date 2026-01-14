@@ -296,14 +296,14 @@ export default function NoticesPage() {
                                             gap: '0.25rem',
                                             background: '#ef4444',
                                             color: 'white',
-                                            padding: '0.125rem 0.5rem',
+                                            padding: isMobile ? '0.25rem' : '0.125rem 0.5rem',
                                             borderRadius: '999px',
                                             fontSize: '0.75rem',
                                             fontWeight: 'bold',
                                             marginLeft: 'auto'
                                         }}>
                                             <Flag size={12} fill="currentColor" />
-                                            <span>フラグ</span>
+                                            {!isMobile && <span>フラグ</span>}
                                         </div>
                                     )}
                                 </div>
