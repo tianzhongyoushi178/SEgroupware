@@ -46,11 +46,14 @@ export default function NoticesPage() {
 
     // Polling for read status updates
     useEffect(() => {
+        // Initial fetch on mount or user change
+        fetchNotices();
+
         const interval = setInterval(() => {
             fetchNotices();
         }, 60000); // Every 1 minute
         return () => clearInterval(interval);
-    }, [fetchNotices]);
+    }, [fetchNotices, user?.id]);
 
     // フィルタリングとソートの適用
     const filteredAndSortedNotices = notices
@@ -70,8 +73,8 @@ export default function NoticesPage() {
                 }
             }
 
-            // Date Filtering
-            const now = new Date();
+            // Date Filtering Logic Removed
+            /*
             // Allow admin AND author to see their own posts regardless of date
             if (!isAdmin && (!user?.id || notice.authorId !== user.id)) {
                 if (notice.startDate) {
@@ -83,6 +86,7 @@ export default function NoticesPage() {
                     if (!isNaN(end.getTime()) && end < now) return false;
                 }
             }
+            */
 
             // Correctly determine if read for the current user based on readStatus map
             const isRead = user?.id ? !!notice.readStatus?.[user.id] : false;

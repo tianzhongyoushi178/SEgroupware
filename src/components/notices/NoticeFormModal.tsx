@@ -319,7 +319,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData, prefillD
                         />
                     </div>
 
-                    {/* Dates */}
+                    {/* Dates - REMOVED 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>掲載開始日 (任意)</label>
@@ -352,6 +352,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData, prefillD
                             />
                         </div>
                     </div>
+                    */}
 
                     {/* Read Status Visibility */}
                     <div style={{ padding: '0.75rem', background: 'var(--background-secondary)', borderRadius: 'var(--radius-md)' }}>

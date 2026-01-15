@@ -45,7 +45,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
 };
 
 export default function NoticesWidget() {
-    const { notices, markAsRead } = useNoticeStore();
+    const { notices, markAsRead, fetchNotices } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const { getAllProfiles } = useAppSettingsStore();
     const [mounted, setMounted] = useState(false);
@@ -55,6 +55,8 @@ export default function NoticesWidget() {
 
     useEffect(() => {
         setMounted(true);
+        fetchNotices(); // Fetch notices on mount
+
         // Fetch profiles for names
         getAllProfiles().then(profiles => {
             const map: Record<string, string> = {};
@@ -63,7 +65,7 @@ export default function NoticesWidget() {
             });
             setUserMap(map);
         });
-    }, []);
+    }, [user?.id, fetchNotices]);
 
     // Hydration Mismatchを防ぐため、マウントされるまでレンダリングしない
     if (!mounted) {
