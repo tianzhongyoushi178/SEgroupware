@@ -453,7 +453,22 @@ export default function NoticesPage() {
                                 </div>
 
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {notice.title}
+                                    {(() => {
+                                        const text = notice.title || '';
+                                        if (!searchQuery.trim()) return text;
+                                        const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+                                        return (
+                                            <>
+                                                {parts.map((part, i) => (
+                                                    part.toLowerCase() === searchQuery.toLowerCase() ? (
+                                                        <span key={i} style={{ color: 'red', fontWeight: 'bold' }}>{part}</span>
+                                                    ) : (
+                                                        <span key={i}>{part}</span>
+                                                    )
+                                                ))}
+                                            </>
+                                        );
+                                    })()}
                                 </h3>
                                 <p style={{
                                     color: 'var(--text-secondary)',
@@ -464,7 +479,22 @@ export default function NoticesPage() {
                                     WebkitBoxOrient: 'vertical',
                                     overflow: 'hidden'
                                 }}>
-                                    {notice.content}
+                                    {(() => {
+                                        const text = notice.content || '';
+                                        if (!searchQuery.trim()) return text;
+                                        const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+                                        return (
+                                            <>
+                                                {parts.map((part, i) => (
+                                                    part.toLowerCase() === searchQuery.toLowerCase() ? (
+                                                        <span key={i} style={{ color: 'red', fontWeight: 'bold' }}>{part}</span>
+                                                    ) : (
+                                                        <span key={i}>{part}</span>
+                                                    )
+                                                ))}
+                                            </>
+                                        );
+                                    })()}
                                 </p>
                             </div>
 
