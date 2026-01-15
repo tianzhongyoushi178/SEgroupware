@@ -37,6 +37,13 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
         }
     }, [notice]);
 
+    // Auto-mark as read when opened
+    useEffect(() => {
+        if (user?.id && notice) {
+            markAsRead(notice.id, user.id);
+        }
+    }, [notice?.id, user?.id]); // Only run when notice ID changes or user changes to avoid loops if readStatus updates trigger this (though notice object changes)
+
     useEffect(() => {
         if (notice && (notice.readStatusVisibleTo === 'all' || isAdmin)) {
             setLoadingMap(true);

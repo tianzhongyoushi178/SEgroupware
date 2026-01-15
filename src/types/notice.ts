@@ -27,4 +27,5 @@ export interface NoticeComment {
         displayName: string;
         avatarUrl?: string;
     };
+    notice?: Notice;
 }

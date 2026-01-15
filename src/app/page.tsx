@@ -2,6 +2,7 @@
 
 import { LayoutDashboard } from 'lucide-react';
 import NoticesWidget from '@/components/dashboard/NoticesWidget';
+import CommentedNoticesWidget from '@/components/dashboard/CommentedNoticesWidget';
 import { useAuthStore } from '@/store/authStore';
 import { useEffect, useState } from 'react';
 
@@ -33,8 +34,8 @@ export default function Home() {
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {/* Quick Access Widget */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+        {/* Quick Access Widget (Left Column) */}
         <section id="tutorial-dashboard-quickaccess" className="glass-panel" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <LayoutDashboard size={20} color="var(--primary)" />
@@ -108,9 +109,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Notices Widget */}
-        <div id="tutorial-dashboard-notices" style={{ height: '100%' }}>
-          <NoticesWidget />
+        {/* Right Column: Notices and Comments */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div id="tutorial-dashboard-notices">
+            <NoticesWidget />
+          </div>
+
+          <div id="dashboard-commented-notices">
+            <CommentedNoticesWidget />
+          </div>
         </div>
       </div>
 

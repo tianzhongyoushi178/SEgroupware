@@ -23,6 +23,10 @@ interface NoticeState {
     fetchComments: (noticeId: string) => Promise<void>;
     addComment: (noticeId: string, content: string) => Promise<void>;
     deleteComment: (commentId: string) => Promise<void>;
+
+    // Dashboard
+    recentComments: NoticeComment[];
+    fetchRecentComments: () => Promise<void>;
 }
 
 export const useNoticeStore = create<NoticeState>((set, get) => ({
@@ -33,6 +37,7 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
     // Comments State
     comments: [],
     isLoadingComments: false,
+    recentComments: [],
 
     fetchNotices: async () => {
         const { data, error } = await supabase
@@ -196,6 +201,18 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             return { notices: updated };
         });
 
+        // Also update recentComments if they contain this notice
+        set((state) => {
+            const updatedComments = state.recentComments.map((c) => {
+                if (c.notice && c.notice.id === id) {
+                    const newStatus = { ...c.notice.readStatus, [userId]: new Date().toISOString() };
+                    return { ...c, notice: { ...c.notice, readStatus: newStatus, isRead: true } };
+                }
+                return c;
+            });
+            return { recentComments: updatedComments };
+        });
+
         // 1. Fetch current to ensure we don't overwrite others (race condition possible but low traffic)
         const { data: current } = await supabase.from('notices').select('read_status').eq('id', id).single();
         const currentStatus = current?.read_status || {};
@@ -345,5 +362,49 @@ export const useNoticeStore = create<NoticeState>((set, get) => ({
             // The optimistic update is usually fine.
             throw error;
         }
+    },
+
+    fetchRecentComments: async () => {
+        const { data, error } = await supabase
+            .from('notice_comments')
+            .select(`
+                *,
+                user:profiles (
+                    display_name
+                ),
+                notice:notices (*)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) {
+            console.error('Error fetching recent comments:', JSON.stringify(error, null, 2));
+            return;
+        }
+
+        const mappedComments: NoticeComment[] = data.map((c: any) => ({
+            id: c.id,
+            noticeId: c.notice_id,
+            userId: c.user_id,
+            content: c.content,
+            createdAt: c.created_at,
+            user: {
+                displayName: c.user?.display_name || 'Unknown'
+            },
+            notice: c.notice ? {
+                ...c.notice,
+                createdAt: c.notice.created_at,
+                readStatus: c.notice.read_status || {},
+                readStatusVisibleTo: c.notice.read_status_visible_to || 'all',
+                startDate: c.notice.start_date,
+                endDate: c.notice.end_date,
+                targetAudience: c.notice.target_audience || ['all'],
+                authorId: c.notice.author_id,
+                isRead: false, // Default
+                isFlagged: false // Default
+            } : undefined
+        })).filter((c: any) => c.notice !== undefined);
+
+        set({ recentComments: mappedComments });
     }
 }));
