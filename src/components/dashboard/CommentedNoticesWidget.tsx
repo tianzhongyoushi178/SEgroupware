@@ -154,6 +154,7 @@ export default function CommentedNoticesWidget() {
             <NoticeDetailModal
                 notice={selectedNotice}
                 onClose={() => setSelectedNoticeId(null)}
+                autoMarkRead={true}
             />
         </>
     );

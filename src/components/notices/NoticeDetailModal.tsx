@@ -13,6 +13,7 @@ import NoticeFormModal from './NoticeFormModal';
 interface NoticeDetailModalProps {
     notice: Notice | null;
     onClose: () => void;
+    autoMarkRead?: boolean;
 }
 
 const categoryConfig: Record<NoticeCategory, { label: string; color: string; icon: any }> = {
@@ -21,7 +22,7 @@ const categoryConfig: Record<NoticeCategory, { label: string; color: string; ico
     urgent: { label: '重要', color: '#ef4444', icon: AlertTriangle },
 };
 
-export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModalProps) {
+export default function NoticeDetailModal({ notice, onClose, autoMarkRead = false }: NoticeDetailModalProps) {
     const { markAsRead, deleteNotice, comments, fetchComments, addComment, deleteComment, isLoadingComments } = useNoticeStore();
     const { user, isAdmin } = useAuthStore();
     const { getAllProfiles } = useAppSettingsStore();
@@ -39,10 +40,10 @@ export default function NoticeDetailModal({ notice, onClose }: NoticeDetailModal
 
     // Auto-mark as read when opened
     useEffect(() => {
-        if (user?.id && notice) {
+        if (user?.id && notice && autoMarkRead) {
             markAsRead(notice.id, user.id);
         }
-    }, [notice?.id, user?.id]); // Only run when notice ID changes or user changes to avoid loops if readStatus updates trigger this (though notice object changes)
+    }, [notice?.id, user?.id, autoMarkRead]); // Only run when notice ID changes or user changes to avoid loops if readStatus updates trigger this (though notice object changes)
 
     useEffect(() => {
         if (notice && (notice.readStatusVisibleTo === 'all' || isAdmin)) {
