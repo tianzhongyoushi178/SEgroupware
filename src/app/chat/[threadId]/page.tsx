@@ -869,21 +869,23 @@ export default function ChatRoomPage() {
                             fontFamily: 'inherit'
                         }}
                     />
-                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '0.5rem' }}>
-                        <label style={{
-                            display: 'flex', alignItems: 'center', cursor: 'pointer',
-                            fontSize: '0.75rem', color: '#666', userSelect: 'none',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            <input
-                                type="checkbox"
-                                checked={chatSendOnEnter}
-                                onChange={(e) => setChatSendOnEnter(e.target.checked)}
-                                style={{ marginRight: '0.25rem' }}
-                            />
-                            {!isMobile && 'Enterで送信'}
-                        </label>
-                    </div>
+                    {!isMobile && (
+                        <div style={{ display: 'flex', alignItems: 'center', marginRight: '0.5rem' }}>
+                            <label style={{
+                                display: 'flex', alignItems: 'center', cursor: 'pointer',
+                                fontSize: '0.75rem', color: '#666', userSelect: 'none',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={chatSendOnEnter}
+                                    onChange={(e) => setChatSendOnEnter(e.target.checked)}
+                                    style={{ marginRight: '0.25rem' }}
+                                />
+                                Enterで送信
+                            </label>
+                        </div>
+                    )}
                     <button
                         type="submit"
                         disabled={(!newMessage.trim() && !selectedFile) || isSubmitting}
