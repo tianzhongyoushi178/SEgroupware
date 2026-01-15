@@ -63,14 +63,13 @@ export default function CommentedNoticesWidget() {
         const notice = comment.notice;
         const lastReadAt = notice.readStatus?.[user.id];
 
-
         if (!lastReadAt) return true; // Never read
         return new Date(lastReadAt) < new Date(comment.createdAt); // Comment is newer than read time
     }).slice(0, 5);
 
     return (
         <>
-            <section className="glass-panel" style={{ padding: '1.5rem', height: '100%', minHeight: '300px' }}>
+            <section className="glass-panel" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                     <MessageSquare size={20} color="var(--primary)" />
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>最新のコメント</h2>
