@@ -248,7 +248,7 @@ export const useChatStore = create<ChatState>()(
                     // search messages
                     const { data: messages, error } = await supabase
                         .from('messages')
-                        .select('*, threads(*)') // Join threads to get metadata
+                        .select('*, threads:threads!messages_thread_id_fkey(*)') // Join threads using specific FK
                         .ilike('content', `%${query}%`)
                         .order('created_at', { ascending: false });
 

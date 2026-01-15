@@ -209,7 +209,25 @@ export default function ChatListPage() {
                                     {result.thread?.title || '不明なスレッド'}
                                 </div>
                                 <div style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
-                                    {result.content}
+                                    {(() => {
+                                        const text = result.content || '';
+                                        if (!searchQuery.trim()) return text;
+
+                                        // Case insensitive splitting
+                                        const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+
+                                        return (
+                                            <>
+                                                {parts.map((part, i) => (
+                                                    part.toLowerCase() === searchQuery.toLowerCase() ? (
+                                                        <span key={i} style={{ color: 'red', fontWeight: 'bold' }}>{part}</span>
+                                                    ) : (
+                                                        <span key={i}>{part}</span>
+                                                    )
+                                                ))}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                     <span>{result.author_name}</span>
