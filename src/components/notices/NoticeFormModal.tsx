@@ -264,7 +264,7 @@ export default function NoticeFormModal({ isOpen, onClose, initialData, prefillD
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
                                     {users.map(u => (
-                                        <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.25rem', borderRadius: '4px', background: selectedUserIds.includes(u.id) ? 'white' : 'transparent' }}>
+                                        <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.25rem', borderRadius: '4px', background: selectedUserIds.includes(u.id) ? 'white' : 'transparent', color: selectedUserIds.includes(u.id) ? 'black' : 'inherit' }}>
                                             <input
                                                 type="checkbox"
                                                 checked={selectedUserIds.includes(u.id)}

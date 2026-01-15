@@ -40,7 +40,9 @@ export default function ChatRoomPage() {
         addReaction,
         removeReaction,
         drafts,
-        setDraft
+        setDraft,
+        draftAttachments,
+        setDraftAttachment
     } = useChatStore();
 
     const { users: allUsers, fetchUsers, isLoading: isUsersLoading } = useUserStore();
@@ -56,7 +58,8 @@ export default function ChatRoomPage() {
         }
     };
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const selectedFile = draftAttachments[threadId] || null;
+    const setSelectedFile = (file: File | null) => setDraftAttachment(threadId, file);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNoteOpen, setIsNoteOpen] = useState(false);
     const [isPrivate, setIsPrivate] = useState(false);

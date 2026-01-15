@@ -100,6 +100,10 @@ interface ChatState {
     // Drafts
     drafts: Record<string, string>;
     setDraft: (threadId: string, draft: string) => void;
+
+    // Draft Attachments (Not persisted to localStorage because File objects cannot be serialized)
+    draftAttachments: Record<string, File | null>;
+    setDraftAttachment: (threadId: string, file: File | null) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -108,7 +112,9 @@ export const useChatStore = create<ChatState>()(
             threads: [],
             messages: {},
             notes: {},
+
             drafts: {}, // Initialize drafts
+            draftAttachments: {}, // Initialize draft attachments
             isLoading: false,
             error: null,
             currentUserId: null,
@@ -121,6 +127,9 @@ export const useChatStore = create<ChatState>()(
 
             setDraft: (threadId, draft) =>
                 set(state => ({ drafts: { ...state.drafts, [threadId]: draft } })),
+
+            setDraftAttachment: (threadId, file) =>
+                set(state => ({ draftAttachments: { ...state.draftAttachments, [threadId]: file } })),
 
             initialize: (userId) => {
                 set({ currentUserId: userId });
